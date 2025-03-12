@@ -11,6 +11,7 @@ public partial class LegalMoves : Node
 	public static List<Vector2I> OpponentMoves = new(), ProtectedPieces = new();
 	public static HashSet<Vector2I> CheckedRoyals;
 	public static List<List<Vector2I>> CheckResponseZones, PinnedPieceZones;
+	public static bool EnPassantBlocked;
 
 	public static readonly Dictionary<char, (Vector2I[] direction, int range)> pieceDefinitons = new()
 	{
@@ -42,7 +43,7 @@ public partial class LegalMoves : Node
 		List<(Vector2I, Vector2I)> legalMovesLocal = new();
 		if (!opponent)
 		{
-			CheckResponseZones = new(); CheckedRoyals = new(); PinnedPieceZones = new(); ProtectedPieces = new();
+			CheckResponseZones = new(); CheckedRoyals = new(); PinnedPieceZones = new(); ProtectedPieces = new(); EnPassantBlocked = false;
 		}
 		OpponentMoves = opponent ? GetOnlyTargets(legalMoves) : GetOpponentMoves();
 		if (!opponent)
@@ -59,10 +60,7 @@ public partial class LegalMoves : Node
 				legalMovesLocal.AddRange(Castling.IsLegal(piece.Key, Position.colorToMove, OpponentMoves, legalMovesLocal.Count));
 		}
 		if (!opponent)
-		{
 			legalMoves = legalMovesLocal;
-			Colors.DebugColors();
-		}
 		return legalMovesLocal;
 	}
 	private static List<Vector2I> GetOpponentMoves()

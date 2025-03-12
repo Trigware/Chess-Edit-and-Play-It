@@ -15,7 +15,6 @@ public partial class Colors : Interaction
 		{ Enum.EnPassant, RGB(0x89, 0xB5, 0x48) },
 		{ Enum.Promotion, RGB(0x8D, 0x80, 0xE5) },
 		{ Enum.Castling, RGB(0xE8, 0xA7, 0x4D) },
-		{ Enum.Debug, RGB(0xFE, 0x61, 0x2C) }
 	};
 	public enum Enum
 	{
@@ -28,7 +27,6 @@ public partial class Colors : Interaction
 		EnPassant,
 		Promotion,
 		Castling,
-		Debug
 	}
 	private static Color RGB(byte r, byte g, byte b)
 	{
@@ -59,7 +57,6 @@ public partial class Colors : Interaction
 			Enum.EnPassant => Dict[Enum.EnPassant],
 			Enum.Promotion => Dict[Enum.Promotion],
 			Enum.Castling => Dict[Enum.Castling],
-			Enum.Debug => Dict[Enum.Debug],
 			_ => new()
 		};
 		if (color != Enum.Default && x % 2 != y % 2)
@@ -72,7 +69,7 @@ public partial class Colors : Interaction
 			Deselect(selectedTile);
 		PreviousMoveTiles(Enum.PreviousMove);
 		selectedTile = new(flatMousePosition.X, flatMousePosition.Y, 0);
-		if (debugNotChangeColors || !Position.pieces.ContainsKey(flatMousePosition))
+		if (!Position.pieces.ContainsKey(flatMousePosition))
 			return;
 		char piece = Position.pieces[flatMousePosition];
 		Set(currentSprite, Enum.Selected, flatMousePosition.X, flatMousePosition.Y);
@@ -91,21 +88,4 @@ public partial class Colors : Interaction
 			Set(tiles[new(startEndTiles.end.X, startEndTiles.end.Y, 0)], color, startEndTiles.end.X, startEndTiles.end.Y);
 		}
 	}
-	public static void ResetAllColors()
-	{
-		for (int x = 0; x < tileCount.X; x++)
-		{
-			for (int y = 0; y < tileCount.Y; y++)
-				Set(Enum.Default, x, y);
-		}
-	}
-    public static void DebugColors()
-    {
-        ResetAllColors();
-		foreach (List<Vector2I> zone in LegalMoves.PinnedPieceZones)
-		{
-			foreach (Vector2I move in zone)
-				Set(Enum.Debug, move.X, move.Y);
-        }
-    }
 }

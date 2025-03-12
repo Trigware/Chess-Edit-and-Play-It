@@ -44,13 +44,15 @@ public partial class PieceMoves : LegalMoves
 			bool pawnCaptures = false;
 			if (isPawn && AnalysePawnMove(dirIter, range, addedFlatPosition, pieceColor, legalCount + rangeMoves.Count, opponent, out pawnCaptures))
 				break;
-			if (opponent && pawnCaptures)
-				continue;
-			char targetColor = GetPieceColor(addedFlatPosition);
-			if (targetColor == Position.colorToMove)
+            char targetColor = GetPieceColor(addedFlatPosition);
+            if (targetColor == Position.colorToMove)
 			{
 				if (opponent)
-					ProtectedPieces.Add(addedFlatPosition);
+                    ProtectedPieces.Add(addedFlatPosition);
+				if (opponent && addedFlatPosition == Position.EnPassantInfo.delete && CanMeetRoyal(addedFlatPosition, dir, pieceRange - range))
+					EnPassantBlocked = true;
+                if (pinnedPieceMoveAnalyse)
+					PinnedPieceZones.RemoveAt(PinnedPieceZones.Count-1);
 				break;
             }
             if (!opponent && BlockMovementForPinnedPiece(piece.Key, addedFlatPosition))
@@ -69,7 +71,7 @@ public partial class PieceMoves : LegalMoves
 				rangeMoves.Add((piece.Key, addedFlatPosition));
 			else if (opponent)
 				PinnedPieceZones.Last().Add(addedFlatPosition);
-			pinnedPieceMoveAnalyse = OnNormalCapture(pinnedPieceMoveAnalyse, targetColor, isTargetRoyal, opponent, addedFlatPosition, dir, pieceRange - range, GetPieceColor(piece.Value), rangeMoves, piece.Key, out bool broken);
+			pinnedPieceMoveAnalyse = OnNormalCapture(pinnedPieceMoveAnalyse, targetColor, isTargetRoyal, opponent, addedFlatPosition, dir, pieceRange - range, rangeMoves, piece.Key, out bool broken);
 			if (broken)
 				break;
         }
@@ -99,7 +101,7 @@ public partial class PieceMoves : LegalMoves
 			return false;
 		return !PinnedPieceZones[pinnedPieceZone].Contains(end);
 	}
-	private static bool CanMeetRoyal(Vector2I startPosition, Vector2I direction, int pieceRange, char movedColor)
+	private static bool CanMeetRoyal(Vector2I startPosition, Vector2I direction, int pieceRange)
 	{
 		foreach (KeyValuePair<Vector2I, char> endRoyal in Position.RoyalPiecesColor)
 		{
@@ -113,18 +115,18 @@ public partial class PieceMoves : LegalMoves
 		}
 		return false;
 	}
-	private static bool OnNormalCapture(bool pinnedPieceMoveAnalyse, char targetColor, bool isTargetRoyal, bool opponent, Vector2I addedFlatPosition, Vector2I dir, int range, char movedColor, List<(Vector2I, Vector2I)> rangeMoves, Vector2I startPosition, out bool broken)
+	private static bool OnNormalCapture(bool pinnedPieceMoveAnalyse, char targetColor, bool isTargetRoyal, bool opponent, Vector2I addedFlatPosition, Vector2I dir, int range, List<(Vector2I, Vector2I)> rangeMoves, Vector2I startPosition, out bool broken)
 	{
-		broken = false;
-		if (targetColor == '\0' || targetColor == Position.colorToMove)
-			return pinnedPieceMoveAnalyse;
+        broken = false;
+        if (targetColor == '\0')
+            return pinnedPieceMoveAnalyse;
         if (pinnedPieceMoveAnalyse && isTargetRoyal)
             PinnedPieceZones.Last().Remove(addedFlatPosition);
-        if (!isTargetRoyal && opponent && CanMeetRoyal(addedFlatPosition, dir, range, movedColor))
+        if (!isTargetRoyal && opponent && CanMeetRoyal(addedFlatPosition, dir, range))
         {
             if (pinnedPieceMoveAnalyse)
             {
-                PinnedPieceZones = new();
+				PinnedPieceZones.RemoveAt(PinnedPieceZones.Count - 1);
                 broken = true;
             }
             else
@@ -142,8 +144,8 @@ public partial class PieceMoves : LegalMoves
 	}
 	private static bool AnalysePawnMove(int dirIter, int range, Vector2I addedFlatPosition, char pieceColor, int moveCount, bool opponent, out bool targetCapture)
 	{
-		bool enPassant = addedFlatPosition == Position.EnPassantInfo.target && GetPieceColor(Position.EnPassantInfo.delete) != Position.colorToMove;
-		targetCapture = opponent || Position.pieces.TryGetValue(addedFlatPosition, out _) || enPassant;
+		bool enPassant = opponent || (addedFlatPosition == Position.EnPassantInfo.target && GetPieceColor(Position.EnPassantInfo.delete) != Position.colorToMove && !EnPassantBlocked);
+		targetCapture = Position.pieces.TryGetValue(addedFlatPosition, out _) || enPassant;
 		if (dirIter == 0 && targetCapture)
 			return true;
 		if (dirIter > 0 && !targetCapture)

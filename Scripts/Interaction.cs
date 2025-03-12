@@ -5,7 +5,6 @@ public partial class Interaction : Chessboard
 {
 	public static Vector3I selectedTile = -Vector3I.One;
 	private bool leftMouseButtonPressed = false, leftMouseOld = false;
-	protected const bool debugNotChangeColors = false;
 	public override void _Process(double delta)
 	{
 		bool leftActuallyPressed = Input.IsMouseButtonPressed(MouseButton.Left);
@@ -55,8 +54,6 @@ public partial class Interaction : Chessboard
 	}
 	public static void Deselect(Vector2I start)
 	{
-		if (debugNotChangeColors)
-			return;
 		PreviousMoveTiles(Colors.Enum.Default);
 		Colors.Set(GetTile(start), Colors.Enum.Default, start.X, start.Y);
 		foreach ((Vector2I start, Vector2I end) startEndTiles in LegalMoves.legalMoves)
@@ -68,8 +65,6 @@ public partial class Interaction : Chessboard
 	}
 	public static void PreviousMoveTiles(Colors.Enum color)
 	{
-		if (debugNotChangeColors)
-			return;
 		Colors.Set(color, Position.LastMoveInfo.start.X, Position.LastMoveInfo.start.Y);
 		Colors.Set(color, Position.LastMoveInfo.end.X, Position.LastMoveInfo.end.Y);
 	}
