@@ -1,0 +1,169 @@
+using Godot;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Text;
+
+public partial class PieceMoves : LegalMoves
+{
+	public static List<(Vector2I, Vector2I)> GetMoves(KeyValuePair<Vector2I, char> piece, int legalCount, bool opponent)
+	{
+		List<(Vector2I start, Vector2I dest)> pieceMoves = new();
+		(Vector2I[] direction, int range) defintion = pieceDefinitons[Convert.ToChar(piece.Value.ToString().ToUpper())];
+		bool isPawn = piece.Value.ToString().ToUpper() == "P";
+		char pieceColor = GetPieceColor(piece.Value);
+		int pieceRange = defintion.range;
+		for (int dirIter = 0; dirIter < defintion.direction.Count(); dirIter++)
+			pieceMoves.AddRange(AnalyseRange(dirIter, defintion, piece, isPawn, pieceColor, legalCount + pieceMoves.Count, opponent));
+		return pieceMoves;
+	}
+	private static List<(Vector2I start, Vector2I dest)> AnalyseRange(int dirIter, (Vector2I[] direction, int range) defintion, KeyValuePair<Vector2I, char> piece, bool isPawn, char pieceColor, int legalCount, bool opponent)
+	{
+		Vector2I originalDir = defintion.direction[dirIter];
+		Vector2I dir = (pieceColor == 'b' && isPawn) ? new(originalDir.X, -originalDir.Y) : originalDir;
+		int pieceRange = defintion.range;
+		if (isPawn && dirIter == 0 && (pieceColor == 'b' && piece.Key.Y == 1 || pieceColor == 'w' && piece.Key.Y == 6))
+			pieceRange++;
+		List<(Vector2I start, Vector2I dest)> rangeMoves = new();
+		bool isMovedPieceRoyal = isRoyal(piece.Key);
+		bool pinnedPieceMoveAnalyse = false;
+		bool beyondRoyalAnalyse = false;
+		for (int range = 0; range < pieceRange; range++)
+		{
+			Vector2I addedFlatPosition = piece.Key + dir * (range + 1);
+			if (!isWithinGrid(addedFlatPosition))
+				break;
+			if (!opponent)
+			{
+				if (isMovedPieceRoyal && (OpponentMoves.Contains(addedFlatPosition) || CheckedRoyals.Count > 1 || ProtectedPieces.Contains(addedFlatPosition)))
+					continue;
+				if (!isMovedPieceRoyal && !SuccessfulResponseInEveryZone(addedFlatPosition))
+					continue;
+			}
+			bool pawnCaptures = false;
+			if (isPawn && AnalysePawnMove(dirIter, range, addedFlatPosition, pieceColor, legalCount + rangeMoves.Count, opponent, out pawnCaptures))
+				break;
+			if (opponent && pawnCaptures)
+				continue;
+			char targetColor = GetPieceColor(addedFlatPosition);
+			if (targetColor == Position.colorToMove)
+			{
+				if (opponent)
+					ProtectedPieces.Add(addedFlatPosition);
+				break;
+            }
+            if (!opponent && BlockMovementForPinnedPiece(piece.Key, addedFlatPosition))
+                continue;
+            bool isTargetRoyal = isRoyal(addedFlatPosition);
+			if (isTargetRoyal && opponent && !pinnedPieceMoveAnalyse && !beyondRoyalAnalyse)
+			{
+				CheckResponseZones.Add(GetOnlyTargets(rangeMoves));
+				CheckResponseZones.Last().Add(piece.Key);
+				if (!CheckedRoyals.Contains(addedFlatPosition))
+					CheckedRoyals.Add(addedFlatPosition);
+				beyondRoyalAnalyse = true;
+				continue;
+			}
+			if (!pinnedPieceMoveAnalyse)
+				rangeMoves.Add((piece.Key, addedFlatPosition));
+			else if (opponent)
+				PinnedPieceZones.Last().Add(addedFlatPosition);
+			pinnedPieceMoveAnalyse = OnNormalCapture(pinnedPieceMoveAnalyse, targetColor, isTargetRoyal, opponent, addedFlatPosition, dir, pieceRange - range, GetPieceColor(piece.Value), rangeMoves, piece.Key, out bool broken);
+			if (broken)
+				break;
+        }
+		return rangeMoves;
+	}
+	private static bool SuccessfulResponseInEveryZone(Vector2I location)
+	{
+		foreach (List<Vector2I> zone in CheckResponseZones)
+		{
+			if (!zone.Contains(location))
+				return false;
+		}
+		return true;
+	}
+	private static bool BlockMovementForPinnedPiece(Vector2I start, Vector2I end)
+	{
+		int pinnedPieceZone = -1;
+		for (int i = 0; i < PinnedPieceZones.Count; i++)
+		{
+			if (PinnedPieceZones[i].Contains(start))
+			{
+				pinnedPieceZone = i;
+				break;
+			}
+		}
+		if (pinnedPieceZone == -1)
+			return false;
+		return !PinnedPieceZones[pinnedPieceZone].Contains(end);
+	}
+	private static bool CanMeetRoyal(Vector2I startPosition, Vector2I direction, int pieceRange, char movedColor)
+	{
+		foreach (KeyValuePair<Vector2I, char> endRoyal in Position.RoyalPiecesColor)
+		{
+			if (endRoyal.Value == Position.colorToMove)
+				continue;
+			Vector2I deltaVector = endRoyal.Key - startPosition;
+			if (deltaVector.X * direction.Y != deltaVector.Y * direction.X)
+				return false;
+			int steps = (direction.X != 0) ? deltaVector.X / direction.X : deltaVector.Y / direction.Y;
+			return steps > 0 && steps <= pieceRange;
+		}
+		return false;
+	}
+	private static bool OnNormalCapture(bool pinnedPieceMoveAnalyse, char targetColor, bool isTargetRoyal, bool opponent, Vector2I addedFlatPosition, Vector2I dir, int range, char movedColor, List<(Vector2I, Vector2I)> rangeMoves, Vector2I startPosition, out bool broken)
+	{
+		broken = false;
+		if (targetColor == '\0' || targetColor == Position.colorToMove)
+			return pinnedPieceMoveAnalyse;
+        if (pinnedPieceMoveAnalyse && isTargetRoyal)
+            PinnedPieceZones.Last().Remove(addedFlatPosition);
+        if (!isTargetRoyal && opponent && CanMeetRoyal(addedFlatPosition, dir, range, movedColor))
+        {
+            if (pinnedPieceMoveAnalyse)
+            {
+                PinnedPieceZones = new();
+                broken = true;
+            }
+            else
+            {
+                List<Vector2I> PinnedPieceZoneInitial = GetOnlyTargets(rangeMoves);
+                PinnedPieceZones.Add(PinnedPieceZoneInitial);
+                PinnedPieceZones.Last().Add(addedFlatPosition);
+                PinnedPieceZones.Last().Add(startPosition);
+                pinnedPieceMoveAnalyse = true;
+            }
+        }
+        else
+            broken = true;
+        return pinnedPieceMoveAnalyse;
+	}
+	private static bool AnalysePawnMove(int dirIter, int range, Vector2I addedFlatPosition, char pieceColor, int moveCount, bool opponent, out bool targetCapture)
+	{
+		bool enPassant = addedFlatPosition == Position.EnPassantInfo.target && GetPieceColor(Position.EnPassantInfo.delete) != Position.colorToMove;
+		targetCapture = opponent || Position.pieces.TryGetValue(addedFlatPosition, out _) || enPassant;
+		if (dirIter == 0 && targetCapture)
+			return true;
+		if (dirIter > 0 && !targetCapture)
+			return true;
+		if (!opponent && range == 1)
+		{
+			PawnLeapMoves.Add(moveCount);
+			PawnLeapMovesInfo.Add((new(addedFlatPosition.X, addedFlatPosition.Y + (pieceColor == 'w' ? 1 : -1)), addedFlatPosition));
+		}
+		if (!opponent && Promotion.CanBePromotedTo.Count() > 0 && (addedFlatPosition.Y == 0 && pieceColor == 'w' || addedFlatPosition.Y == 7 && pieceColor == 'b'))
+			PromotionMoves.Add(moveCount);
+		if (!opponent && enPassant)
+			EnPassantMoves.Add(moveCount);
+		return false;
+	}
+	public static bool isRoyal(Vector2I location)
+	{
+		if (!(Position.pieces.TryGetValue(location, out char piece) && piece != Position.colorToMove))
+			return false;
+		int tagIndex = Tags.tagPositions.IndexOf(location);
+		return tagIndex > -1 ? Tags.activeTags[tagIndex].Contains(Tags.Tag.Royal) : false;
+	}
+}
