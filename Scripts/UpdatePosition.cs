@@ -5,7 +5,7 @@ public partial class UpdatePosition : Node
 {
 	public static void MovePiece(Vector2I start, Vector2I end, int legalIndex)
 	{
-		int leapMoveIndex = LegalMoves.PawnLeapMoves.IndexOf(legalIndex);
+        int leapMoveIndex = LegalMoves.PawnLeapMoves.IndexOf(legalIndex);
 		int enPassantIndex = LegalMoves.EnPassantMoves.IndexOf(legalIndex);
 		int promotionIndex = LegalMoves.PromotionMoves.IndexOf(legalIndex);
 		int castlingIndex = LegalMoves.CastlingMoves.IndexOf(legalIndex);
@@ -18,7 +18,7 @@ public partial class UpdatePosition : Node
 		else
 			Position.EnPassantInfo = new(-Vector2I.One, -Vector2I.One);
 
-		Position.ModifyRoyalPieceList(start, end);
+        Position.ModifyRoyalPieceList(start, end);
 		Sprite2D handledSprite = GetPiece(start);
 		EditPiecePositions(start, end, handledSprite, !enPassant && castlingIndex == -1, promotionIndex > -1, castlingIndex > -1);
 		if (castlingIndex > -1)
@@ -26,7 +26,7 @@ public partial class UpdatePosition : Node
 
 		Interaction.Deselect(start);
 		Position.LastMoveInfo = (start, end);
-		if (promotionIndex == -1)
+        if (promotionIndex == -1)
 		{
 			Position.ReverseColor(Position.colorToMove);
 			Interaction.PreviousMoveTiles(Colors.Enum.PreviousMove);

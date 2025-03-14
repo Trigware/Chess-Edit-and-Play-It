@@ -12,6 +12,7 @@ public partial class Position : Chessboard
 	public static (Vector2I start, Vector2I end) LastMoveInfo = (-Vector2I.One, -Vector2I.One);
 	public static bool startPositionLoaded = false;
 	public static Dictionary<Vector2I, char> RoyalPiecesColor;
+	public static bool InCheck = false;
 	public static void Load(string fen)
 	{
 		if (startPositionLoaded)

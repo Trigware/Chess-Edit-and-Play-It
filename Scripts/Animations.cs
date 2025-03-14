@@ -1,10 +1,12 @@
 using Godot;
 using System;
+using System.Collections.Generic;
 
 public partial class Animations : Update
 {
 	public const float animationSpeed = 0.3f;
-	public static bool promotionUnsafe = false;
+	public static bool promotionUnsafe = false, CancelCheckAnimationEarly = false;
+	public static List<Vector2I> PreviousCheckTiles = new();
 	public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale, float? endTransparency, bool deleteOnFinished, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = int.MaxValue)
 	{
 		Tween tween = spr.CreateTween();
@@ -64,6 +66,39 @@ public partial class Animations : Update
 			promotionUnsafe = false;
 			if (promotion && Promotion.promotionPending != null)
 				Promotion.Promote((Vector2I)Promotion.promotionPending);
+		};
+		timer.Start();
+	}
+	public static void CheckAnimation(int i, Node main)
+	{
+		if (CancelCheckAnimationEarly)
+		{
+            CancelCheckAnimationEarly = false;
+            return;
+        }
+        List<Color> previousColors = new();
+		Colors.ChangeTileColorBack();
+        for (int j = 0; j < LegalMoves.CheckResponseZones.Count; j++)
+		{
+			List<Vector2I> zone = LegalMoves.CheckResponseZones[j];
+			if (i >= zone.Count)
+			{
+				Colors.Set(Colors.Enum.Check, LegalMoves.CheckedRoyals[j].X, LegalMoves.CheckedRoyals[j].Y);
+				continue;
+			}
+			PreviousCheckTiles.Add(zone[i]);
+			Colors.Set(Colors.Enum.Check, zone[i].X, zone[i].Y);
+		}
+		if (i >= LegalMoves.maxResponseRange)
+		{
+            Audio.Play("check");
+			return;
+		}
+		Timer timer = new() { WaitTime = animationSpeed/LegalMoves.maxResponseRange*2, OneShot = true };
+		main.AddChild(timer);
+		timer.Timeout += () =>
+		{
+			CheckAnimation(i+1, main);
 		};
 		timer.Start();
 	}

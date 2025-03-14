@@ -61,7 +61,8 @@ public partial class Interaction : Chessboard
 			if (startEndTiles.start == start)
 				Colors.Set(GetTile(startEndTiles.end), Colors.Enum.Default, startEndTiles.end.X, startEndTiles.end.Y);
 		}
-		selectedTile = -Vector3I.One;
+        Colors.ColorCheckedRoyalTiles();
+        selectedTile = -Vector3I.One;
 	}
 	public static void PreviousMoveTiles(Colors.Enum color)
 	{

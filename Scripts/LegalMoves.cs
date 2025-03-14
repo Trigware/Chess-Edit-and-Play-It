@@ -8,10 +8,10 @@ public partial class LegalMoves : Node
 	public static List<(Vector2I target, Vector2I deletion)> PawnLeapMovesInfo = new();
 	public static List<int> PawnLeapMoves = new(), EnPassantMoves = new(), PromotionMoves = new(), CastlingMoves = new();
 	public static List<(Vector2I start, Vector2I end)> CastleeMoves = new();
-	public static List<Vector2I> OpponentMoves = new(), ProtectedPieces = new();
-	public static HashSet<Vector2I> CheckedRoyals;
+	public static List<Vector2I> OpponentMoves = new(), ProtectedPieces, CheckedRoyals;
 	public static List<List<Vector2I>> CheckResponseZones, PinnedPieceZones;
 	public static bool EnPassantBlocked;
+	public static int maxResponseRange, CheckRoyalsCount;
 
 	public static readonly Dictionary<char, (Vector2I[] direction, int range)> pieceDefinitons = new()
 	{
@@ -43,7 +43,7 @@ public partial class LegalMoves : Node
 		List<(Vector2I, Vector2I)> legalMovesLocal = new();
 		if (!opponent)
 		{
-			CheckResponseZones = new(); CheckedRoyals = new(); PinnedPieceZones = new(); ProtectedPieces = new(); EnPassantBlocked = false;
+            CheckResponseZones = new(); CheckedRoyals = new(); PinnedPieceZones = new(); ProtectedPieces = new(); EnPassantBlocked = false; maxResponseRange = 0; CheckRoyalsCount = 0;
 		}
 		OpponentMoves = opponent ? GetOnlyTargets(legalMoves) : GetOpponentMoves();
 		if (!opponent)
@@ -60,8 +60,11 @@ public partial class LegalMoves : Node
 				legalMovesLocal.AddRange(Castling.IsLegal(piece.Key, Position.colorToMove, OpponentMoves, legalMovesLocal.Count));
 		}
 		if (!opponent)
-			legalMoves = legalMovesLocal;
-		return legalMovesLocal;
+		{
+            legalMoves = legalMovesLocal;
+			PostMoveGeneration();
+        }
+        return legalMovesLocal;
 	}
 	private static List<Vector2I> GetOpponentMoves()
 	{
@@ -70,9 +73,20 @@ public partial class LegalMoves : Node
 		Position.ReverseColor(Position.colorToMove);
 		return opponentMoves;
 	}
+	private static void PostMoveGeneration()
+	{
+        Position.InCheck = CheckResponseZones.Count >= 1;
+		if (!Animations.CancelCheckAnimationEarly)
+			Animations.PreviousCheckTiles = new();
+        if (Position.InCheck)
+		{
+            Colors.ResetAllColors();
+            Animations.CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene);
+        }
+    }
 	protected static List<Vector2I> GetOnlyTargets(List<(Vector2I start, Vector2I end)> moves)
 	{
-		List<Vector2I> onlyTargets = new();
+        List<Vector2I> onlyTargets = new();
 		foreach ((Vector2I start, Vector2I end) move in moves)
 			onlyTargets.Add(move.end);
 		return onlyTargets;

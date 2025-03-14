@@ -15,6 +15,7 @@ public partial class Colors : Interaction
 		{ Enum.EnPassant, RGB(0x89, 0xB5, 0x48) },
 		{ Enum.Promotion, RGB(0x8D, 0x80, 0xE5) },
 		{ Enum.Castling, RGB(0xE8, 0xA7, 0x4D) },
+		{ Enum.Check, RGB(0x55, 0x55, 0x55) }
 	};
 	public enum Enum
 	{
@@ -27,6 +28,7 @@ public partial class Colors : Interaction
 		EnPassant,
 		Promotion,
 		Castling,
+		Check,
 	}
 	private static Color RGB(byte r, byte g, byte b)
 	{
@@ -48,23 +50,45 @@ public partial class Colors : Interaction
 	{
 		if (spr.Texture != LoadGraphics.textureDict["tile"])
 			return;
-		spr.Modulate = color switch
-		{
-			Enum.Default => (x % 2 == y % 2) ? Dict[Enum.DefaultLight] : Dict[Enum.DefaultDark],
-			Enum.Legal => Dict[Enum.Legal],
-			Enum.Selected => Dict[Enum.Selected],
-			Enum.PreviousMove => Dict[Enum.PreviousMove],
-			Enum.EnPassant => Dict[Enum.EnPassant],
-			Enum.Promotion => Dict[Enum.Promotion],
-			Enum.Castling => Dict[Enum.Castling],
-			_ => new()
-		};
-		if (color != Enum.Default && x % 2 != y % 2)
-			spr.Modulate *= new Color(darkEffect, darkEffect, darkEffect);
+		spr.Modulate = GetColorFromEnum(color, x, y);
 	}
+	public static Color Get(int x, int y)
+	{
+		try
+		{
+			return GetTile(new(x, y)).Modulate;
+		} catch
+		{
+			return GetColorFromEnum(Enum.Default, x, y);
+		}
+	}
+	private static Color GetColorFromEnum(Enum color, int x, int y)
+	{
+		Color enumAsColor = color switch
+		{
+            Enum.Default => (x % 2 == y % 2) ? Dict[Enum.DefaultLight] : Dict[Enum.DefaultDark],
+            Enum.Legal => Dict[Enum.Legal],
+            Enum.Selected => Dict[Enum.Selected],
+            Enum.PreviousMove => Dict[Enum.PreviousMove],
+            Enum.EnPassant => Dict[Enum.EnPassant],
+            Enum.Promotion => Dict[Enum.Promotion],
+            Enum.Castling => Dict[Enum.Castling],
+			Enum.Check => Dict[Enum.Check],
+            _ => new()
+        };
+		if (color != Enum.Default && x % 2 != y % 2)
+			enumAsColor *= new Color(darkEffect, darkEffect, darkEffect);
+		return enumAsColor;
+    }
 	public static void SetTileColors(Vector2I flatMousePosition)
 	{
-		Sprite2D currentSprite = tiles[new(flatMousePosition.X, flatMousePosition.Y, 0)];
+		if (LegalMoves.CheckedRoyals.Contains(flatMousePosition) && Animations.PreviousCheckTiles.Count > 0)
+		{
+            Animations.CancelCheckAnimationEarly = true;
+			ChangeTileColorBack();
+            Audio.Play("check");
+        }
+        Sprite2D currentSprite = tiles[new(flatMousePosition.X, flatMousePosition.Y, 0)];
 		if (selectedTile != -Vector3I.One)
 			Deselect(selectedTile);
 		PreviousMoveTiles(Enum.PreviousMove);
@@ -88,4 +112,28 @@ public partial class Colors : Interaction
 			Set(tiles[new(startEndTiles.end.X, startEndTiles.end.Y, 0)], color, startEndTiles.end.X, startEndTiles.end.Y);
 		}
 	}
+	public static void ResetAllColors()
+	{
+		for (int x = 0; x < tileCount.X; x++)
+		{
+			for (int y = 0; y < tileCount.Y; y++)
+				Set(Enum.Default, x, y);
+		}
+	}
+    public static void ChangeTileColorBack()
+    {
+        foreach (Vector2I previousCheckTile in Animations.PreviousCheckTiles)
+        {
+            Colors.Enum resetColor = Colors.Enum.Default;
+            if (previousCheckTile == Position.LastMoveInfo.start || previousCheckTile == Position.LastMoveInfo.end)
+                resetColor = Colors.Enum.PreviousMove;
+            Colors.Set(resetColor, previousCheckTile.X, previousCheckTile.Y);
+        }
+        Animations.PreviousCheckTiles = new();
+    }
+    public static void ColorCheckedRoyalTiles()
+    {
+        foreach (Vector2I checkedRoyal in LegalMoves.CheckedRoyals)
+            Colors.Set(Colors.Enum.Check, checkedRoyal.X, checkedRoyal.Y);
+    }
 }

@@ -34,17 +34,22 @@ public partial class PieceMoves : LegalMoves
 			Vector2I addedFlatPosition = piece.Key + dir * (range + 1);
 			if (!isWithinGrid(addedFlatPosition))
 				break;
-			if (!opponent)
+            char targetColor = GetPieceColor(addedFlatPosition);
+            if (!opponent)
 			{
-				if (isMovedPieceRoyal && (OpponentMoves.Contains(addedFlatPosition) || CheckedRoyals.Count > 1 || ProtectedPieces.Contains(addedFlatPosition)))
+				if (isMovedPieceRoyal && (OpponentMoves.Contains(addedFlatPosition) || CheckRoyalsCount > 1 || ProtectedPieces.Contains(addedFlatPosition)))
 					continue;
 				if (!isMovedPieceRoyal && !SuccessfulResponseInEveryZone(addedFlatPosition))
-					continue;
+				{
+					if (targetColor == Position.colorToMove)
+						break;
+					else
+						continue;
+				}
 			}
 			bool pawnCaptures = false;
 			if (isPawn && AnalysePawnMove(dirIter, range, addedFlatPosition, pieceColor, legalCount + rangeMoves.Count, opponent, out pawnCaptures))
 				break;
-            char targetColor = GetPieceColor(addedFlatPosition);
             if (targetColor == Position.colorToMove)
 			{
 				if (opponent)
@@ -60,11 +65,15 @@ public partial class PieceMoves : LegalMoves
             bool isTargetRoyal = isRoyal(addedFlatPosition);
 			if (isTargetRoyal && opponent && !pinnedPieceMoveAnalyse && !beyondRoyalAnalyse)
 			{
-				CheckResponseZones.Add(GetOnlyTargets(rangeMoves));
-				CheckResponseZones.Last().Add(piece.Key);
+                CheckResponseZones.Add(new() { piece.Key });
+                CheckResponseZones.Last().AddRange(GetOnlyTargets(rangeMoves));
+				int responseCount = CheckResponseZones.Last().Count();
+				if (responseCount > maxResponseRange)
+					maxResponseRange = responseCount;
+                CheckedRoyals.Add(addedFlatPosition);
 				if (!CheckedRoyals.Contains(addedFlatPosition))
-					CheckedRoyals.Add(addedFlatPosition);
-				beyondRoyalAnalyse = true;
+                    CheckRoyalsCount++;
+                beyondRoyalAnalyse = true;
 				continue;
 			}
 			if (!pinnedPieceMoveAnalyse)

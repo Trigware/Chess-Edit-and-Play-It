@@ -16,7 +16,7 @@ public partial class Chessboard : Node
 
 	public override void _Ready()
 	{
-		Position.Load(Position.FEN.Default);
+		Position.Load(Position.FEN.DoublePin);
 	}
 	public override void _Process(double delta)
 	{
@@ -48,16 +48,6 @@ public partial class Chessboard : Node
 			{
 				DrawTile("tile", x, y, 0, parentNode);
 				DrawTile(x, y, 1, parentNode);
-				/*int tagposIndex = Tags.tagPositions.IndexOf(new(x, y));
-				if (tagposIndex == -1)
-					continue;
-				int i = 0;
-				foreach (Tags.Tag tag in Tags.activeTags[tagposIndex])
-				{
-					GD.Print(i);
-					DrawTile("Emblem", x, y, 3, parentNode, i);
-					i++;
-				}*/
 			}
 		}
 		Position.GetRoyalsPerColor();
