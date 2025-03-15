@@ -7,6 +7,8 @@ public partial class Interaction : Chessboard
 	private bool leftMouseButtonPressed = false, leftMouseOld = false;
 	public override void _Process(double delta)
 	{
+		if (Position.GameEndState != Position.EndState.Ongoing)
+			return;
 		bool leftActuallyPressed = Input.IsMouseButtonPressed(MouseButton.Left);
 		leftMouseButtonPressed = leftActuallyPressed && !leftMouseOld;
 		if (leftMouseButtonPressed || Input.IsKeyPressed(Key.Escape))
@@ -61,7 +63,7 @@ public partial class Interaction : Chessboard
 			if (startEndTiles.start == start)
 				Colors.Set(GetTile(startEndTiles.end), Colors.Enum.Default, startEndTiles.end.X, startEndTiles.end.Y);
 		}
-        Colors.ColorCheckedRoyalTiles();
+        Colors.ColorCheckedRoyalTiles(Colors.Enum.Check);
         selectedTile = -Vector3I.One;
 	}
 	public static void PreviousMoveTiles(Colors.Enum color)

@@ -26,7 +26,7 @@ public partial class LoadGraphics : Node
 	}
 	private static void LoadAllTextures()
 	{
-		string[] textureArray = new string[] { "tile", "wP", "wN", "wB", "wR", "wQ", "wK", "bP", "bN", "bB", "bR", "bQ", "bK", "Emblem" };
+		string[] textureArray = new string[] { "tile", "wP", "wN", "wB", "wR", "wQ", "wK", "bP", "bN", "bB", "bR", "bQ", "bK" };
 		foreach (string texture in textureArray)
 		{
 			string spriteName = texture;

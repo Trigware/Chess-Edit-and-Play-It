@@ -1,8 +1,9 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 public partial class LoadAudio : Node
 {
-	public static Dictionary<string, AudioStream> audioDict = new();
+	public static Dictionary<Audio.Enum, AudioStream> audioDict = new();
 	private static AudioStream Load(string name)
 	{
 		string fileLocation = $"res://Audio/{name}.wav";
@@ -16,8 +17,11 @@ public partial class LoadAudio : Node
 	}
 	public static void LoadAll()
 	{
-		string[] audioArray = new string[] { "capture", "castle", "check", "game start", "illegal", "mate", "move", "promote", "stalemate" };
-		foreach (string audioName in audioArray)
-			audioDict.Add(audioName, Load(audioName));
-	}
+		Audio.Enum[] audioArray = (Audio.Enum[])Enum.GetValues(typeof(Audio.Enum));
+		foreach (Audio.Enum audioName in audioArray)
+		{
+			string audioNameAsString = audioName.ToString();
+            audioDict.Add(audioName, Load(audioNameAsString));
+        }
+    }
 }

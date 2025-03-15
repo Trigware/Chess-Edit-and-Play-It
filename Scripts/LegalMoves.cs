@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public partial class LegalMoves : Node
 {
@@ -8,7 +9,7 @@ public partial class LegalMoves : Node
 	public static List<(Vector2I target, Vector2I deletion)> PawnLeapMovesInfo = new();
 	public static List<int> PawnLeapMoves = new(), EnPassantMoves = new(), PromotionMoves = new(), CastlingMoves = new();
 	public static List<(Vector2I start, Vector2I end)> CastleeMoves = new();
-	public static List<Vector2I> OpponentMoves = new(), ProtectedPieces, CheckedRoyals;
+	public static List<Vector2I> OpponentMoves = new(), ProtectedPieces, CheckedRoyals = new();
 	public static List<List<Vector2I>> CheckResponseZones, PinnedPieceZones;
 	public static bool EnPassantBlocked;
 	public static int maxResponseRange, CheckRoyalsCount;
@@ -43,6 +44,7 @@ public partial class LegalMoves : Node
 		List<(Vector2I, Vector2I)> legalMovesLocal = new();
 		if (!opponent)
 		{
+			Colors.ColorCheckedRoyalTiles(Colors.Enum.Default);
             CheckResponseZones = new(); CheckedRoyals = new(); PinnedPieceZones = new(); ProtectedPieces = new(); EnPassantBlocked = false; maxResponseRange = 0; CheckRoyalsCount = 0;
 		}
 		OpponentMoves = opponent ? GetOnlyTargets(legalMoves) : GetOpponentMoves();
@@ -75,14 +77,35 @@ public partial class LegalMoves : Node
 	}
 	private static void PostMoveGeneration()
 	{
+        Position.EndState[] NotDefaultGameEndSound = new Position.EndState[] { Position.EndState.Ongoing, Position.EndState.Checkmate, Position.EndState.Stalemate };
+		Position.EndState[] WinLoss = new Position.EndState[] { Position.EndState.Checkmate, Position.EndState.Timeout, Position.EndState.Resignation };
         Position.InCheck = CheckResponseZones.Count >= 1;
 		if (!Animations.CancelCheckAnimationEarly)
 			Animations.PreviousCheckTiles = new();
         if (Position.InCheck)
-		{
+        {
             Colors.ResetAllColors();
             Animations.CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene);
         }
+
+        if (legalMoves.Count == 0)
+			Position.GameEndState = Position.InCheck ? Position.EndState.Checkmate : Position.EndState.Stalemate;
+		if (Position.FiftyMoveRuleClock == 100)
+			Position.GameEndState = Position.EndState.FiftyMoveRule;
+		if (Position.GameEndState == Position.EndState.Ongoing && InsufficientMaterial.Check())
+			Position.GameEndState = Position.EndState.InsufficientMaterial;
+
+		if (Position.GameEndState == Position.EndState.Stalemate)
+			Audio.Play(Audio.Enum.Stalemate);
+        if (!NotDefaultGameEndSound.Contains(Position.GameEndState))
+			Audio.Play(Audio.Enum.GameEnd);
+
+		if (Position.GameEndState != Position.EndState.Ongoing)
+		{
+			Colors.PreviousMoveTiles(Colors.Enum.Default);
+			Position.WinningPlayer = WinLoss.Contains(Position.GameEndState) ? Position.ReverseColorReturn(Position.colorToMove) : 'd';
+		}
+        GD.Print($"GameEnd State: {Position.GameEndState}, FiftyMove Clock: {Position.FiftyMoveRuleClock}, Player that has won: {Position.WinningPlayer}");
     }
 	protected static List<Vector2I> GetOnlyTargets(List<(Vector2I start, Vector2I end)> moves)
 	{

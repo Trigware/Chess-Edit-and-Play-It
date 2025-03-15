@@ -66,7 +66,7 @@ public partial class Promotion : Node
 	}
 	private static void PromoteLogic(Vector2I promotionPosition)
 	{
-		Audio.Play("promote");
+		Audio.Play(Audio.Enum.Promotion);
 		Position.ReverseColor(promotionColor);
 		Sprite2D selectedPromotionSprite = null;
 		int selectedIndex = 0;

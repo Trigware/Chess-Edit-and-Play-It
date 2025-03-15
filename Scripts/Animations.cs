@@ -91,10 +91,10 @@ public partial class Animations : Update
 		}
 		if (i >= LegalMoves.maxResponseRange)
 		{
-            Audio.Play("check");
+            Audio.Play(Position.GameEndState == Position.EndState.Checkmate ? Audio.Enum.Checkmate : Audio.Enum.Check);
 			return;
 		}
-		Timer timer = new() { WaitTime = animationSpeed/LegalMoves.maxResponseRange*2, OneShot = true };
+		Timer timer = new() { WaitTime = animationSpeed/LegalMoves.maxResponseRange, OneShot = true };
 		main.AddChild(timer);
 		timer.Timeout += () =>
 		{

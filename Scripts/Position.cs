@@ -7,18 +7,22 @@ public partial class Position : Chessboard
 {
 	public static readonly string playerColors = "wb";
 	public static Dictionary<Vector2I, char> pieces = new();
-	public static char colorToMove = 'w';
+	public static char colorToMove = 'w', WinningPlayer = '\0';
 	public static (Vector2I target, Vector2I delete) EnPassantInfo = (-Vector2I.One, -Vector2I.One);
 	public static (Vector2I start, Vector2I end) LastMoveInfo = (-Vector2I.One, -Vector2I.One);
 	public static bool startPositionLoaded = false;
 	public static Dictionary<Vector2I, char> RoyalPiecesColor;
 	public static bool InCheck = false;
+	public static EndState GameEndState = EndState.Ongoing;
+	public static int FiftyMoveRuleClock = 0;
 	public static void Load(string fen)
 	{
 		if (startPositionLoaded)
 			return;
+		GameEndState = EndState.Ongoing;
+		WinningPlayer = '\0';
 		string[] fenSplit = fen.Split(' ');
-		Pos(fenSplit);
+		LoadPosition(fenSplit);
 		if (fenSplit.Length == 1)
 			return;
 		colorToMove = Convert.ToChar(fenSplit[1]);
@@ -27,6 +31,26 @@ public partial class Position : Chessboard
 		// missing castling, en passant, halfmove clock, fullmove number
 		GetRoyalsPerColor();
 		startPositionLoaded = true;
+	}
+	private static void LoadPosition(string[] fenSplit)
+	{
+		Vector2I piecePos = new(0, 0);
+		pieces = new();
+		foreach (char c in fenSplit[0])
+		{
+			if (c == '/')
+			{
+				piecePos = new(0, piecePos.Y + 1);
+				continue;
+			}
+			if (isNumber(c, out int number))
+			{
+				piecePos.X += number;
+				continue;
+			}
+			pieces.Add(piecePos, c);
+			piecePos.X++;
+		}
 	}
 	public static void Load(FEN fen)
 	{
@@ -46,6 +70,9 @@ public partial class Position : Chessboard
 			FEN.PawnRoyalBlock => "4k//3PPP b",
 			FEN.EnPassantBlock => "/2p/3p/KP5r/1R3p1k//4P1P",
 			FEN.CastlingTest => "r3k2r///////R3K2R",
+			FEN.KingVsKing => "K//k",
+			FEN.KingVsKingKnightKnight => "KNN//k",
+			FEN.Checkmate => "3qKq",
 			_ => ""
 		};
 		Load(fenCall);
@@ -66,32 +93,32 @@ public partial class Position : Chessboard
 		PawnRoyalBlock,
 		EnPassantBlock,
 		CastlingTest,
+		Checkmate,
+		KingVsKing,
+		KingVsKingKnightKnight,
 		Empty
+	}
+	public enum EndState
+	{
+		Ongoing,
+		Checkmate,
+		Stalemate,
+		InsufficientMaterial,
+		ThreefoldRepetition,
+		FiftyMoveRule,
+		Timeout,
+		InsufficientMaterialVsTimeout,
+		Resignation,
+		DrawAgreement
 	}
 	public static void ReverseColor(char originalColor)
 	{
-		int currentColorIndex = playerColors.IndexOf(originalColor);
-		colorToMove = playerColors[(currentColorIndex + 1) % 2];
+		colorToMove = ReverseColorReturn(originalColor);
 	}
-	private static void Pos(string[] fenSplit)
+	public static char ReverseColorReturn(char originalColor)
 	{
-		Vector2I piecePos = new(0, 0);
-		pieces = new();
-		foreach (char c in fenSplit[0])
-		{
-			if (c == '/')
-			{
-				piecePos = new(0, piecePos.Y + 1);
-				continue;
-			}
-			if (isNumber(c, out int number))
-			{
-				piecePos.X += number;
-				continue;
-			}
-			pieces.Add(piecePos, c);
-			piecePos.X++;
-		}
+		int currentColorIndex = playerColors.IndexOf(originalColor);
+		return playerColors[(currentColorIndex + 1) % 2];
 	}
 	public static void GetRoyalsPerColor()
 	{
@@ -112,7 +139,7 @@ public partial class Position : Chessboard
 	private static void MoveDeleteRoyal(Vector2I start, Vector2I end, bool delete)
 	{
 		char royalColor = RoyalPiecesColor[start];
-        RoyalPiecesColor.Remove(start);
+		RoyalPiecesColor.Remove(start);
 		if (!delete)
 			RoyalPiecesColor.Add(end, royalColor);
 	}
