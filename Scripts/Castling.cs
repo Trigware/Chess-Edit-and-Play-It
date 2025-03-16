@@ -5,7 +5,9 @@ using System.Collections.Generic;
 public partial class Castling : Node
 {
 	private const int elipseQualityConst = 65;
-	public static int endX, elipseQuality;
+	public static int elipseQuality;
+	public static List<int> endXpositions = new();
+	public static List<bool> elipsePathUp = new();
 	public static List<(Vector2I, Vector2I)> IsLegal(Vector2I castlerPosition, char color, List<Vector2I> opponentMoves, int moveCount)
 	{
 		if (opponentMoves.Contains(castlerPosition))
@@ -47,8 +49,12 @@ public partial class Castling : Node
 			Animations.Tween(spr, duration, startPosition, new(endXLocal, startPosition.Y), null, null, false);
 			return;
 		}
-		endX = endXLocal; elipseQuality = Convert.ToInt32(elipseQualityConst * Animations.animationSpeed);
-		Animations.Tween(spr, duration / elipseQuality, startPosition, CalculatePointOnElipse(1, startPosition, endXLocal), null, null, false, false, true, 1);
+		bool elipseUp = Position.colorToMove == 'w';
+        Animations.CancelCastlingEarly = false;
+		endXpositions.Add(endXLocal);
+		elipsePathUp.Add(elipseUp);
+		elipseQuality = Convert.ToInt32(elipseQualityConst * Animations.animationSpeed);
+		Animations.Tween(spr, duration / elipseQuality, startPosition, CalculatePointOnElipse(1, startPosition, endXLocal, elipseUp), null, null, false, false, true, 1, endXpositions.Count-1);
 	}
 	private static bool CanDoElipseAnimation(Vector2I startPosition, int endXLocal, float duration)
 	{
@@ -66,7 +72,7 @@ public partial class Castling : Node
 		}
 		return elipsePath;
 	}
-	public static Vector2 CalculatePointOnElipse(int elipsePointUnit, Vector2I start, int endX)
+	public static Vector2 CalculatePointOnElipse(int elipsePointUnit, Vector2I start, int endX, bool elipseUp)
 	{
 		int direction = 1;
 		if (endX > start.X)
@@ -77,7 +83,7 @@ public partial class Castling : Node
 
 		float angle = (float)elipsePointUnit / elipseQuality * Mathf.Pi;
 		float xRadius = Mathf.Abs(endX) / 2f;
-		float yRadius = Position.colorToMove == 'b' ? 1 : -1;
+		float yRadius = elipseUp ? 1 : -1;
 
 		float xPoint = xRadius * Mathf.Cos(angle) - xRadius;
 		float yPoint = yRadius * Mathf.Sin(angle);

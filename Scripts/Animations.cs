@@ -6,14 +6,14 @@ using System.Linq;
 public partial class Animations : Update
 {
 	public const float animationSpeed = 10;
-	public static bool promotionUnsafe = false, CancelCheckAnimationEarly = false;
+	public static bool promotionUnsafe = false, CancelCheckAnimationEarly = false, CancelCastlingEarly = false;
 	public static List<Vector2I> PreviousCheckTiles = new();
 	public static Dictionary<Tween, (Sprite2D spr, bool deleteOnFinish, float? transparency)> ActiveTweens = new();
-	public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale, float? endTransparency, bool deleteOnFinished, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = int.MaxValue)
+	public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale, float? endTransparency, bool deleteOnFinished, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = -1, int castlingAnimation = -1)
 	{
 		Tween tween = spr.CreateTween();
-        ActiveTweens.Add(tween, (spr, deleteOnFinished, endTransparency));
-        if (endPosition != null)
+		ActiveTweens.Add(tween, (spr, deleteOnFinished, endTransparency));
+		if (endPosition != null)
 			spr.ZIndex = 2;
 		if (endPosition != null)
 		{
@@ -32,7 +32,7 @@ public partial class Animations : Update
 		}
 		if (endPosition != null)
 			tween.Finished += () => OnFinishedPosition(spr);
-		OnFinishedDelete(spr, startPosition, tween, endPosition, duration, deleteOnFinished, promotion, deleteFromPiecesDict, chainIterator);
+		OnFinishedDelete(spr, startPosition, tween, endPosition, duration, deleteOnFinished, promotion, deleteFromPiecesDict, chainIterator, castlingAnimation);
 	}
 	private static void TweenSetup(Sprite2D spr, Tween tween, string type, Variant end, float duration)
 	{
@@ -42,13 +42,13 @@ public partial class Animations : Update
 	{
 		spr.ZIndex = 1;
 	}
-	private static void OnFinishedDelete(Sprite2D spr, Vector2I startPosition, Tween tween, Vector2? endPosition, float duration, bool deleteOnFinished, bool promotion, bool deleteFromPiecesDict, int chainIterator)
+	private static void OnFinishedDelete(Sprite2D spr, Vector2I startPosition, Tween tween, Vector2? endPosition, float duration, bool deleteOnFinished, bool promotion, bool deleteFromPiecesDict, int chainIterator, int castlingAnimation)
 	{
 		if (deleteOnFinished && deleteFromPiecesDict)
 			UpdatePosition.DeletePiece(startPosition, (Vector2I?)endPosition, false, false, '\0', spr);
 		if (promotion)
 			promotionUnsafe = true;
-        if (duration == 0)
+		if (duration == 0)
 		{
 			ActiveTweens.Remove(tween);
 			if (deleteOnFinished)
@@ -60,15 +60,21 @@ public partial class Animations : Update
 		timer.Timeout += () =>
 		{
 			timer.QueueFree();
-			if (chainIterator < Castling.elipseQuality)
+			if (chainIterator != -1 && chainIterator < Castling.elipseQuality && !CancelCastlingEarly)
 			{
-				Tween(spr, animationSpeed/Castling.elipseQuality, startPosition, Castling.CalculatePointOnElipse(chainIterator+1, startPosition, Castling.endX), null, null, false, false, false, chainIterator+1);
+				castlingAnimation = castlingAnimation == Castling.endXpositions.Count ? castlingAnimation - 1 : castlingAnimation;
+				Tween(spr, animationSpeed/Castling.elipseQuality, startPosition, Castling.CalculatePointOnElipse(chainIterator+1, startPosition, Castling.endXpositions[castlingAnimation], Castling.elipsePathUp[castlingAnimation]), null, null, false, false, false, chainIterator+1, castlingAnimation);
 				return;
 			}
 			if (deleteOnFinished)
 				spr.QueueFree();
 			promotionUnsafe = false;
-            ActiveTweens.Remove(tween);
+			ActiveTweens.Remove(tween);
+			if (castlingAnimation >= 0)
+			{
+                Castling.endXpositions.RemoveAt(0);
+				Castling.elipsePathUp.RemoveAt(0);
+            }
             if (promotion && Promotion.promotionPending != null)
 				Promotion.Promote((Vector2I)Promotion.promotionPending);
 		};
@@ -85,12 +91,12 @@ public partial class Animations : Update
 		}
 		if (CancelCheckAnimationEarly)
 		{
-            CancelCheckAnimationEarly = false;
-            return;
-        }
-        List<Color> previousColors = new();
+			CancelCheckAnimationEarly = false;
+			return;
+		}
+		List<Color> previousColors = new();
 		Colors.ChangeTileColorBack();
-        for (int j = 0; j < LegalMoves.CheckResponseZones.Count; j++)
+		for (int j = 0; j < LegalMoves.CheckResponseZones.Count; j++)
 		{
 			List<Vector2I> zone = LegalMoves.CheckResponseZones[j];
 			if (i >= zone.Count)
@@ -103,7 +109,7 @@ public partial class Animations : Update
 		}
 		if (i >= LegalMoves.maxResponseRange)
 		{
-            Audio.Play(Position.GameEndState == Position.EndState.Checkmate ? Audio.Enum.Checkmate : Audio.Enum.Check);
+			Audio.Play(Position.GameEndState == Position.EndState.Checkmate ? Audio.Enum.Checkmate : Audio.Enum.Check);
 			return;
 		}
 		Timer timer = new() { WaitTime = animationSpeed/LegalMoves.maxResponseRange, OneShot = true };
@@ -118,16 +124,17 @@ public partial class Animations : Update
 	{
 		if (ActiveTweens.Count == 0)
 			return;
-        for (int i = ActiveTweens.Count-1; i >= 0; i--)
-        {
-            ActiveTweens.Keys.Last().Kill();
+		CancelCastlingEarly = true;
+		for (int i = ActiveTweens.Count-1; i >= 0; i--)
+		{
+			ActiveTweens.Keys.Last().Kill();
 			(Sprite2D spr, bool deleteOnFinish, float? transparency) tweenValue = ActiveTweens.Last().Value;
-            Sprite2D handledSprite = tweenValue.spr;
+			Sprite2D handledSprite = tweenValue.spr;
 			if (tweenValue.deleteOnFinish)
 				handledSprite.QueueFree();
 			else if (tweenValue.transparency != null)
 				handledSprite.Modulate = new(handledSprite.Modulate.R, handledSprite.Modulate.G, handledSprite.Modulate.B, (float)tweenValue.transparency);
 			ActiveTweens.Remove(ActiveTweens.Keys.Last());
-        }
-    }
+		}
+	}
 }
