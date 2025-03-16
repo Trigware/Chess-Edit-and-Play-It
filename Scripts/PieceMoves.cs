@@ -48,7 +48,7 @@ public partial class PieceMoves : LegalMoves
 				}
 			}
 			bool pawnCaptures = false;
-			if (isPawn && AnalysePawnMove(dirIter, range, addedFlatPosition, pieceColor, legalCount + rangeMoves.Count, opponent, out pawnCaptures))
+			if (isPawn && AnalysePawnMove(dirIter, range, addedFlatPosition, pieceColor, legalCount + rangeMoves.Count, opponent, piece, out pawnCaptures))
 				break;
             if (targetColor == Position.colorToMove)
 			{
@@ -151,7 +151,7 @@ public partial class PieceMoves : LegalMoves
             broken = true;
         return pinnedPieceMoveAnalyse;
 	}
-	private static bool AnalysePawnMove(int dirIter, int range, Vector2I addedFlatPosition, char pieceColor, int moveCount, bool opponent, out bool targetCapture)
+	private static bool AnalysePawnMove(int dirIter, int range, Vector2I addedFlatPosition, char pieceColor, int moveCount, bool opponent, KeyValuePair<Vector2I, char> piece, out bool targetCapture)
 	{
 		bool enPassant = opponent || (addedFlatPosition == Position.EnPassantInfo.target && GetPieceColor(Position.EnPassantInfo.delete) != Position.colorToMove && !EnPassantBlocked);
 		targetCapture = Position.pieces.TryGetValue(addedFlatPosition, out _) || enPassant;
@@ -165,8 +165,8 @@ public partial class PieceMoves : LegalMoves
 			PawnLeapMovesInfo.Add((new(addedFlatPosition.X, addedFlatPosition.Y + (pieceColor == 'w' ? 1 : -1)), addedFlatPosition));
 		}
 		if (!opponent && Promotion.CanBePromotedTo.Count() > 0 && (addedFlatPosition.Y == 0 && pieceColor == 'w' || addedFlatPosition.Y == 7 && pieceColor == 'b'))
-			PromotionMoves.Add(moveCount);
-		if (!opponent && enPassant)
+            PromotionMoves.Add(moveCount);
+        if (!opponent && enPassant)
 			EnPassantMoves.Add(moveCount);
 		return false;
 	}

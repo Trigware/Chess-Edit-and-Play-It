@@ -16,14 +16,17 @@ public partial class Chessboard : Node
 
 	public override void _Ready()
 	{
-		Position.Load(Position.FEN.KingVsKingKnightKnight);
+		Position.Load(Position.FEN.CastlingTest);
 	}
 	public override void _Process(double delta)
 	{
 		gameviewSize = DisplayServer.WindowGetSize();
 		if (gameviewSize != oldviewSize)
-			Draw();
-		oldviewSize = gameviewSize;
+		{
+            Draw();
+			Animations.CancelEarly();
+        }
+        oldviewSize = gameviewSize;
 	}
 	public static void Draw()
 	{

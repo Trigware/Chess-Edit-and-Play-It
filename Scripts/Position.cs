@@ -65,14 +65,16 @@ public partial class Position : Chessboard
 			FEN.CheckTest => "4k/1R///7q///4k",
 			FEN.DoubleCheck => "q3K//R//4q///4k",
 			FEN.DoublePin => "qR2K//4Q//4q///4k",
+			FEN.DiscoveredCheck => "4K///4n/4r///4k b",
 			FEN.HiddenBlock => "q3K1R",
 			FEN.ProtectedBlock => "4K/3q/3r",
 			FEN.PawnRoyalBlock => "4k//3PPP b",
 			FEN.EnPassantBlock => "/2p/3p/KP5r/1R3p1k//4P1P",
 			FEN.CastlingTest => "r3k2r///////R3K2R",
-			FEN.KingVsKing => "K//k",
-			FEN.KingVsKingKnightKnight => "KNN//k",
-			FEN.Checkmate => "3qKq",
+            FEN.Checkmate => "3qKq",
+            FEN.KingVsKing => "K//k",
+			FEN.KingVsKingKnightKnight => "KNN//knn",
+			FEN.TwoRoyalsUnderAttack => "4K///4q////4K",
 			_ => ""
 		};
 		Load(fenCall);
@@ -88,6 +90,7 @@ public partial class Position : Chessboard
 		CheckTest,
 		DoubleCheck,
 		DoublePin,
+		DiscoveredCheck,
 		HiddenBlock,
 		ProtectedBlock,
 		PawnRoyalBlock,
@@ -96,6 +99,7 @@ public partial class Position : Chessboard
 		Checkmate,
 		KingVsKing,
 		KingVsKingKnightKnight,
+		TwoRoyalsUnderAttack,
 		Empty
 	}
 	public enum EndState

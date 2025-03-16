@@ -79,7 +79,15 @@ public partial class LegalMoves : Node
 	{
         Position.EndState[] NotDefaultGameEndSound = new Position.EndState[] { Position.EndState.Ongoing, Position.EndState.Checkmate, Position.EndState.Stalemate };
 		Position.EndState[] WinLoss = new Position.EndState[] { Position.EndState.Checkmate, Position.EndState.Timeout, Position.EndState.Resignation };
+
         Position.InCheck = CheckResponseZones.Count >= 1;
+        if (legalMoves.Count == 0)
+            Position.GameEndState = Position.InCheck ? Position.EndState.Checkmate : Position.EndState.Stalemate;
+        if (Position.FiftyMoveRuleClock == 100)
+            Position.GameEndState = Position.EndState.FiftyMoveRule;
+        if (Position.GameEndState == Position.EndState.Ongoing && InsufficientMaterial.Check())
+            Position.GameEndState = Position.EndState.InsufficientMaterial;
+
 		if (!Animations.CancelCheckAnimationEarly)
 			Animations.PreviousCheckTiles = new();
         if (Position.InCheck)
@@ -87,13 +95,6 @@ public partial class LegalMoves : Node
             Colors.ResetAllColors();
             Animations.CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene);
         }
-
-        if (legalMoves.Count == 0)
-			Position.GameEndState = Position.InCheck ? Position.EndState.Checkmate : Position.EndState.Stalemate;
-		if (Position.FiftyMoveRuleClock == 100)
-			Position.GameEndState = Position.EndState.FiftyMoveRule;
-		if (Position.GameEndState == Position.EndState.Ongoing && InsufficientMaterial.Check())
-			Position.GameEndState = Position.EndState.InsufficientMaterial;
 
 		if (Position.GameEndState == Position.EndState.Stalemate)
 			Audio.Play(Audio.Enum.Stalemate);
@@ -105,7 +106,7 @@ public partial class LegalMoves : Node
 			Colors.PreviousMoveTiles(Colors.Enum.Default);
 			Position.WinningPlayer = WinLoss.Contains(Position.GameEndState) ? Position.ReverseColorReturn(Position.colorToMove) : 'd';
 		}
-        GD.Print($"GameEnd State: {Position.GameEndState}, FiftyMove Clock: {Position.FiftyMoveRuleClock}, Player that has won: {Position.WinningPlayer}");
+		GD.PrintS("Game End State:", Position.GameEndState, "Player that has won:", Position.WinningPlayer);
     }
 	protected static List<Vector2I> GetOnlyTargets(List<(Vector2I start, Vector2I end)> moves)
 	{

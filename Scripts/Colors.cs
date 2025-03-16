@@ -117,19 +117,20 @@ public partial class Colors : Interaction
 		for (int x = 0; x < tileCount.X; x++)
 		{
 			for (int y = 0; y < tileCount.Y; y++)
-				Set(Enum.Default, x, y);
-		}
+			{
+				if (Position.LastMoveInfo.start != new Vector2I(x, y) && Position.LastMoveInfo.end != new Vector2I(x, y))
+					Set(Enum.Default, x, y);
+            }
+        }
 	}
 	public static void ChangeTileColorBack()
 	{
 		foreach (Vector2I previousCheckTile in Animations.PreviousCheckTiles)
 		{
-			Enum resetColor = Enum.Default;
-			if (previousCheckTile == Position.LastMoveInfo.start || previousCheckTile == Position.LastMoveInfo.end)
-				resetColor = Enum.PreviousMove;
-			Set(resetColor, previousCheckTile.X, previousCheckTile.Y);
-		}
-		Animations.PreviousCheckTiles = new();
+			Enum color = Position.LastMoveInfo.start == previousCheckTile || Position.LastMoveInfo.end == previousCheckTile ? Enum.PreviousMove : Enum.Default;
+            Set(color, previousCheckTile.X, previousCheckTile.Y);
+        }
+        Animations.PreviousCheckTiles = new();
 	}
 	public static void ColorCheckedRoyalTiles(Enum color)
 	{

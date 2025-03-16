@@ -48,7 +48,7 @@ public partial class Promotion : Node
 	public static void Promote(Vector2I promotionPosition)
 	{
 		promotionPending = promotionPosition;
-		if (!Animations.promotionUnsafe)
+		if (!Animations.promotionUnsafe || Animations.animationSpeed == 0)
 		{
 			PromoteLogic(promotionPosition);
 			promotionPending = null;

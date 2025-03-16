@@ -1,16 +1,19 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public partial class Animations : Update
 {
-	public const float animationSpeed = 0.3f;
+	public const float animationSpeed = 10;
 	public static bool promotionUnsafe = false, CancelCheckAnimationEarly = false;
 	public static List<Vector2I> PreviousCheckTiles = new();
+	public static Dictionary<Tween, (Sprite2D spr, bool deleteOnFinish, float? transparency)> ActiveTweens = new();
 	public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale, float? endTransparency, bool deleteOnFinished, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = int.MaxValue)
 	{
 		Tween tween = spr.CreateTween();
-		if (endPosition != null)
+        ActiveTweens.Add(tween, (spr, deleteOnFinished, endTransparency));
+        if (endPosition != null)
 			spr.ZIndex = 2;
 		if (endPosition != null)
 		{
@@ -45,8 +48,9 @@ public partial class Animations : Update
 			UpdatePosition.DeletePiece(startPosition, (Vector2I?)endPosition, false, false, '\0', spr);
 		if (promotion)
 			promotionUnsafe = true;
-		if (duration == 0)
+        if (duration == 0)
 		{
+			ActiveTweens.Remove(tween);
 			if (deleteOnFinished)
 				spr.QueueFree();
 			return;
@@ -64,13 +68,21 @@ public partial class Animations : Update
 			if (deleteOnFinished)
 				spr.QueueFree();
 			promotionUnsafe = false;
-			if (promotion && Promotion.promotionPending != null)
+            ActiveTweens.Remove(tween);
+            if (promotion && Promotion.promotionPending != null)
 				Promotion.Promote((Vector2I)Promotion.promotionPending);
 		};
 		timer.Start();
 	}
 	public static void CheckAnimation(int i, Node main)
 	{
+		if (animationSpeed == 0)
+		{
+			foreach (Vector2I location in LegalMoves.CheckedRoyals)
+				Colors.Set(Colors.Enum.Check, location.X, location.Y);
+			Audio.Play(Position.GameEndState == Position.EndState.Checkmate ? Audio.Enum.Checkmate : Audio.Enum.Check);
+			return;
+		}
 		if (CancelCheckAnimationEarly)
 		{
             CancelCheckAnimationEarly = false;
@@ -102,4 +114,20 @@ public partial class Animations : Update
 		};
 		timer.Start();
 	}
+	public static void CancelEarly()
+	{
+		if (ActiveTweens.Count == 0)
+			return;
+        for (int i = ActiveTweens.Count-1; i >= 0; i--)
+        {
+            ActiveTweens.Keys.Last().Kill();
+			(Sprite2D spr, bool deleteOnFinish, float? transparency) tweenValue = ActiveTweens.Last().Value;
+            Sprite2D handledSprite = tweenValue.spr;
+			if (tweenValue.deleteOnFinish)
+				handledSprite.QueueFree();
+			else if (tweenValue.transparency != null)
+				handledSprite.Modulate = new(handledSprite.Modulate.R, handledSprite.Modulate.G, handledSprite.Modulate.B, (float)tweenValue.transparency);
+			ActiveTweens.Remove(ActiveTweens.Keys.Last());
+        }
+    }
 }

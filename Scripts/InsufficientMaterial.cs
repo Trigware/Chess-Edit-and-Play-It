@@ -17,19 +17,15 @@ public partial class InsufficientMaterial : Node
         for (int i = 0; i < 2; i++)
         {
             List<char> wantedPlayerPiecesList = i == 0 ? piecePositionsByColor.white : piecePositionsByColor.black;
-            PlayerMaterialInsufficiency[i] = InsufficientMaterialSide.Any(insufficient => insufficient.SequenceEqual(wantedPlayerPiecesList));
+            PlayerMaterialInsufficiency[i] = InsufficientMaterialSide.Any(side => side.SequenceEqual(wantedPlayerPiecesList));
             playersInsufficient += PlayerMaterialInsufficiency[i] ? 1 : 0;
         }
         if (playersInsufficient == 2)
             return true;
         if (playersInsufficient == 1)
         {
-            foreach ((List<char> player1, List<char> player2) insufficientMaterialCombination in InsufficientMaterialCombinations)
-            {
-                if ((insufficientMaterialCombination.player1.SequenceEqual(piecePositionsByColor.white) && insufficientMaterialCombination.player2.SequenceEqual(piecePositionsByColor.black)) ||
-                    (insufficientMaterialCombination.player1.SequenceEqual(piecePositionsByColor.black) && insufficientMaterialCombination.player2.SequenceEqual(piecePositionsByColor.white)))
-                    return true;
-            }
+            return InsufficientMaterialCombinations.Any(comb => (comb.player1.SequenceEqual(piecePositionsByColor.white) && comb.player2.SequenceEqual(piecePositionsByColor.black)) || 
+                                                                (comb.player1.SequenceEqual(piecePositionsByColor.black) && comb.player2.SequenceEqual(piecePositionsByColor.white)));
         }
         return false;
     }
