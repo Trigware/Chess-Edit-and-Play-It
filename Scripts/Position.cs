@@ -75,6 +75,7 @@ public partial class Position : Chessboard
             FEN.KingVsKing => "K//k",
 			FEN.KingVsKingKnightKnight => "KNN//knn",
 			FEN.TwoRoyalsUnderAttack => "4K///4q////4K",
+			FEN.MoveFlagFilterBug => "/q1P1K//////4k",
 			_ => ""
 		};
 		Load(fenCall);
@@ -100,6 +101,7 @@ public partial class Position : Chessboard
 		KingVsKing,
 		KingVsKingKnightKnight,
 		TwoRoyalsUnderAttack,
+		MoveFlagFilterBug,
 		Empty
 	}
 	public enum EndState
@@ -135,9 +137,9 @@ public partial class Position : Chessboard
 	}
 	public static void ModifyRoyalPieceList(Vector2I start, Vector2I end)
 	{
-		if (PieceMoves.isRoyal(start))
+		if (PieceMoves.IsRoyal(start))
 			MoveDeleteRoyal(start, end, false);
-		if (PieceMoves.isRoyal(end))
+		if (PieceMoves.IsRoyal(end))
 			MoveDeleteRoyal(end, end, true);
 	}
 	private static void MoveDeleteRoyal(Vector2I start, Vector2I end, bool delete)

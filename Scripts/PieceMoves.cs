@@ -26,7 +26,7 @@ public partial class PieceMoves : LegalMoves
 		if (isPawn && dirIter == 0 && (pieceColor == 'b' && piece.Key.Y == 1 || pieceColor == 'w' && piece.Key.Y == 6))
 			pieceRange++;
 		List<(Vector2I start, Vector2I dest)> rangeMoves = new();
-		bool isMovedPieceRoyal = isRoyal(piece.Key);
+		bool isMovedPieceRoyal = IsRoyal(piece.Key);
 		bool pinnedPieceMoveAnalyse = false;
 		bool beyondRoyalAnalyse = false;
 		for (int range = 0; range < pieceRange; range++)
@@ -47,8 +47,8 @@ public partial class PieceMoves : LegalMoves
 						continue;
 				}
 			}
-			bool pawnCaptures = false;
-			if (isPawn && AnalysePawnMove(dirIter, range, addedFlatPosition, pieceColor, legalCount + rangeMoves.Count, opponent, piece, out pawnCaptures))
+			bool promotion = false;
+			if (isPawn && AnalysePawnMove(dirIter, range, addedFlatPosition, pieceColor, legalCount + rangeMoves.Count, opponent, piece, out promotion))
 				break;
             if (targetColor == Position.colorToMove)
 			{
@@ -61,8 +61,12 @@ public partial class PieceMoves : LegalMoves
 				break;
             }
             if (!opponent && BlockMovementForPinnedPiece(piece.Key, addedFlatPosition))
+			{
+                if (promotion)
+                    PromotionMoves.RemoveAt(PromotionMoves.Count - 1);
                 continue;
-            bool isTargetRoyal = isRoyal(addedFlatPosition);
+            }
+            bool isTargetRoyal = IsRoyal(addedFlatPosition);
 			if (isTargetRoyal && opponent && !pinnedPieceMoveAnalyse && !beyondRoyalAnalyse)
 			{
                 CheckResponseZones.Add(new() { piece.Key });
@@ -151,10 +155,11 @@ public partial class PieceMoves : LegalMoves
             broken = true;
         return pinnedPieceMoveAnalyse;
 	}
-	private static bool AnalysePawnMove(int dirIter, int range, Vector2I addedFlatPosition, char pieceColor, int moveCount, bool opponent, KeyValuePair<Vector2I, char> piece, out bool targetCapture)
+	private static bool AnalysePawnMove(int dirIter, int range, Vector2I addedFlatPosition, char pieceColor, int moveCount, bool opponent, KeyValuePair<Vector2I, char> piece, out bool promotion)
 	{
-		bool enPassant = opponent || (addedFlatPosition == Position.EnPassantInfo.target && GetPieceColor(Position.EnPassantInfo.delete) != Position.colorToMove && !EnPassantBlocked);
-		targetCapture = Position.pieces.TryGetValue(addedFlatPosition, out _) || enPassant;
+		promotion = false;
+		bool enPassant = addedFlatPosition == Position.EnPassantInfo.target && GetPieceColor(Position.EnPassantInfo.delete) != Position.colorToMove && !EnPassantBlocked;
+		bool targetCapture = Position.pieces.TryGetValue(addedFlatPosition, out _) || enPassant || opponent;
 		if (dirIter == 0 && targetCapture)
 			return true;
 		if (dirIter > 0 && !targetCapture)
@@ -165,12 +170,15 @@ public partial class PieceMoves : LegalMoves
 			PawnLeapMovesInfo.Add((new(addedFlatPosition.X, addedFlatPosition.Y + (pieceColor == 'w' ? 1 : -1)), addedFlatPosition));
 		}
 		if (!opponent && Promotion.CanBePromotedTo.Count() > 0 && (addedFlatPosition.Y == 0 && pieceColor == 'w' || addedFlatPosition.Y == 7 && pieceColor == 'b'))
+		{
+			promotion = true;
             PromotionMoves.Add(moveCount);
+        }
         if (!opponent && enPassant)
-			EnPassantMoves.Add(moveCount);
-		return false;
+            EnPassantMoves.Add(moveCount);
+        return false;
 	}
-	public static bool isRoyal(Vector2I location)
+	public static bool IsRoyal(Vector2I location)
 	{
 		if (!(Position.pieces.TryGetValue(location, out char piece) && piece != Position.colorToMove))
 			return false;
