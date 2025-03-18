@@ -5,7 +5,7 @@ using System.Linq;
 
 public partial class Animations : Update
 {
-	public const float animationSpeed = 10;
+	public const float animationSpeed = 0.3f;
 	public static bool promotionUnsafe = false, CancelCheckAnimationEarly = false, CancelCastlingEarly = false;
 	public static List<Vector2I> PreviousCheckTiles = new();
 	public static Dictionary<Tween, (Sprite2D spr, bool deleteOnFinish, float? transparency)> ActiveTweens = new();

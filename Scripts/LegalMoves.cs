@@ -44,7 +44,6 @@ public partial class LegalMoves : Node
 		List<(Vector2I, Vector2I)> legalMovesLocal = new();
 		if (!opponent)
 		{
-			Colors.ColorCheckedRoyalTiles(Colors.Enum.Default);
             CheckResponseZones = new(); CheckedRoyals = new(); PinnedPieceZones = new(); ProtectedPieces = new(); EnPassantBlocked = false; maxResponseRange = 0; CheckRoyalsCount = 0;
 		}
 		OpponentMoves = opponent ? GetOnlyTargets(legalMoves) : GetOpponentMoves();

@@ -40,7 +40,7 @@ public partial class Colors : Interaction
 	}
 	public static void Set(Enum color, int x, int y)
 	{
-		try
+        try
 		{
 			Set(GetTile(new(x, y)), color, x, y);
 		}
@@ -50,7 +50,7 @@ public partial class Colors : Interaction
 	{
 		if (spr.Texture != LoadGraphics.textureDict["tile"])
 			return;
-		spr.Modulate = GetColorFromEnum(color, x, y);
+        spr.Modulate = GetColorFromEnum(color, x, y);
 	}
 	public static Color Get(int x, int y)
 	{
