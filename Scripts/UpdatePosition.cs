@@ -20,7 +20,7 @@ public partial class UpdatePosition : Node
 		else
 			Position.EnPassantInfo = new(-Vector2I.One, -Vector2I.One);
 
-		Position.ModifyRoyalPieceList(start, end);
+		Tags.ModifyRoyalPieceList(start, end);
 		Sprite2D handledSprite = GetPiece(start);
 		if (Chessboard.tiles.ContainsKey(new(end.X, end.Y, 1)) || Position.pieces[start].ToString().ToLower() == "p")
 			Position.FiftyMoveRuleClock = 0;

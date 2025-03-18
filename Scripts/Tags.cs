@@ -4,14 +4,25 @@ using System.Collections.Generic;
 
 public partial class Tags : Node
 {
-	public static List<Vector2I> tagPositions = new() { new(0, 0), new(4, 0), new(7, 0), new(0, 7), new(4, 7), new(7, 7) };
-	public static List<HashSet<Tag>> activeTags = new() { new() { Tag.Castlee }, new() { Tag.Royal, Tag.Castler }, new() { Tag.Castlee }, new() { Tag.Castlee }, new() { Tag.Royal, Tag.Castler }, new() { Tag.Castlee } };
+	public static List<Vector2I> tagPositions = new() { new(4, 0), new(4, 7) };
+	public static List<HashSet<Tag>> activeTags = new() { new() { Tag.Royal, Tag.Castler }, new() { Tag.Royal, Tag.Castler } };
 	public static List<(Vector2I location, Sprite2D sprite, int offset)> spriteTags = new();
 	public enum Tag
 	{
 		Royal,
 		Castler,
 		Castlee
+	}
+	public static void AddTag(Vector2I location, Tag tag)
+	{
+		int tagIndex = tagPositions.IndexOf(location);
+		if (tagIndex == -1)
+		{
+			tagPositions.Add(location);
+			activeTags.Add(new() {tag});
+		}
+		else
+			activeTags[tagIndex].Add(tag);
 	}
 	public static void ModifyTags(Vector2I start, Vector2I end, char handledPiece)
 	{
@@ -58,4 +69,27 @@ public partial class Tags : Node
 				TagDeletion(i, Tag.Castlee);
 		}
 	}
+    public static void GetRoyalsPerColor()
+    {
+        Position.RoyalPiecesColor = new();
+        for (int i = 0; i < Tags.activeTags.Count; i++)
+        {
+            if (activeTags[i].Contains(Tags.Tag.Royal))
+                Position.RoyalPiecesColor.Add(Tags.tagPositions[i], LegalMoves.GetPieceColor(Tags.tagPositions[i]));
+        }
+    }
+    public static void ModifyRoyalPieceList(Vector2I start, Vector2I end)
+    {
+        if (PieceMoves.IsRoyal(start))
+            MoveDeleteRoyal(start, end, false);
+        if (PieceMoves.IsRoyal(end))
+            MoveDeleteRoyal(end, end, true);
+    }
+    private static void MoveDeleteRoyal(Vector2I start, Vector2I end, bool delete)
+    {
+        char royalColor = Position.RoyalPiecesColor[start];
+        Position.RoyalPiecesColor.Remove(start);
+        if (!delete)
+            Position.RoyalPiecesColor.Add(end, royalColor);
+    }
 }

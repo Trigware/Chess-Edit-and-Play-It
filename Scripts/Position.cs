@@ -5,7 +5,6 @@ using System.Linq;
 
 public partial class Position : Chessboard
 {
-	public static readonly string playerColors = "wb";
 	public static Dictionary<Vector2I, char> pieces = new();
 	public static char colorToMove = 'w', WinningPlayer = '\0';
 	public static (Vector2I target, Vector2I delete) EnPassantInfo = (-Vector2I.One, -Vector2I.One);
@@ -15,6 +14,7 @@ public partial class Position : Chessboard
 	public static bool InCheck = false;
 	public static EndState GameEndState = EndState.Ongoing;
 	public static int FiftyMoveRuleClock = 0;
+	private static string playerColors = "wb";
 	public static void Load(string fen)
 	{
 		if (startPositionLoaded)
@@ -22,28 +22,27 @@ public partial class Position : Chessboard
 		GameEndState = EndState.Ongoing;
 		WinningPlayer = '\0';
 		string[] fenSplit = fen.Split(' ');
-		LoadPosition(fenSplit);
-		if (fenSplit.Length == 1)
+		LoadPosition(fenSplit[0]);
+        Tags.GetRoyalsPerColor();
+        if (LoadColorToMove(fenSplit))
 			return;
-		colorToMove = Convert.ToChar(fenSplit[1]);
-		if (!playerColors.Contains(colorToMove))
-			colorToMove = 'w';
-		// missing castling, en passant, halfmove clock, fullmove number
-		GetRoyalsPerColor();
+		if (LoadCastling(fenSplit))
+			return;
+		// missing en passant, halfmove clock, fullmove number
 		startPositionLoaded = true;
 	}
-	private static void LoadPosition(string[] fenSplit)
+	private static void LoadPosition(string position)
 	{
 		Vector2I piecePos = new(0, 0);
 		pieces = new();
-		foreach (char c in fenSplit[0])
+		foreach (char c in position)
 		{
 			if (c == '/')
 			{
 				piecePos = new(0, piecePos.Y + 1);
 				continue;
 			}
-			if (isNumber(c, out int number))
+			if (IsNumber(c, out int number))
 			{
 				piecePos.X += number;
 				continue;
@@ -51,6 +50,33 @@ public partial class Position : Chessboard
 			pieces.Add(piecePos, c);
 			piecePos.X++;
 		}
+	}
+	private static bool LoadColorToMove(string[] fenSplit)
+	{
+        if (fenSplit.Length == 1)
+            return true;
+        colorToMove = fenSplit[1] switch
+        {
+            "b" => 'b',
+            _ => 'w'
+        };
+        return false;
+    }
+	private static bool LoadCastling(string[] fenSplit)
+	{
+		if (fenSplit.Length == 2)
+			return true;
+		string fenCastling = fenSplit[2];
+		if (fenCastling == "-")
+			return false;
+		foreach (char castlingSide in fenCastling)
+		{
+			Vector2I castleeLocation = GetCastleeLocation(castlingSide, out bool invalid);
+			if (invalid)
+				continue;
+			Tags.AddTag(castleeLocation, Tags.Tag.Castlee);
+		}
+		return false;
 	}
 	public static void Load(FEN fen)
 	{
@@ -70,7 +96,7 @@ public partial class Position : Chessboard
 			FEN.ProtectedBlock => "4K/3q/3r",
 			FEN.PawnRoyalBlock => "4k//3PPP b",
 			FEN.EnPassantBlock => "/2p/3p/KP5r/1R3p1k//4P1P",
-			FEN.CastlingTest => "r3k2r///////R3K2R",
+			FEN.CastlingTest => "r3k2r///////R3K2R w K",
             FEN.Checkmate => "3qKq",
             FEN.KingVsKing => "K//k",
 			FEN.KingVsKingKnightKnight => "KNN//knn",
@@ -126,30 +152,7 @@ public partial class Position : Chessboard
 		int currentColorIndex = playerColors.IndexOf(originalColor);
 		return playerColors[(currentColorIndex + 1) % 2];
 	}
-	public static void GetRoyalsPerColor()
-	{
-		RoyalPiecesColor = new();
-		for (int i = 0; i < Tags.activeTags.Count; i++)
-		{
-			if (Tags.activeTags[i].Contains(Tags.Tag.Royal))
-				RoyalPiecesColor.Add(Tags.tagPositions[i], LegalMoves.GetPieceColor(Tags.tagPositions[i]));
-		}
-	}
-	public static void ModifyRoyalPieceList(Vector2I start, Vector2I end)
-	{
-		if (PieceMoves.IsRoyal(start))
-			MoveDeleteRoyal(start, end, false);
-		if (PieceMoves.IsRoyal(end))
-			MoveDeleteRoyal(end, end, true);
-	}
-	private static void MoveDeleteRoyal(Vector2I start, Vector2I end, bool delete)
-	{
-		char royalColor = RoyalPiecesColor[start];
-		RoyalPiecesColor.Remove(start);
-		if (!delete)
-			RoyalPiecesColor.Add(end, royalColor);
-	}
-	private static bool isNumber(char c, out int number)
+	private static bool IsNumber(char c, out int number)
 	{
 		string testedString = c.ToString();
 		try
@@ -162,5 +165,23 @@ public partial class Position : Chessboard
 			number = 0;
 			return false;
 		}
+	}
+	private static Vector2I GetCastleeLocation(char castlingSide, out bool invalid)
+	{
+		invalid = !"KQ".Contains(castlingSide.ToString().ToUpper());
+		if (invalid)
+			return new();
+		Vector2I location = new();
+		location.X = castlingSide.ToString().ToUpper() switch
+		{
+			"Q" => 0,
+			_ => 7
+		};
+		location.Y = LegalMoves.GetPieceColor(castlingSide) switch
+		{
+			'w' => 7,
+			_ => 0
+		};
+		return location;
 	}
 }

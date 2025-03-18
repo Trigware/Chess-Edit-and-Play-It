@@ -15,7 +15,8 @@ public partial class Colors : Interaction
 		{ Enum.EnPassant, RGB(0x89, 0xB5, 0x48) },
 		{ Enum.Promotion, RGB(0x8D, 0x80, 0xE5) },
 		{ Enum.Castling, RGB(0xE8, 0xA7, 0x4D) },
-		{ Enum.Check, RGB(0x55, 0x55, 0x55) }
+		{ Enum.Check, RGB(0x55, 0x55, 0x55) },
+		{ Enum.Checkmate,  HSV(0, 80, 80) }
 	};
 	public enum Enum
 	{
@@ -29,6 +30,7 @@ public partial class Colors : Interaction
 		Promotion,
 		Castling,
 		Check,
+		Checkmate
 	}
 	private static Color RGB(byte r, byte g, byte b)
 	{
@@ -74,6 +76,7 @@ public partial class Colors : Interaction
 			Enum.Promotion => Dict[Enum.Promotion],
 			Enum.Castling => Dict[Enum.Castling],
 			Enum.Check => Dict[Enum.Check],
+			Enum.Checkmate => Dict[Enum.Checkmate],
 			_ => new()
 		};
 		if (color != Enum.Default && x % 2 != y % 2)

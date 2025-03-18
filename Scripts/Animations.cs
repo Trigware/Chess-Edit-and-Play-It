@@ -101,7 +101,7 @@ public partial class Animations : Update
 			List<Vector2I> zone = LegalMoves.CheckResponseZones[j];
 			if (i >= zone.Count)
 			{
-				Colors.Set(Colors.Enum.Check, LegalMoves.CheckedRoyals[j].X, LegalMoves.CheckedRoyals[j].Y);
+				Colors.Set(Position.GameEndState == Position.EndState.Checkmate ? Colors.Enum.Checkmate : Colors.Enum.Check, LegalMoves.CheckedRoyals[j].X, LegalMoves.CheckedRoyals[j].Y);
 				continue;
 			}
 			PreviousCheckTiles.Add(zone[i]);
