@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public partial class Tags : Node
 {
-	public static List<Vector2I> tagPositions = new() { new(0, 0), new(4, 1), new(7, 0), new(0, 7), new(4, 7), new(7, 7) };
+	public static List<Vector2I> tagPositions = new() { new(0, 0), new(4, 0), new(7, 0), new(0, 7), new(4, 7), new(7, 7) };
 	public static List<HashSet<Tag>> activeTags = new() { new() { Tag.Castlee }, new() { Tag.Royal, Tag.Castler }, new() { Tag.Castlee }, new() { Tag.Castlee }, new() { Tag.Royal, Tag.Castler }, new() { Tag.Castlee } };
 	public static List<(Vector2I location, Sprite2D sprite, int offset)> spriteTags = new();
 	public enum Tag

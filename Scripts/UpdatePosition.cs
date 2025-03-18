@@ -31,18 +31,26 @@ public partial class UpdatePosition : Node
 			MoveCastlee(LegalMoves.CastleeMoves[castlingIndex]);
 
 		Interaction.Deselect(start);
+		if (Position.InCheck && PieceMoves.SuccessfulResponseInEveryZone(end))
+			Colors.ColorCheckedRoyalTiles(Colors.Enum.Default);
 		Position.LastMoveInfo = (start, end);
+		if (promotionIndex == -1 || Promotion.PromotionOptionsPieces.Count == 0)
+			Interaction.PreviousMoveTiles(Colors.Enum.PreviousMove);
 		if (promotionIndex == -1)
 		{
 			Position.ReverseColor(Position.colorToMove);
-			Interaction.PreviousMoveTiles(Colors.Enum.PreviousMove);
 			LegalMoves.GetLegalMoves();
 		}
 		else
 		{
 			LegalMoves.legalMoves = new();
-			Promotion.AvailablePromotions(end, Position.colorToMove);
-			Position.colorToMove = '\0';
+			if (Promotion.CanBePromotedTo.Length > 1)
+			{
+				Promotion.AvailablePromotions(end, Position.colorToMove);
+				Position.colorToMove = '\0';
+			}
+			else
+				Promotion.AutomaticPromotion(end);
 		}
 	}
 	public static void DeletePiece(Vector2I start, Vector2I? end, bool playSound, bool animation = true, char replace = '\0', Sprite2D handledSprite = null)

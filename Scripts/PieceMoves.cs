@@ -90,7 +90,7 @@ public partial class PieceMoves : LegalMoves
         }
 		return rangeMoves;
 	}
-	private static bool SuccessfulResponseInEveryZone(Vector2I location)
+	public static bool SuccessfulResponseInEveryZone(Vector2I location)
 	{
 		foreach (List<Vector2I> zone in CheckResponseZones)
 		{
