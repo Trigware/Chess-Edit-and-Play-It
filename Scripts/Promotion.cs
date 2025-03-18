@@ -56,7 +56,7 @@ public partial class Promotion : Node
 		char chosenPiece = Position.colorToMove == 'w' ? CanBePromotedTo[0] : Convert.ToChar(CanBePromotedTo[0].ToString().ToLower());
         Position.pieces[location] = chosenPiece;
 		PromotionChosen(chosenPiece, location, location, 1, 1);
-		Position.ReverseColor(Position.colorToMove);
+		LegalMoves.ReverseColor(Position.colorToMove);
 		LegalMoves.GetLegalMoves();
 	}
 	private static void PromotionChosen(char chosenPiece, Vector2I promotionLocation, Vector2I animationStartPosition, float endTransparency, int tileLayer)
@@ -79,7 +79,7 @@ public partial class Promotion : Node
 	private static void PromoteLogic(Vector2I promotionPosition)
 	{
 		Audio.Play(Audio.Enum.Promotion);
-		Position.ReverseColor(promotionColor);
+		LegalMoves.ReverseColor(promotionColor);
 		Sprite2D selectedPromotionSprite = null;
 		int selectedIndex = 0;
 		for (int i = 0; i < PromotionOptionsPositions.Count(); i++)

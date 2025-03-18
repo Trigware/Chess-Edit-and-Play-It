@@ -74,9 +74,9 @@ public partial class PieceMoves : LegalMoves
 				int responseCount = CheckResponseZones.Last().Count();
 				if (responseCount > maxResponseRange)
 					maxResponseRange = responseCount;
-                CheckedRoyals.Add(addedFlatPosition);
 				if (!CheckedRoyals.Contains(addedFlatPosition))
                     CheckRoyalsCount++;
+                CheckedRoyals.Add(addedFlatPosition);
                 beyondRoyalAnalyse = true;
 				continue;
 			}

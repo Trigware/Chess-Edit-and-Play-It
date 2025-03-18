@@ -20,13 +20,16 @@ public partial class UpdatePosition : Node
 		else
 			Position.EnPassantInfo = new(-Vector2I.One, -Vector2I.One);
 
-		Tags.ModifyRoyalPieceList(start, end);
-		Sprite2D handledSprite = GetPiece(start);
 		if (Chessboard.tiles.ContainsKey(new(end.X, end.Y, 1)) || Position.pieces[start].ToString().ToLower() == "p")
-			Position.FiftyMoveRuleClock = 0;
+			Position.HalfmoveClock = 0;
 		else
-			Position.FiftyMoveRuleClock++;
-		EditPiecePositions(start, end, handledSprite, !enPassant && castlingIndex == -1, promotionIndex > -1, castlingIndex > -1);
+			Position.HalfmoveClock++;
+        if (Position.colorToMove == Position.oppositeStartColorToMove)
+            Position.FullmoveNumber++;
+
+        Tags.ModifyRoyalPieceList(start, end);
+        Sprite2D handledSprite = GetPiece(start);
+        EditPiecePositions(start, end, handledSprite, !enPassant && castlingIndex == -1, promotionIndex > -1, castlingIndex > -1);
 		if (castlingIndex > -1)
 			MoveCastlee(LegalMoves.CastleeMoves[castlingIndex]);
 
@@ -38,7 +41,7 @@ public partial class UpdatePosition : Node
 			Interaction.PreviousMoveTiles(Colors.Enum.PreviousMove);
 		if (promotionIndex == -1)
 		{
-			Position.ReverseColor(Position.colorToMove);
+			LegalMoves.ReverseColor(Position.colorToMove);
 			LegalMoves.GetLegalMoves();
 		}
 		else

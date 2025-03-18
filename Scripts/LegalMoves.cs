@@ -23,22 +23,6 @@ public partial class LegalMoves : Node
 		{ 'Q', ( new Vector2I[] {new(-1, 0), new(1, 0), new(0, -1), new(0, 1), new(-1, -1), new(1, -1), new(-1, 1), new(1, 1)}, int.MaxValue ) },
 		{ 'K', ( new Vector2I[] {new(-1, 0), new(1, 0), new(0, -1), new(0, 1), new(-1, -1), new(1, -1), new(-1, 1), new(1, 1)}, 1 ) }
 	};
-	public static char GetPieceColor(Vector2I location)
-	{
-		if (Position.pieces.TryGetValue(location, out char piece))
-			return GetPieceColor(piece);
-		return '\0';
-	}
-	public static char GetPieceColor(char piece)
-	{
-		if (!pieceDefinitons.ContainsKey(Convert.ToChar(piece.ToString().ToUpper())))
-			return '\0';
-		return (piece.ToString() == piece.ToString().ToUpper()) ? 'w' : 'b';
-	}
-	protected static bool isWithinGrid(Vector2I position)
-	{
-		return position.X >= 0 && position.Y >= 0 && position.X < Chessboard.tileCount.X && position.Y < Chessboard.tileCount.Y;
-	}
 	public static List<(Vector2I, Vector2I)> GetLegalMoves(bool opponent = false)
 	{
 		List<(Vector2I, Vector2I)> legalMovesLocal = new();
@@ -69,9 +53,9 @@ public partial class LegalMoves : Node
 	}
 	private static List<Vector2I> GetOpponentMoves()
 	{
-		Position.ReverseColor(Position.colorToMove);
+		ReverseColor(Position.colorToMove);
 		List<Vector2I> opponentMoves = GetOnlyTargets(GetLegalMoves(true));
-		Position.ReverseColor(Position.colorToMove);
+		ReverseColor(Position.colorToMove);
 		return opponentMoves;
 	}
 	private static void PostMoveGeneration()
@@ -82,7 +66,7 @@ public partial class LegalMoves : Node
         Position.InCheck = CheckResponseZones.Count >= 1;
         if (legalMoves.Count == 0)
             Position.GameEndState = Position.InCheck ? Position.EndState.Checkmate : Position.EndState.Stalemate;
-        if (Position.FiftyMoveRuleClock == 100)
+        if (Position.HalfmoveClock >= 100)
             Position.GameEndState = Position.EndState.FiftyMoveRule;
         if (Position.GameEndState == Position.EndState.Ongoing && InsufficientMaterial.Check())
             Position.GameEndState = Position.EndState.InsufficientMaterial;
@@ -103,7 +87,7 @@ public partial class LegalMoves : Node
 		if (Position.GameEndState != Position.EndState.Ongoing)
 		{
 			Colors.PreviousMoveTiles(Colors.Enum.Default);
-			Position.WinningPlayer = WinLoss.Contains(Position.GameEndState) ? Position.ReverseColorReturn(Position.colorToMove) : 'd';
+			Position.WinningPlayer = WinLoss.Contains(Position.GameEndState) ? ReverseColorReturn(Position.colorToMove) : 'd';
 		}
 		GD.PrintS("Game End State:", Position.GameEndState, "Player that has won:", Position.WinningPlayer);
     }
@@ -114,4 +98,29 @@ public partial class LegalMoves : Node
 			onlyTargets.Add(move.end);
 		return onlyTargets;
 	}
+    public static char GetPieceColor(Vector2I location)
+    {
+        if (Position.pieces.TryGetValue(location, out char piece))
+            return GetPieceColor(piece);
+        return '\0';
+    }
+    public static char GetPieceColor(char piece)
+    {
+        if (!pieceDefinitons.ContainsKey(Convert.ToChar(piece.ToString().ToUpper())))
+            return '\0';
+        return (piece.ToString() == piece.ToString().ToUpper()) ? 'w' : 'b';
+    }
+    protected static bool isWithinGrid(Vector2I position)
+    {
+        return position.X >= 0 && position.Y >= 0 && position.X < Chessboard.tileCount.X && position.Y < Chessboard.tileCount.Y;
+    }
+    public static void ReverseColor(char originalColor)
+    {
+        Position.colorToMove = ReverseColorReturn(originalColor);
+    }
+    public static char ReverseColorReturn(char originalColor)
+    {
+        int currentColorIndex = Position.playerColors.IndexOf(originalColor);
+        return Position.playerColors[(currentColorIndex + 1) % 2];
+    }
 }
