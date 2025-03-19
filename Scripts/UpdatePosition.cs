@@ -24,12 +24,12 @@ public partial class UpdatePosition : Node
 			Position.HalfmoveClock = 0;
 		else
 			Position.HalfmoveClock++;
-        if (Position.colorToMove == Position.oppositeStartColorToMove)
-            Position.FullmoveNumber++;
+		if (Position.colorToMove == Position.oppositeStartColorToMove)
+			Position.FullmoveNumber++;
 
-        Tags.ModifyRoyalPieceList(start, end);
-        Sprite2D handledSprite = GetPiece(start);
-        EditPiecePositions(start, end, handledSprite, !enPassant && castlingIndex == -1, promotionIndex > -1, castlingIndex > -1);
+		Tags.ModifyRoyalPieceList(start, end);
+		Sprite2D handledSprite = GetPiece(start);
+		EditPiecePositions(start, end, handledSprite, !enPassant && castlingIndex == -1, promotionIndex > -1, castlingIndex > -1);
 		if (castlingIndex > -1)
 			MoveCastlee(LegalMoves.CastleeMoves[castlingIndex]);
 
@@ -55,6 +55,7 @@ public partial class UpdatePosition : Node
 			else
 				Promotion.AutomaticPromotion(end);
 		}
+		DiscoveredCheckAnimation(start);
 	}
 	public static void DeletePiece(Vector2I start, Vector2I? end, bool playSound, bool animation = true, char replace = '\0', Sprite2D handledSprite = null)
 	{
@@ -112,5 +113,17 @@ public partial class UpdatePosition : Node
 	private static Sprite2D GetPiece(Vector2I location)
 	{
 		return Chessboard.tiles[new(location.X, location.Y, 1)];
+	}
+	private static void DiscoveredCheckAnimation(Vector2I start)
+	{
+		for (int i = 0; i < LegalMoves.CheckResponseZones.Count; i++)
+		{
+			List<Vector2I> zone = LegalMoves.CheckResponseZones[i];
+			foreach (Vector2I tile in zone)
+			{
+				if (start == tile)
+                    Animations.CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i);
+            }
+        }
 	}
 }

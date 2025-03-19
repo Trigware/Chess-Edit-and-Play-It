@@ -15,6 +15,7 @@ public partial class Position
 	public static EndState GameEndState = EndState.Ongoing;
 	public static int HalfmoveClock, FullmoveNumber;
 	public const string playerColors = "wb", castlingSideOptions = "KQ";
+    public static Dictionary<char, int> RoyalsPerColor = new() { { 'w', 0 }, { 'b', 0 } };
     public static void Load(FEN fen)
     {
         string fenCall = fen switch
@@ -33,7 +34,7 @@ public partial class Position
             FEN.ProtectedBlock => "4K/3q/3r",
             FEN.PawnRoyalBlock => "4k//3PPP b",
             FEN.EnPassantBlock => "/2p/3p/KP5r/1R3p1k//4P1P",
-            FEN.CastlingTest => "r3k2r///////R3K2R w K",
+            FEN.CastlingTest => "r3k2r///////R3K2R w KQkq",
             FEN.Checkmate => "3qKq",
             FEN.KingVsKing => "K//k",
             FEN.KingVsKingKnightKnight => "KNN//knn",

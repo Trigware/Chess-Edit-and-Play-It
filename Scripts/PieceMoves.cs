@@ -34,8 +34,8 @@ public partial class PieceMoves : LegalMoves
 			Vector2I addedFlatPosition = piece.Key + dir * (range + 1);
 			if (!isWithinGrid(addedFlatPosition))
 				break;
-            char targetColor = GetPieceColor(addedFlatPosition);
-            if (!opponent)
+			char targetColor = GetPieceColor(addedFlatPosition);
+			if (!opponent)
 			{
 				if (isMovedPieceRoyal && (OpponentMoves.Contains(addedFlatPosition) || CheckRoyalsCount > 1 || ProtectedPieces.Contains(addedFlatPosition)))
 					continue;
@@ -46,38 +46,41 @@ public partial class PieceMoves : LegalMoves
 					else
 						continue;
 				}
+				if (CheckResponseZones.Count > 0 && isMovedPieceRoyal && !CheckedRoyals.Contains(piece.Key))
+					continue;
 			}
 			bool promotion = false;
 			if (isPawn && AnalysePawnMove(dirIter, range, addedFlatPosition, pieceColor, legalCount + rangeMoves.Count, opponent, piece, out promotion))
 				break;
-            if (targetColor == Position.colorToMove)
+			if (targetColor == Position.colorToMove)
 			{
 				if (opponent)
-                    ProtectedPieces.Add(addedFlatPosition);
+					ProtectedPieces.Add(addedFlatPosition);
 				if (opponent && addedFlatPosition == Position.EnPassantInfo.delete && CanMeetRoyal(addedFlatPosition, dir, pieceRange - range))
 					EnPassantBlocked = true;
-                if (pinnedPieceMoveAnalyse)
+				if (pinnedPieceMoveAnalyse)
 					PinnedPieceZones.RemoveAt(PinnedPieceZones.Count-1);
 				break;
-            }
-            if (!opponent && BlockMovementForPinnedPiece(piece.Key, addedFlatPosition))
+			}
+			if (!opponent && BlockMovementForPinnedPiece(piece.Key, addedFlatPosition))
 			{
-                if (promotion)
-                    PromotionMoves.RemoveAt(PromotionMoves.Count - 1);
-                continue;
-            }
-            bool isTargetRoyal = IsRoyal(addedFlatPosition);
+				if (promotion)
+					PromotionMoves.RemoveAt(PromotionMoves.Count - 1);
+				continue;
+			}
+			bool isTargetRoyal = IsRoyal(addedFlatPosition);
 			if (isTargetRoyal && opponent && !pinnedPieceMoveAnalyse && !beyondRoyalAnalyse)
 			{
-                CheckResponseZones.Add(new() { piece.Key });
-                CheckResponseZones.Last().AddRange(GetOnlyTargets(rangeMoves));
+				CheckResponseZones.Add(new() { piece.Key });
+				CheckResponseZones.Last().AddRange(GetOnlyTargets(rangeMoves));
 				int responseCount = CheckResponseZones.Last().Count();
 				if (responseCount > maxResponseRange)
 					maxResponseRange = responseCount;
 				if (!CheckedRoyals.Contains(addedFlatPosition))
-                    CheckRoyalsCount++;
-                CheckedRoyals.Add(addedFlatPosition);
-                beyondRoyalAnalyse = true;
+					CheckRoyalsCount++;
+				CheckedRoyals.Add(addedFlatPosition);
+				RoyalAttackers.Add(piece.Key);
+				beyondRoyalAnalyse = true;
 				continue;
 			}
 			if (!pinnedPieceMoveAnalyse)
@@ -87,13 +90,14 @@ public partial class PieceMoves : LegalMoves
 			pinnedPieceMoveAnalyse = OnNormalCapture(pinnedPieceMoveAnalyse, targetColor, isTargetRoyal, opponent, addedFlatPosition, dir, pieceRange - range, rangeMoves, piece.Key, out bool broken);
 			if (broken)
 				break;
-        }
+		}
 		return rangeMoves;
 	}
 	public static bool SuccessfulResponseInEveryZone(Vector2I location)
 	{
-		foreach (List<Vector2I> zone in CheckResponseZones)
+		for (int i = 0; i < CheckResponseZones.Count; i++)
 		{
+			List<Vector2I> zone = CheckResponseZones[i];
 			if (!zone.Contains(location))
 				return false;
 		}
@@ -130,30 +134,30 @@ public partial class PieceMoves : LegalMoves
 	}
 	private static bool OnNormalCapture(bool pinnedPieceMoveAnalyse, char targetColor, bool isTargetRoyal, bool opponent, Vector2I addedFlatPosition, Vector2I dir, int range, List<(Vector2I, Vector2I)> rangeMoves, Vector2I startPosition, out bool broken)
 	{
-        broken = false;
-        if (targetColor == '\0')
-            return pinnedPieceMoveAnalyse;
-        if (pinnedPieceMoveAnalyse && isTargetRoyal)
-            PinnedPieceZones.Last().Remove(addedFlatPosition);
-        if (!isTargetRoyal && opponent && CanMeetRoyal(addedFlatPosition, dir, range))
-        {
-            if (pinnedPieceMoveAnalyse)
-            {
+		broken = false;
+		if (targetColor == '\0')
+			return pinnedPieceMoveAnalyse;
+		if (pinnedPieceMoveAnalyse && isTargetRoyal)
+			PinnedPieceZones.Last().Remove(addedFlatPosition);
+		if (!isTargetRoyal && opponent && CanMeetRoyal(addedFlatPosition, dir, range))
+		{
+			if (pinnedPieceMoveAnalyse)
+			{
 				PinnedPieceZones.RemoveAt(PinnedPieceZones.Count - 1);
-                broken = true;
-            }
-            else
-            {
-                List<Vector2I> PinnedPieceZoneInitial = GetOnlyTargets(rangeMoves);
-                PinnedPieceZones.Add(PinnedPieceZoneInitial);
-                PinnedPieceZones.Last().Add(addedFlatPosition);
-                PinnedPieceZones.Last().Add(startPosition);
-                pinnedPieceMoveAnalyse = true;
-            }
-        }
-        else
-            broken = true;
-        return pinnedPieceMoveAnalyse;
+				broken = true;
+			}
+			else
+			{
+				List<Vector2I> PinnedPieceZoneInitial = GetOnlyTargets(rangeMoves);
+				PinnedPieceZones.Add(PinnedPieceZoneInitial);
+				PinnedPieceZones.Last().Add(addedFlatPosition);
+				PinnedPieceZones.Last().Add(startPosition);
+				pinnedPieceMoveAnalyse = true;
+			}
+		}
+		else
+			broken = true;
+		return pinnedPieceMoveAnalyse;
 	}
 	private static bool AnalysePawnMove(int dirIter, int range, Vector2I addedFlatPosition, char pieceColor, int moveCount, bool opponent, KeyValuePair<Vector2I, char> piece, out bool promotion)
 	{
@@ -172,11 +176,11 @@ public partial class PieceMoves : LegalMoves
 		if (!opponent && Promotion.CanBePromotedTo.Count() > 0 && (addedFlatPosition.Y == 0 && pieceColor == 'w' || addedFlatPosition.Y == 7 && pieceColor == 'b'))
 		{
 			promotion = true;
-            PromotionMoves.Add(moveCount);
-        }
-        if (!opponent && enPassant)
-            EnPassantMoves.Add(moveCount);
-        return false;
+			PromotionMoves.Add(moveCount);
+		}
+		if (!opponent && enPassant)
+			EnPassantMoves.Add(moveCount);
+		return false;
 	}
 	public static bool IsRoyal(Vector2I location)
 	{

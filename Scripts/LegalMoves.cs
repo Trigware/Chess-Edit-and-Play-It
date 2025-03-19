@@ -9,7 +9,7 @@ public partial class LegalMoves : Node
 	public static List<(Vector2I target, Vector2I deletion)> PawnLeapMovesInfo = new();
 	public static List<int> PawnLeapMoves = new(), EnPassantMoves = new(), PromotionMoves = new(), CastlingMoves = new();
 	public static List<(Vector2I start, Vector2I end)> CastleeMoves = new();
-	public static List<Vector2I> OpponentMoves = new(), ProtectedPieces, CheckedRoyals = new();
+	public static List<Vector2I> OpponentMoves = new(), ProtectedPieces, CheckedRoyals = new(), RoyalAttackers;
 	public static List<List<Vector2I>> CheckResponseZones, PinnedPieceZones;
 	public static bool EnPassantBlocked;
 	public static int maxResponseRange, CheckRoyalsCount;
@@ -28,9 +28,9 @@ public partial class LegalMoves : Node
 		List<(Vector2I, Vector2I)> legalMovesLocal = new();
 		if (!opponent)
 		{
-            CheckResponseZones = new(); CheckedRoyals = new(); PinnedPieceZones = new(); ProtectedPieces = new(); EnPassantBlocked = false; maxResponseRange = 0; CheckRoyalsCount = 0;
+            CheckResponseZones = new(); CheckedRoyals = new(); PinnedPieceZones = new(); ProtectedPieces = new(); RoyalAttackers = new(); EnPassantBlocked = false; maxResponseRange = 0; CheckRoyalsCount = 0;
 		}
-		OpponentMoves = opponent ? GetOnlyTargets(legalMoves) : GetOpponentMoves();
+        OpponentMoves = opponent ? GetOnlyTargets(legalMoves) : GetOpponentMoves();
 		if (!opponent)
 		{
 			PawnLeapMovesInfo = new(); PawnLeapMoves = new(); EnPassantMoves = new(); PromotionMoves = new(); CastlingMoves = new(); CastleeMoves = new();
@@ -62,7 +62,7 @@ public partial class LegalMoves : Node
 	{
         Position.EndState[] NotDefaultGameEndSound = new Position.EndState[] { Position.EndState.Ongoing, Position.EndState.Checkmate, Position.EndState.Stalemate };
 		Position.EndState[] WinLoss = new Position.EndState[] { Position.EndState.Checkmate, Position.EndState.Timeout, Position.EndState.Resignation };
-
+		
         Position.InCheck = CheckResponseZones.Count >= 1;
         if (legalMoves.Count == 0)
             Position.GameEndState = Position.InCheck ? Position.EndState.Checkmate : Position.EndState.Stalemate;
@@ -74,10 +74,8 @@ public partial class LegalMoves : Node
 		if (!Animations.CancelCheckAnimationEarly)
 			Animations.PreviousCheckTiles = new();
         if (Position.InCheck)
-        {
             Colors.ResetAllColors();
-            Animations.CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene);
-        }
+		Animations.CancelFlag = false;
 
 		if (Position.GameEndState == Position.EndState.Stalemate)
 			Audio.Play(Audio.Enum.Stalemate);

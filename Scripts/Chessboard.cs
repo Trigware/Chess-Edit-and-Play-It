@@ -16,7 +16,7 @@ public partial class Chessboard : Node
 
 	public override void _Ready()
 	{
-		Position.Load(Position.FEN.CheckTest);
+		Position.Load(Position.FEN.EnPassantFen);
 	}
 	public override void _Process(double delta)
 	{
@@ -53,7 +53,6 @@ public partial class Chessboard : Node
 				DrawTile(x, y, 1, parentNode);
 			}
 		}
-		Tags.GetRoyalsPerColor();
 		LegalMoves.GetLegalMoves();
 	}
 	private static void DrawTile(int x, int y, int z, Node parentNode, int i = 0)

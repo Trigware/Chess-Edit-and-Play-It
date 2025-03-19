@@ -72,10 +72,16 @@ public partial class Tags : Node
     public static void GetRoyalsPerColor()
     {
         Position.RoyalPiecesColor = new();
-        for (int i = 0; i < Tags.activeTags.Count; i++)
+        for (int i = 0; i < activeTags.Count; i++)
         {
-            if (activeTags[i].Contains(Tags.Tag.Royal))
-                Position.RoyalPiecesColor.Add(Tags.tagPositions[i], LegalMoves.GetPieceColor(Tags.tagPositions[i]));
+            if (activeTags[i].Contains(Tag.Royal))
+			{
+				char pieceColor = LegalMoves.GetPieceColor(tagPositions[i]);
+				if (pieceColor == '\0')
+					continue;
+                Position.RoyalPiecesColor.Add(tagPositions[i], pieceColor);
+				Position.RoyalsPerColor[pieceColor]++;
+            }
         }
     }
     public static void ModifyRoyalPieceList(Vector2I start, Vector2I end)
@@ -89,7 +95,9 @@ public partial class Tags : Node
     {
         char royalColor = Position.RoyalPiecesColor[start];
         Position.RoyalPiecesColor.Remove(start);
-        if (!delete)
-            Position.RoyalPiecesColor.Add(end, royalColor);
+		if (!delete)
+			Position.RoyalPiecesColor.Add(end, royalColor);
+		else
+			Position.RoyalsPerColor[royalColor]--;
     }
 }

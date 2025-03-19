@@ -85,8 +85,9 @@ public partial class Colors : Interaction
 	}
 	public static void SetTileColors(Vector2I flatMousePosition)
 	{
-		if (LegalMoves.CheckedRoyals.Contains(flatMousePosition) && Animations.PreviousCheckTiles.Count > 0)
+		if (LegalMoves.CheckedRoyals.Contains(flatMousePosition) && !Animations.CancelCheckAnimationEarly && !Animations.CancelFlag)
 		{
+			Animations.CancelFlag = true;
 			Animations.CancelCheckAnimationEarly = true;
 			ChangeTileColorBack();
 			Audio.Play(Audio.Enum.Check);

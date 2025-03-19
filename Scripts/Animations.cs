@@ -5,8 +5,8 @@ using System.Linq;
 
 public partial class Animations : Update
 {
-	public const float animationSpeed = 5;
-	public static bool promotionUnsafe = false, CancelCheckAnimationEarly = false, CancelCastlingEarly = false;
+	public const float animationSpeed = 0.3f;
+	public static bool promotionUnsafe = false, CancelCheckAnimationEarly = false, CancelCastlingEarly = false, CancelFlag = false;
 	public static List<Vector2I> PreviousCheckTiles = new();
 	public static Dictionary<Tween, (Sprite2D spr, bool deleteOnFinish, float? transparency)> ActiveTweens = new();
 	public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale, float? endTransparency, bool deleteOnFinished, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = -1, int castlingAnimation = -1)
@@ -50,9 +50,7 @@ public partial class Animations : Update
 			promotionUnsafe = true;
 		if (duration == 0)
 		{
-			ActiveTweens.Remove(tween);
-			if (deleteOnFinished)
-				spr.QueueFree();
+			AnimationEnd(tween, deleteOnFinished, spr, endPosition);
 			return;
 		}
 		Timer timer = new() { WaitTime = duration, OneShot = true };
@@ -66,11 +64,9 @@ public partial class Animations : Update
 				Tween(spr, animationSpeed/Castling.elipseQuality, startPosition, Castling.CalculatePointOnElipse(chainIterator+1, startPosition, Castling.endXpositions[castlingAnimation], Castling.elipsePathUp[castlingAnimation]), null, null, false, false, false, chainIterator+1, castlingAnimation);
 				return;
 			}
-			if (deleteOnFinished)
-				spr.QueueFree();
 			promotionUnsafe = false;
-			ActiveTweens.Remove(tween);
-			if (castlingAnimation >= 0)
+			AnimationEnd(tween, deleteOnFinished, spr, endPosition);
+            if (castlingAnimation >= 0)
 			{
                 Castling.endXpositions.RemoveAt(0);
 				Castling.elipsePathUp.RemoveAt(0);
@@ -80,7 +76,22 @@ public partial class Animations : Update
 		};
 		timer.Start();
 	}
-	public static void CheckAnimation(int i, Node main)
+	private static void AnimationEnd(Tween tween, bool deleteOnFinished, Sprite2D spr, Vector2? endPosition)
+	{
+        ActiveTweens.Remove(tween);
+        if (deleteOnFinished)
+            spr.QueueFree();
+		spr.ZIndex = 1;
+		if (endPosition == null)
+			return;
+		Vector2I endNotNull = (Vector2I)endPosition;
+		for (int i = 0; i < LegalMoves.RoyalAttackers.Count; i++)
+		{
+			if (LegalMoves.RoyalAttackers[i] == endNotNull)
+                CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i);
+        }
+    }
+    public static void CheckAnimation(int i, Node main, int j)
 	{
 		if (animationSpeed == 0)
 		{
@@ -94,22 +105,23 @@ public partial class Animations : Update
 			CancelCheckAnimationEarly = false;
 			return;
 		}
+
 		List<Color> previousColors = new();
-		Colors.ChangeTileColorBack();
-		for (int j = 0; j < LegalMoves.CheckResponseZones.Count; j++)
+		List<Vector2I> zone = LegalMoves.CheckResponseZones[j];
+		if (j == 0)
+			Colors.ChangeTileColorBack();
+		if (i >= zone.Count)
+			Colors.Set(Colors.Enum.Check, LegalMoves.CheckedRoyals[j].X, LegalMoves.CheckedRoyals[j].Y);
+		else
 		{
-			List<Vector2I> zone = LegalMoves.CheckResponseZones[j];
-			if (i >= zone.Count)
-			{
-				Colors.Set(Colors.Enum.Check, LegalMoves.CheckedRoyals[j].X, LegalMoves.CheckedRoyals[j].Y);
-				continue;
-			}
-			PreviousCheckTiles.Add(zone[i]);
-			Colors.Set(Colors.Enum.Check, zone[i].X, zone[i].Y);
-		}
+            PreviousCheckTiles.Add(zone[i]);
+            Colors.Set(Colors.Enum.Check, zone[i].X, zone[i].Y);
+        }
+
 		if (i >= LegalMoves.maxResponseRange)
 		{
 			Audio.Play(Position.GameEndState == Position.EndState.Checkmate ? Audio.Enum.Checkmate : Audio.Enum.Check);
+			CancelCheckAnimationEarly = true;
 			if (Position.GameEndState == Position.EndState.Checkmate)
 				CheckmateColors();
 			return;
@@ -118,7 +130,7 @@ public partial class Animations : Update
 		main.AddChild(timer);
 		timer.Timeout += () =>
 		{
-			CheckAnimation(i+1, main);
+            CheckAnimation(i+1, main, j);
 		};
 		timer.Start();
 	}
