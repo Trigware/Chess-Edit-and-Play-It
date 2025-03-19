@@ -14,7 +14,7 @@ public partial class UpdatePosition : Node
 		bool enPassant = Position.EnPassantInfo.delete != -Vector2I.One && enPassantIndex > -1;
 
 		if (enPassant)
-			DeletePiece(Position.EnPassantInfo.delete, null, true);
+			DeletePiece(Position.EnPassantInfo.delete, null, true, true, '\0', null, true);
 		if (leapMoveIndex > -1)
 			Position.EnPassantInfo = LegalMoves.PawnLeapMovesInfo[leapMoveIndex];
 		else
@@ -57,7 +57,7 @@ public partial class UpdatePosition : Node
 		}
 		DiscoveredCheckAnimation(start);
 	}
-	public static void DeletePiece(Vector2I start, Vector2I? end, bool playSound, bool animation = true, char replace = '\0', Sprite2D handledSprite = null)
+	public static void DeletePiece(Vector2I start, Vector2I? end, bool playSound, bool animation = true, char replace = '\0', Sprite2D handledSprite = null, bool enPassant = false)
 	{
 		Vector2I endUsed = start;
 		if (end != null)
@@ -67,8 +67,13 @@ public partial class UpdatePosition : Node
 		try
 		{
 			if (animation)
-				Animations.Tween(Chessboard.tiles[new(endUsed.X, endUsed.Y, 1)], Animations.animationSpeed, start, null, new(), null, true);
-			if (replace == '\0')
+			{
+				if (enPassant)
+                    Animations.Tween(Chessboard.tiles[new(endUsed.X, endUsed.Y, 1)], Animations.animationSpeed, start, null, null, 0, true);
+                else
+                    Animations.Tween(Chessboard.tiles[new(endUsed.X, endUsed.Y, 1)], Animations.animationSpeed, start, null, new(), null, true);
+            }
+            if (replace == '\0')
 			{
 				Position.pieces.Remove(endUsed);
 				Chessboard.tiles.Remove(new(endUsed.X, endUsed.Y, 1));
