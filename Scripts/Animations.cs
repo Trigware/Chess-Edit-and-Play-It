@@ -5,7 +5,7 @@ using System.Linq;
 
 public partial class Animations : Update
 {
-	public const float animationSpeed = 0.3f;
+	public const float animationSpeed = 5;
 	public static bool promotionUnsafe = false, CancelCheckAnimationEarly = false, CancelCastlingEarly = false;
 	public static List<Vector2I> PreviousCheckTiles = new();
 	public static Dictionary<Tween, (Sprite2D spr, bool deleteOnFinish, float? transparency)> ActiveTweens = new();
@@ -101,7 +101,7 @@ public partial class Animations : Update
 			List<Vector2I> zone = LegalMoves.CheckResponseZones[j];
 			if (i >= zone.Count)
 			{
-				Colors.Set(Position.GameEndState == Position.EndState.Checkmate ? Colors.Enum.Checkmate : Colors.Enum.Check, LegalMoves.CheckedRoyals[j].X, LegalMoves.CheckedRoyals[j].Y);
+				Colors.Set(Colors.Enum.Check, LegalMoves.CheckedRoyals[j].X, LegalMoves.CheckedRoyals[j].Y);
 				continue;
 			}
 			PreviousCheckTiles.Add(zone[i]);
@@ -110,6 +110,8 @@ public partial class Animations : Update
 		if (i >= LegalMoves.maxResponseRange)
 		{
 			Audio.Play(Position.GameEndState == Position.EndState.Checkmate ? Audio.Enum.Checkmate : Audio.Enum.Check);
+			if (Position.GameEndState == Position.EndState.Checkmate)
+				CheckmateColors();
 			return;
 		}
 		Timer timer = new() { WaitTime = animationSpeed/LegalMoves.maxResponseRange, OneShot = true };
@@ -119,6 +121,11 @@ public partial class Animations : Update
 			CheckAnimation(i+1, main);
 		};
 		timer.Start();
+	}
+	private static void CheckmateColors()
+	{
+		foreach (Vector2I royalLocation in LegalMoves.CheckedRoyals)
+			Colors.Set(Colors.Enum.Checkmate, royalLocation.X, royalLocation.Y);
 	}
 	public static void CancelEarly()
 	{
