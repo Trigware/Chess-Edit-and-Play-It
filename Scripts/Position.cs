@@ -40,6 +40,7 @@ public partial class Position
             FEN.KingVsKingKnightKnight => "KNN//knn",
             FEN.TwoRoyalsUnderAttack => "4K///4q////4K",
             FEN.MoveFlagFilterBug => "/q1P1K//////4k",
+			FEN.PerpetualCheck => "4k////Q///4K b",
             FEN.EnPassantFen => "4k3/8/8/8/2pPp3/8/8/4K3 b - d3 99 1",
             _ => ""
         };
@@ -68,6 +69,7 @@ public partial class Position
         TwoRoyalsUnderAttack,
         MoveFlagFilterBug,
         EnPassantFen,
+		PerpetualCheck,
         Empty
     }
     public enum EndState
@@ -87,6 +89,8 @@ public partial class Position
 	{
 		if (startPositionLoaded)
 			return;
+        Zobrist.GenerateKeys();
+        LegalMoves.IsGettingLegalMovesOnLoad = true;
 		GameEndState = EndState.Ongoing;
 		HalfmoveClock = 0; FullmoveNumber = 1;
 		WinningPlayer = '\0';

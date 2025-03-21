@@ -11,7 +11,7 @@ public partial class LegalMoves : Node
 	public static List<(Vector2I start, Vector2I end)> CastleeMoves = new();
 	public static List<Vector2I> OpponentMoves = new(), ProtectedPieces, CheckedRoyals = new(), RoyalAttackers;
 	public static List<List<Vector2I>> CheckResponseZones, PinnedPieceZones;
-	public static bool EnPassantBlocked;
+	public static bool EnPassantBlocked, IsGettingLegalMovesOnLoad;
 	public static int maxResponseRange, CheckRoyalsCount;
 
 	public static readonly Dictionary<char, (Vector2I[] direction, int range)> pieceDefinitons = new()
@@ -73,9 +73,15 @@ public partial class LegalMoves : Node
 
 		if (!Animations.CancelCheckAnimationEarly)
 			Animations.PreviousCheckTiles = new();
+        Animations.CancelFlag = false;
         if (Position.InCheck)
             Colors.ResetAllColors();
-		Animations.CancelFlag = false;
+		Animations.CancelCheckAnimationEarly = false;
+		if (IsGettingLegalMovesOnLoad)
+		{
+            for (int i = 0; i < CheckResponseZones.Count; i++)
+                Animations.CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i);
+        }
 
 		if (Position.GameEndState == Position.EndState.Stalemate)
 			Audio.Play(Audio.Enum.Stalemate);
@@ -87,7 +93,7 @@ public partial class LegalMoves : Node
 			Colors.PreviousMoveTiles(Colors.Enum.Default);
 			Position.WinningPlayer = WinLoss.Contains(Position.GameEndState) ? ReverseColorReturn(Position.colorToMove) : 'd';
 		}
-		GD.PrintS("Game End State:", Position.GameEndState, "Player that has won:", Position.WinningPlayer);
+		IsGettingLegalMovesOnLoad = false;
     }
 	protected static List<Vector2I> GetOnlyTargets(List<(Vector2I start, Vector2I end)> moves)
 	{
