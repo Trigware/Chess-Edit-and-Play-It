@@ -3,7 +3,7 @@ using System;
 
 public partial class Interaction : Chessboard
 {
-	public static Vector3I selectedTile = -Vector3I.One;
+	public static Vector3I? selectedTile = null;
 	private bool leftMouseButtonPressed = false, leftMouseOld = false;
 	public override void _Process(double delta)
 	{
@@ -38,19 +38,25 @@ public partial class Interaction : Chessboard
 			return;
 		Vector3I mousePositionBoard = new(flatMousePosition.X, flatMousePosition.Y, 0), mousePositionPieces = new(flatMousePosition.X, flatMousePosition.Y, 1);
 		bool canSwitchSelectedTile = PieceMoves.GetPieceColor(flatMousePosition) == Position.colorToMove;
-		if ((Input.IsKeyPressed(Key.Escape) && selectedTile != -Vector3I.One) || (leftMouseButtonPressed && selectedTile == mousePositionBoard))
+		if ((Input.IsKeyPressed(Key.Escape) && selectedTile != null) || (leftMouseButtonPressed && selectedTile == mousePositionBoard))
 		{
-			Deselect(selectedTile);
+			Deselect((Vector3I)selectedTile);
 			PreviousMoveTiles(Colors.Enum.PreviousMove);
 			return;
 		}
 		if (leftMouseButtonPressed)
 		{
-			Vector2I selectedTileFlat = new(selectedTile.X, selectedTile.Y);
-			int legalIndex = LegalMoves.legalMoves.IndexOf((selectedTileFlat, flatMousePosition));
 			if (canSwitchSelectedTile)
+			{
 				Colors.SetTileColors(flatMousePosition);
-			else if (legalIndex > -1)
+				return;
+			}
+			if (selectedTile == null)
+				return;
+			Vector3I selectedNotNull = (Vector3I)selectedTile;
+			Vector2I selectedTileFlat = new(selectedNotNull.X, selectedNotNull.Y);
+			int legalIndex = LegalMoves.legalMoves.IndexOf((selectedTileFlat, flatMousePosition));
+			if (legalIndex > -1)
 				UpdatePosition.MovePiece(selectedTileFlat, flatMousePosition, legalIndex);
 		}
 	}
@@ -64,7 +70,7 @@ public partial class Interaction : Chessboard
 				Colors.Set(GetTile(startEndTiles.end), Colors.Enum.Default, startEndTiles.end.X, startEndTiles.end.Y);
 		}
 		Colors.ColorCheckedRoyalTiles(Colors.Enum.Check);
-		selectedTile = -Vector3I.One;
+		selectedTile = null;
 	}
 	public static void PreviousMoveTiles(Colors.Enum color)
 	{

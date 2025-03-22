@@ -149,7 +149,7 @@ public partial class Position
 			Vector2I castleeLocation = GetCastleeLocation(castlingSide, out bool invalid);
 			if (invalid)
 				continue;
-			Tags.AddTag(castleeLocation, Tags.Tag.Castlee);
+			Tags.Add(castleeLocation, Tags.Tag.Castlee);
 		}
 		return false;
 	}

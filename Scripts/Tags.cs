@@ -7,13 +7,14 @@ public partial class Tags : Node
 	public static List<Vector2I> tagPositions = new() { new(4, 0), new(4, 7) };
 	public static List<HashSet<Tag>> activeTags = new() { new() { Tag.Royal, Tag.Castler }, new() { Tag.Royal, Tag.Castler } };
 	public static List<(Vector2I location, Sprite2D sprite, int offset)> spriteTags = new();
+	public static List<Vector2I> CastlingRights = new();
 	public enum Tag
 	{
 		Royal,
 		Castler,
 		Castlee
 	}
-	public static void AddTag(Vector2I location, Tag tag)
+	public static void Add(Vector2I location, Tag tag)
 	{
 		int tagIndex = tagPositions.IndexOf(location);
 		if (tagIndex == -1)
@@ -26,27 +27,42 @@ public partial class Tags : Node
 	}
 	public static void ModifyTags(Vector2I start, Vector2I end, char handledPiece)
 	{
+		bool updateCastlingRights = false;
 		if (tagPositions.Contains(end))
 		{
 			int endIndex = tagPositions.IndexOf(end);
-			tagPositions.RemoveAt(endIndex);
+			if (activeTags[endIndex].Contains(Tag.Castlee))
+				updateCastlingRights = true;
+            tagPositions.RemoveAt(endIndex);
 			activeTags.RemoveAt(endIndex);
 		}
 		if (tagPositions.Contains(start))
 		{
-			int startIndex = tagPositions.IndexOf(start);
-			HashSet<Tag> tagsAssignedToPosition = activeTags[startIndex];
-			if (tagsAssignedToPosition.Contains(Tag.Castlee))
-				TagDeletion(startIndex, Tag.Castlee);
+			if (CastleeMoved(start, out int startIndex, out HashSet<Tag> tagsAssignedToPosition))
+				updateCastlingRights = true;
 			else
 				tagPositions[startIndex] = end;
-			if (tagsAssignedToPosition.Contains(Tag.Castler))
+            if (tagsAssignedToPosition.Contains(Tag.Castler))
 			{
 				TagDeletion(startIndex, Tag.Castler);
 				CastleeDeletion(handledPiece);
-			}
-		}
+                updateCastlingRights = true;
+            }
+        }
+		if (updateCastlingRights)
+			GetCastlingRights();
 	}
+	private static bool CastleeMoved(Vector2I start, out int startIndex, out HashSet<Tag> tagsAssignedToPosition)
+	{
+        startIndex = tagPositions.IndexOf(start);
+        tagsAssignedToPosition = activeTags[startIndex];
+        if (tagsAssignedToPosition.Contains(Tag.Castlee))
+        {
+            TagDeletion(startIndex, Tag.Castlee);
+			return true;
+        }
+		return false;
+    }
 	private static void TagDeletion(int index, Tag tag)
 	{
 		activeTags[index].Remove(tag);
@@ -55,7 +71,7 @@ public partial class Tags : Node
 			tagPositions.RemoveAt(index);
 			activeTags.RemoveAt(index);
 		}
-	}
+    }
 	private static void CastleeDeletion(char handledPiece)
 	{
 		char colorCastler = LegalMoves.GetPieceColor(handledPiece);
@@ -84,6 +100,16 @@ public partial class Tags : Node
             }
         }
     }
+	private static void GetCastlingRights()
+	{
+		CastlingRights = new();
+		for (int i = 0; i < activeTags.Count; i++)
+		{
+			if (activeTags[i].Contains(Tag.Castlee))
+                CastlingRights.Add(tagPositions[i]);
+        }
+		Zobrist.LastCastlingRightHash = Zobrist.GetCastlingHash();
+	}
     public static void ModifyRoyalPieceList(Vector2I start, Vector2I end)
     {
         if (PieceMoves.IsRoyal(start))

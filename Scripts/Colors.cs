@@ -42,7 +42,7 @@ public partial class Colors : Interaction
 	}
 	public static void Set(Enum color, int x, int y)
 	{
-        try
+		try
 		{
 			Set(GetTile(new(x, y)), color, x, y);
 		}
@@ -52,7 +52,7 @@ public partial class Colors : Interaction
 	{
 		if (spr.Texture != LoadGraphics.textureDict["tile"])
 			return;
-        spr.Modulate = GetColorFromEnum(color, x, y);
+		spr.Modulate = GetColorFromEnum(color, x, y);
 	}
 	public static Color Get(int x, int y)
 	{
@@ -93,8 +93,8 @@ public partial class Colors : Interaction
 			Audio.Play(Audio.Enum.Check);
 		}
 		Sprite2D currentSprite = tiles[new(flatMousePosition.X, flatMousePosition.Y, 0)];
-		if (selectedTile != -Vector3I.One)
-			Deselect(selectedTile);
+		if (selectedTile != null)
+			Deselect((Vector3I)selectedTile);
 		PreviousMoveTiles(Enum.PreviousMove);
 		selectedTile = new(flatMousePosition.X, flatMousePosition.Y, 0);
 		if (!Position.pieces.ContainsKey(flatMousePosition))
@@ -124,17 +124,17 @@ public partial class Colors : Interaction
 			{
 				if (Position.LastMoveInfo.start != new Vector2I(x, y) && Position.LastMoveInfo.end != new Vector2I(x, y))
 					Set(Enum.Default, x, y);
-            }
-        }
+			}
+		}
 	}
 	public static void ChangeTileColorBack()
 	{
 		foreach (Vector2I previousCheckTile in Animations.PreviousCheckTiles)
 		{
 			Enum color = Position.LastMoveInfo.start == previousCheckTile || Position.LastMoveInfo.end == previousCheckTile ? Enum.PreviousMove : Enum.Default;
-            Set(color, previousCheckTile.X, previousCheckTile.Y);
-        }
-        Animations.PreviousCheckTiles = new();
+			Set(color, previousCheckTile.X, previousCheckTile.Y);
+		}
+		Animations.PreviousCheckTiles = new();
 	}
 	public static void ColorCheckedRoyalTiles(Enum color)
 	{

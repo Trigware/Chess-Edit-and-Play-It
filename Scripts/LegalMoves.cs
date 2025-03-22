@@ -70,6 +70,7 @@ public partial class LegalMoves : Node
             Position.GameEndState = Position.EndState.FiftyMoveRule;
         if (Position.GameEndState == Position.EndState.Ongoing && InsufficientMaterial.Check())
             Position.GameEndState = Position.EndState.InsufficientMaterial;
+		GD.Print(Zobrist.PositionHash());
 
 		if (!Animations.CancelCheckAnimationEarly)
 			Animations.PreviousCheckTiles = new();
