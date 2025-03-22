@@ -10,14 +10,14 @@ public partial class UpdatePosition
 		int promotionIndex = LegalMoves.PromotionMoves.IndexOf(legalIndex);
 		int castlingIndex = LegalMoves.CastlingMoves.IndexOf(legalIndex);
 
-		bool enPassant = Position.EnPassantInfo.delete != -Vector2I.One && enPassantIndex > -1;
+		bool enPassant = Position.EnPassantInfo != null && enPassantIndex > -1;
 
 		if (enPassant)
-			DeletePiece(Position.EnPassantInfo.delete, null, true, true, '\0', null, true);
+			DeletePiece((Position.EnPassantInfo ?? default).delete, null, true, true, '\0', null, true);
 		if (leapMoveIndex > -1)
 			Position.EnPassantInfo = LegalMoves.PawnLeapMovesInfo[leapMoveIndex];
 		else
-			Position.EnPassantInfo = new(-Vector2I.One, -Vector2I.One);
+			Position.EnPassantInfo = null;
 
 		if (Chessboard.tiles.ContainsKey(new(end.X, end.Y, 1)) || Position.pieces[start].ToString().ToLower() == "p")
 			Position.HalfmoveClock = 0;
@@ -61,8 +61,6 @@ public partial class UpdatePosition
 		Vector2I endUsed = start;
 		if (end != null)
 			endUsed = (Vector2I)end;
-		if (end == -Vector2I.One)
-			return;
 		try
 		{
 			if (animation)

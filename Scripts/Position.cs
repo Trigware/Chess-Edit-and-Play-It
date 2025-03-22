@@ -6,7 +6,7 @@ public partial class Position
 {
 	public static Dictionary<Vector2I, char> pieces = new();
 	public static char colorToMove = 'w', WinningPlayer = '\0', oppositeStartColorToMove = 'b';
-	public static (Vector2I target, Vector2I delete) EnPassantInfo = (-Vector2I.One, -Vector2I.One);
+	public static (Vector2I target, Vector2I delete)? EnPassantInfo = null;
 	public static (Vector2I start, Vector2I end)? LastMoveInfo = null;
 	public static bool startPositionLoaded = false;
 	public static Dictionary<Vector2I, char> RoyalPiecesColor;
@@ -158,18 +158,18 @@ public partial class Position
 			return true;
 		string fenEnPassant = fenSplit[3];
 		if (fenEnPassant == "-")
-			return false;
-		Vector2I location = Notation.ToLocation(fenEnPassant, out bool invalid);
+		{
+			EnPassantInfo = null;
+            return false;
+        }
+        Vector2I location = Notation.ToLocation(fenEnPassant, out bool invalid);
 		if (invalid)
 			return false;
         switch (location.Y)
 		{
-			case 5: EnPassantInfo.delete.Y = 4; break;
-			case 2: EnPassantInfo.delete.Y = 3; break;
-			default: return false;
+			case 5: EnPassantInfo = (location, new(location.X, 4)); break;
+			case 2: EnPassantInfo = (location, new(location.X, 3)); break;
 		}
-		EnPassantInfo.delete.X = location.X;
-		EnPassantInfo.target = location;
         return false;
 	}
 	private static void LoadCounters(string[] fenSplit)

@@ -100,6 +100,7 @@ public partial class Colors : Interaction
 		if (!Position.pieces.ContainsKey(flatMousePosition))
 			return;
 		char piece = Position.pieces[flatMousePosition];
+		Vector2I enPassantTarget = (Position.EnPassantInfo ?? default).target;
 		Set(currentSprite, Enum.Selected, flatMousePosition.X, flatMousePosition.Y);
 		for (int i = 0; i < LegalMoves.legalMoves.Count; i++)
 		{
@@ -107,7 +108,7 @@ public partial class Colors : Interaction
 			if (startEndTiles.start != flatMousePosition)
 				continue;
 			Enum color = Enum.Legal;
-			if (Position.EnPassantInfo.target == startEndTiles.end && piece.ToString().ToUpper() == "P")
+			if (Position.EnPassantInfo != null && enPassantTarget == startEndTiles.end && piece.ToString().ToUpper() == "P")
 				color = Enum.EnPassant;
 			if (LegalMoves.PromotionMoves.Contains(i))
 				color = Enum.Promotion;

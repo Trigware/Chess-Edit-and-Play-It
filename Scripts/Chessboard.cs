@@ -13,10 +13,11 @@ public partial class Chessboard : Node
 	public static float gridScale = 1;
 	public static float actualTileSize = 45;
 	public static Vector2? leftUpCorner = null;
+	public const int PositionRepetitionCount = 3;
 
 	public override void _Ready()
 	{
-		Position.Load(Position.FEN.EnPassantBlock);
+		Position.Load(Position.FEN.Default);
 	}
 	public override void _Process(double delta)
 	{

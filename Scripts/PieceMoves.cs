@@ -54,7 +54,7 @@ public partial class PieceMoves : LegalMoves
 			{
 				if (opponent)
 					ProtectedPieces.Add(addedFlatPosition);
-				if (opponent && addedFlatPosition == Position.EnPassantInfo.delete && CanMeetRoyal(addedFlatPosition, dir, pieceRange - range))
+				if (opponent && Position.EnPassantInfo != null && addedFlatPosition == (Position.EnPassantInfo ?? default).delete && CanMeetRoyal(addedFlatPosition, dir, pieceRange - range))
 					EnPassantBlocked = true;
 				if (pinnedPieceMoveAnalyse)
 					PinnedPieceZones.RemoveAt(PinnedPieceZones.Count-1);
@@ -160,8 +160,13 @@ public partial class PieceMoves : LegalMoves
 	private static bool AnalysePawnMove(int dirIter, int range, Vector2I addedFlatPosition, char pieceColor, int moveCount, bool opponent, KeyValuePair<Vector2I, char> piece, out bool promotion)
 	{
 		promotion = false;
-		bool enPassant = addedFlatPosition == Position.EnPassantInfo.target && GetPieceColor(Position.EnPassantInfo.delete) != Position.colorToMove && !EnPassantBlocked;
-		bool targetCapture = Position.pieces.TryGetValue(addedFlatPosition, out _) || enPassant || opponent;
+		bool enPassant = Position.EnPassantInfo != null;
+		if (enPassant)
+		{
+			(Vector2I target, Vector2I delete) enPassantNotNull = Position.EnPassantInfo ?? default;
+            enPassant = addedFlatPosition == enPassantNotNull.target && GetPieceColor(enPassantNotNull.delete) != Position.colorToMove && !EnPassantBlocked;
+        }
+        bool targetCapture = Position.pieces.TryGetValue(addedFlatPosition, out _) || enPassant || opponent;
 		if (dirIter == 0 && targetCapture)
 			return true;
 		if (dirIter > 0 && !targetCapture)

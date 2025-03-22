@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public partial class Zobrist
 {
     public static ulong LastCastlingRightHash = 0;
+    public static Dictionary<ulong, int> RepeatedPositions;
     private static Dictionary<Vector2I, ulong> Squares;
     private static ulong[] Pieces;
     private static ulong BlackToMove;
@@ -14,6 +15,7 @@ public partial class Zobrist
         Squares = new();
         Pieces = new ulong[12];
         BlackToMove = GenerateRandom();
+        RepeatedPositions = new();
 
         for (int x = 0; x < Chessboard.tileCount.X; x++)
         {
@@ -23,22 +25,28 @@ public partial class Zobrist
         for (int i = 0; i < 12; i++)
             Pieces[i] = GenerateRandom();
     }
-    public static ulong PositionHash()
+    public static ulong Hash()
     {
-        ulong positionHash = 0;
+        ulong hash = 0;
         foreach (KeyValuePair<Vector2I, char> piece in Position.pieces)
-            positionHash ^= Squares[piece.Key] ^ Pieces[pieceString.IndexOf(piece.Value)];
+            hash ^= Squares[piece.Key] ^ Pieces[pieceString.IndexOf(piece.Value)];
         if (Position.colorToMove == 'b')
-            positionHash ^= BlackToMove;
-        positionHash ^= LastCastlingRightHash;
-        return positionHash;
+            hash ^= BlackToMove;
+        hash ^= LastCastlingRightHash;
+        if (Position.EnPassantInfo != null)
+            hash ^= Squares[(Position.EnPassantInfo ?? default).target];
+        return hash;
     }
-    private static ulong GenerateRandom()
+    public static bool TriggersRepetitionRule(ulong hash)
     {
-        byte[] buffer = new byte[8];
-        System.Security.Cryptography.RandomNumberGenerator.Fill(buffer);
-        ulong randomNumber = BitConverter.ToUInt64(buffer, 0);
-        return randomNumber;
+        int positionRepeated = 1;
+        if (RepeatedPositions.ContainsKey(hash))
+            positionRepeated = ++RepeatedPositions[hash];
+        else
+            RepeatedPositions.Add(hash, 1);
+        if (positionRepeated >= 3)
+            return true;
+        return false;
     }
     public static ulong GetCastlingHash()
     {
@@ -57,8 +65,11 @@ public partial class Zobrist
             return a.Y.CompareTo(b.Y);
         }
     }
-    private static Vector2I IndexToBoardPosition(int index)
+    private static ulong GenerateRandom()
     {
-        return new(index % Chessboard.tileCount.X, index / Chessboard.tileCount.Y);
+        byte[] buffer = new byte[8];
+        System.Security.Cryptography.RandomNumberGenerator.Fill(buffer);
+        ulong randomNumber = BitConverter.ToUInt64(buffer, 0);
+        return randomNumber;
     }
 }
