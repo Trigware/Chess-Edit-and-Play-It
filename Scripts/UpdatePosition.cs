@@ -55,6 +55,12 @@ public partial class UpdatePosition
 				Promotion.AutomaticPromotion(end);
 		}
 		DiscoveredCheckAnimation(start);
+		for (int i = 0; i < Tags.activeTags.Count; i++)
+		{
+			GD.Print(Tags.tagPositions[i]);
+			foreach (Tags.Tag tag in Tags.activeTags[i])
+				GD.Print(tag);
+		}
 	}
 	public static void DeletePiece(Vector2I start, Vector2I? end, bool playSound, bool animation = true, char replace = '\0', Sprite2D handledSprite = null, bool enPassant = false)
 	{
@@ -66,11 +72,11 @@ public partial class UpdatePosition
 			if (animation)
 			{
 				if (enPassant)
-                    Animations.Tween(Chessboard.tiles[new(endUsed.X, endUsed.Y, 1)], Animations.animationSpeed, start, null, null, 0, true);
-                else
-                    Animations.Tween(Chessboard.tiles[new(endUsed.X, endUsed.Y, 1)], Animations.animationSpeed, start, null, new(), null, true);
-            }
-            if (replace == '\0')
+					Animations.Tween(Chessboard.tiles[new(endUsed.X, endUsed.Y, 1)], Animations.animationSpeed, start, null, null, 0, true);
+				else
+					Animations.Tween(Chessboard.tiles[new(endUsed.X, endUsed.Y, 1)], Animations.animationSpeed, start, null, new(), null, true);
+			}
+			if (replace == '\0')
 			{
 				Position.pieces.Remove(endUsed);
 				Chessboard.tiles.Remove(new(endUsed.X, endUsed.Y, 1));
@@ -124,8 +130,8 @@ public partial class UpdatePosition
 			foreach (Vector2I tile in zone)
 			{
 				if (start == tile)
-                    Animations.CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i);
-            }
-        }
+					Animations.CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i);
+			}
+		}
 	}
 }

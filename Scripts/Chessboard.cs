@@ -17,7 +17,7 @@ public partial class Chessboard : Node
 
 	public override void _Ready()
 	{
-		Position.Load(Position.FEN.Default);
+		Position.Load(Position.FEN.CastlingTest);
 	}
 	public override void _Process(double delta)
 	{

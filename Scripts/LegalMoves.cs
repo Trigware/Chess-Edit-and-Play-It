@@ -96,7 +96,6 @@ public partial class LegalMoves
 			Position.WinningPlayer = WinLoss.Contains(Position.GameEndState) ? ReverseColorReturn(Position.colorToMove) : 'd';
 		}
 		IsGettingLegalMovesOnLoad = false;
-		GD.PrintS("Game State:", Position.GameEndState, "Player that has won:", Position.WinningPlayer);
     }
 	protected static List<Vector2I> GetOnlyTargets(List<(Vector2I start, Vector2I end)> moves)
 	{

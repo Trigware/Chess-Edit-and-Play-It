@@ -21,7 +21,7 @@ public partial class LoadAudio
 		foreach (Audio.Enum audioName in audioArray)
 		{
 			string audioNameAsString = audioName.ToString();
-            audioDict.Add(audioName, Load(audioNameAsString));
-        }
-    }
+			audioDict.Add(audioName, Load(audioNameAsString));
+		}
+	}
 }
