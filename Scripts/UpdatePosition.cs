@@ -1,8 +1,7 @@
 using Godot;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 
-public partial class UpdatePosition : Node
+public partial class UpdatePosition
 {
 	public static void MovePiece(Vector2I start, Vector2I end, int legalIndex)
 	{

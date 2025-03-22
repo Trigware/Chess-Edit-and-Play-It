@@ -1,7 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
-public partial class LoadAudio : Node
+public partial class LoadAudio
 {
 	public static Dictionary<Audio.Enum, AudioStream> audioDict = new();
 	private static AudioStream Load(string name)

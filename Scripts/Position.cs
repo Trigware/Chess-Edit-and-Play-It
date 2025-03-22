@@ -1,14 +1,13 @@
 using Godot;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 public partial class Position
 {
 	public static Dictionary<Vector2I, char> pieces = new();
 	public static char colorToMove = 'w', WinningPlayer = '\0', oppositeStartColorToMove = 'b';
 	public static (Vector2I target, Vector2I delete) EnPassantInfo = (-Vector2I.One, -Vector2I.One);
-	public static (Vector2I start, Vector2I end) LastMoveInfo = (-Vector2I.One, -Vector2I.One);
+	public static (Vector2I start, Vector2I end)? LastMoveInfo = null;
 	public static bool startPositionLoaded = false;
 	public static Dictionary<Vector2I, char> RoyalPiecesColor;
 	public static bool InCheck = false;

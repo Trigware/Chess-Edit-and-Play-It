@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-public partial class LegalMoves : Node
+public partial class LegalMoves
 {
 	public static List<(Vector2I start, Vector2I end)> legalMoves = new();
 	public static List<(Vector2I target, Vector2I deletion)> PawnLeapMovesInfo = new();

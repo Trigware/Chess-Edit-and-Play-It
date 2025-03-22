@@ -74,8 +74,11 @@ public partial class Interaction : Chessboard
 	}
 	public static void PreviousMoveTiles(Colors.Enum color)
 	{
-		Colors.Set(color, Position.LastMoveInfo.start.X, Position.LastMoveInfo.start.Y);
-		Colors.Set(color, Position.LastMoveInfo.end.X, Position.LastMoveInfo.end.Y);
+		if (Position.LastMoveInfo == null)
+			return;
+		(Vector2I start, Vector2I end) lastMoveNotNull = Position.LastMoveInfo ?? default;
+		Colors.Set(color, lastMoveNotNull.start.X, lastMoveNotNull.start.Y);
+		Colors.Set(color, lastMoveNotNull.end.X, lastMoveNotNull.end.Y);
 	}
 	public static void Deselect(Vector3I start)
 	{

@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-public partial class InsufficientMaterial : Node
+public partial class InsufficientMaterial
 {
     public static bool[] PlayerMaterialInsufficiency = new bool[2];
     private static List<List<char>> InsufficientMaterialSide = new() { new() { 'k' }, new() { 'k', 'b' }, new() { 'k', 'n' } };

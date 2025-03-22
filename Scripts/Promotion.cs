@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-public partial class Promotion : Node
+public partial class Promotion
 {
 	public static List<char> PromotionOptionsPieces = new();
 	public static List<Vector2I> PromotionOptionsPositions = new();

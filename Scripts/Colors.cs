@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 public partial class Colors : Interaction
 {
-	private const float darkEffect = 0.6f; // 0 dark, 1 light
+	private const float darkEffect = 0.6f;
 	public static System.Collections.Generic.Dictionary<Enum, Color> Dict = new()
 	{
 		{ Enum.DefaultLight, RGB(0xB6, 0x9D, 0x96) },
@@ -118,20 +118,22 @@ public partial class Colors : Interaction
 	}
 	public static void ResetAllColors()
 	{
+		(Vector2I start, Vector2I end) lastMoveNotNull = Position.LastMoveInfo ?? default;
 		for (int x = 0; x < tileCount.X; x++)
 		{
 			for (int y = 0; y < tileCount.Y; y++)
 			{
-				if (Position.LastMoveInfo.start != new Vector2I(x, y) && Position.LastMoveInfo.end != new Vector2I(x, y))
+				if (Position.LastMoveInfo != null && lastMoveNotNull.start != new Vector2I(x, y) && lastMoveNotNull.end != new Vector2I(x, y))
 					Set(Enum.Default, x, y);
 			}
 		}
 	}
 	public static void ChangeTileColorBack()
 	{
-		foreach (Vector2I previousCheckTile in Animations.PreviousCheckTiles)
+        (Vector2I start, Vector2I end) lastMoveNotNull = Position.LastMoveInfo ?? default;
+        foreach (Vector2I previousCheckTile in Animations.PreviousCheckTiles)
 		{
-			Enum color = Position.LastMoveInfo.start == previousCheckTile || Position.LastMoveInfo.end == previousCheckTile ? Enum.PreviousMove : Enum.Default;
+			Enum color = lastMoveNotNull.start == previousCheckTile || lastMoveNotNull.end == previousCheckTile ? Enum.PreviousMove : Enum.Default;
 			Set(color, previousCheckTile.X, previousCheckTile.Y);
 		}
 		Animations.PreviousCheckTiles = new();

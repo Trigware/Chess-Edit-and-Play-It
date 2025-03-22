@@ -2,7 +2,7 @@ using Godot;
 using System;
 using System.Collections.Generic;
 
-public partial class Tags : Node
+public partial class Tags
 {
 	public static List<Vector2I> tagPositions = new() { new(4, 0), new(4, 7) };
 	public static List<HashSet<Tag>> activeTags = new() { new() { Tag.Royal, Tag.Castler }, new() { Tag.Royal, Tag.Castler } };

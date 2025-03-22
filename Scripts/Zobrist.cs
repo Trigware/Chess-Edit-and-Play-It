@@ -2,7 +2,7 @@ using Godot;
 using System;
 using System.Collections.Generic;
 
-public partial class Zobrist : Node
+public partial class Zobrist
 {
     public static ulong LastCastlingRightHash = 0;
     private static Dictionary<Vector2I, ulong> Squares;

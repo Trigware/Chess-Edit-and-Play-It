@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-public partial class Notation : Node
+public partial class Notation
 {
     private const string fileLetters = "abcdefgh", rankNumbers = "87654321";
     public static Vector2I ToLocation(string position, out bool invalid)
