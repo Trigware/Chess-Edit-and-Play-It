@@ -1,17 +1,10 @@
 using Godot;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 
 public partial class PieceMoves : LegalMoves
 {
-	private enum LoopBreak
-	{
-		None,
-		Continue,
-		Break
-	}
 	public static List<(Vector2I, Vector2I)> GetMoves(KeyValuePair<Vector2I, char> piece, int legalCount, bool opponent)
 	{
 		List<(Vector2I start, Vector2I dest)> pieceMoves = new();
@@ -40,11 +33,18 @@ public partial class PieceMoves : LegalMoves
 			if (!isWithinGrid(addedFlatPosition))
 				break;
 			char targetColor = GetPieceColor(addedFlatPosition);
-			if (RoyalDangerRestriction(opponent, isMovedPieceRoyal, addedFlatPosition, piece.Key))
-            {
-				if (targetColor == Position.colorToMove)
-					break;
-				else
+			if (!opponent)
+			{
+				if (isMovedPieceRoyal && (OpponentMoves.Contains(addedFlatPosition) || CheckRoyalsCount > 1 || ProtectedPieces.Contains(addedFlatPosition)))
+					continue;
+				if (!isMovedPieceRoyal && !SuccessfulResponseInEveryZone(addedFlatPosition))
+				{
+					if (targetColor == Position.colorToMove)
+						break;
+					else
+						continue;
+				}
+				if (CheckResponseZones.Count > 0 && isMovedPieceRoyal && !CheckedRoyals.Contains(piece.Key))
 					continue;
 			}
 			bool promotion = false;
@@ -79,8 +79,7 @@ public partial class PieceMoves : LegalMoves
 				CheckedRoyals.Add(addedFlatPosition);
 				RoyalAttackers.Add(piece.Key);
 				beyondRoyalAnalyse = true;
-                rangeMoves.Add((piece.Key, addedFlatPosition));
-                continue;
+				continue;
 			}
 			if (!pinnedPieceMoveAnalyse)
 				rangeMoves.Add((piece.Key, addedFlatPosition));
@@ -193,14 +192,4 @@ public partial class PieceMoves : LegalMoves
 		int tagIndex = Tags.tagPositions.IndexOf(location);
 		return tagIndex > -1 ? Tags.activeTags[tagIndex].Contains(Tags.Tag.Royal) : false;
 	}
-	private static bool RoyalDangerRestriction(bool opponent, bool isMovedPieceRoyal, Vector2I addedFlatPosition, Vector2I start)
-	{
-		if (opponent)
-			return false;
-        if (isMovedPieceRoyal && (OpponentMoves.Contains(addedFlatPosition) || CheckRoyalsCount > 1 || ProtectedPieces.Contains(addedFlatPosition)))
-			return true;
-		if (!isMovedPieceRoyal && !SuccessfulResponseInEveryZone(addedFlatPosition))
-			return true;
-		return CheckResponseZones.Count > 0 && isMovedPieceRoyal && !CheckedRoyals.Contains(start);
-    }
 }

@@ -13,10 +13,10 @@ public partial class UpdatePosition
 		bool enPassant = Position.EnPassantInfo != null && enPassantIndex > -1;
 
 		if (enPassant)
-            DeletePiece((Position.EnPassantInfo ?? default).delete, null, true, true, '\0', null, true);
-        if (leapMoveIndex > -1)
-            Position.EnPassantInfo = LegalMoves.PawnLeapMovesInfo[leapMoveIndex];
-        else
+			DeletePiece((Position.EnPassantInfo ?? default).delete, null, true, true, '\0', null, true);
+		if (leapMoveIndex > -1)
+			Position.EnPassantInfo = LegalMoves.PawnLeapMovesInfo[leapMoveIndex];
+		else
 			Position.EnPassantInfo = null;
 
 		if (Chessboard.tiles.ContainsKey(new(end.X, end.Y, 1)) || Position.pieces[start].ToString().ToLower() == "p")
@@ -28,9 +28,9 @@ public partial class UpdatePosition
 
 		Tags.ModifyRoyalPieceList(start, end);
 		Sprite2D handledSprite = GetPiece(start);
-        if (castlingIndex > -1)
-            MoveCastlee(LegalMoves.CastleeMoves[castlingIndex]);
-        EditPiecePositions(start, end, handledSprite, !enPassant && castlingIndex == -1, promotionIndex > -1, castlingIndex > -1, true);
+		EditPiecePositions(start, end, handledSprite, !enPassant && castlingIndex == -1, promotionIndex > -1, castlingIndex > -1);
+		if (castlingIndex > -1)
+			MoveCastlee(LegalMoves.CastleeMoves[castlingIndex]);
 
 		Interaction.Deselect(start);
 		if (Position.InCheck && PieceMoves.SuccessfulResponseInEveryZone(end))
@@ -55,6 +55,12 @@ public partial class UpdatePosition
 				Promotion.AutomaticPromotion(end);
 		}
 		DiscoveredCheckAnimation(start);
+		for (int i = 0; i < Tags.activeTags.Count; i++)
+		{
+			GD.Print(Tags.tagPositions[i]);
+			foreach (Tags.Tag tag in Tags.activeTags[i])
+				GD.Print(tag);
+		}
 	}
 	public static void DeletePiece(Vector2I start, Vector2I? end, bool playSound, bool animation = true, char replace = '\0', Sprite2D handledSprite = null, bool enPassant = false)
 	{
@@ -85,10 +91,10 @@ public partial class UpdatePosition
 		if (playSound)
 			Audio.Play(Audio.Enum.Capture);
 	}
-	private static void EditPiecePositions(Vector2I start, Vector2I end, Sprite2D handledSprite, bool playSound, bool promotion, bool castling, bool updateCastlingRightsHash)
+	private static void EditPiecePositions(Vector2I start, Vector2I end, Sprite2D handledSprite, bool playSound, bool promotion, bool castling)
 	{
 		char handledPiece = Position.pieces[start];
-		Tags.ModifyTags(start, end, handledPiece, updateCastlingRightsHash);
+		Tags.ModifyTags(start, end, handledPiece);
 		Position.pieces.Remove(start);
 		Chessboard.tiles.Remove(new(start.X, start.Y, 1));
 		Vector3I endPiece = new(end.X, end.Y, 1);
@@ -109,7 +115,7 @@ public partial class UpdatePosition
 	}
 	private static void MoveCastlee((Vector2I start, Vector2I end) castleePosition)
 	{
-		EditPiecePositions(castleePosition.start, castleePosition.end, Chessboard.tiles[new(castleePosition.start.X, castleePosition.start.Y, 1)], false, false, false, false);
+		EditPiecePositions(castleePosition.start, castleePosition.end, Chessboard.tiles[new(castleePosition.start.X, castleePosition.start.Y, 1)], false, false, false);
 		Audio.Play(Audio.Enum.Castle);
 	}
 	private static Sprite2D GetPiece(Vector2I location)

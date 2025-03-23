@@ -19,7 +19,7 @@ public partial class Position
     {
         string fenCall = fen switch
         {
-            FEN.Default => "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQPBNR w KQkq - 0 1",
+            FEN.Default => "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
             FEN.NoRange => "8/1n6/6k1/8/3N4/8/5K2/8 w - - 0 1",
             FEN.Range => "8/8/3q1b2/8/3R1r2/8/3Q1B2/8 w - - 0 1",
             FEN.PawnTest => "8/pppppppp/8/8/8/8/PPPPPPPP/8 w - - 0 1",
@@ -33,7 +33,7 @@ public partial class Position
             FEN.ProtectedBlock => "4K/3q/3r",
             FEN.PawnRoyalBlock => "4k//3PPP b",
             FEN.EnPassantBlock => "/2p/3p/KP5r/1R3p1k//4P1P",
-            FEN.CastlingTest => "r3k2r///////R3P2R w KQkq",
+            FEN.CastlingTest => "r3k2r///////R3K2R w KQkq",
             FEN.Checkmate => "3qKq",
             FEN.KingVsKing => "K//k",
             FEN.KingVsKingKnightKnight => "KNN//knn",

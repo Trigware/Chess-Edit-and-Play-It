@@ -25,30 +25,22 @@ public partial class Tags
 		else
 			activeTags[tagIndex].Add(tag);
 	}
-	public static void ModifyTags(Vector2I start, Vector2I end, char handledPiece, bool updateCastlingRightsHash)
+	public static void ModifyTags(Vector2I start, Vector2I end, char handledPiece)
 	{
-		bool updatedCastlingRights = false;
 		if (tagPositions.Contains(end))
 		{
 			int endIndex = tagPositions.IndexOf(end);
-			HashSet<Tag> tagsAtPosition = activeTags[endIndex];
-			if (tagsAtPosition.Contains(Tag.Castlee) || tagsAtPosition.Contains(Tag.Castler))
-				updatedCastlingRights = true;
 			tagPositions.RemoveAt(endIndex);
 			activeTags.RemoveAt(endIndex);
 			CastlerAction(end, out _, out _);
 		}
 		if (tagPositions.Contains(start))
 		{
-			if (CastlerAction(start, out int index, out bool entireTagDeleted))
-				updatedCastlingRights = true;
+			CastlerAction(start, out int index, out bool entireTagDeleted);
 			if (!entireTagDeleted)
 				tagPositions[index] = end;
-			if (CastleeMoved(end))
-				updatedCastlingRights = true;
+			CastleeMoved(end);
 		}
-		if (updateCastlingRightsHash && updatedCastlingRights)
-			GetCastlingRightsHash();
 	}
 	private static bool TagDeletion(Vector2I location, Tag tag)
 	{
@@ -62,13 +54,13 @@ public partial class Tags
 		}
 		return false;
 	}
-	private static bool CastlerAction(Vector2I location, out int index, out bool entireTagDeleted)
+	private static void CastlerAction(Vector2I location, out int index, out bool entireTagDeleted)
 	{
 		entireTagDeleted = false;
 		index = tagPositions.IndexOf(location);
 		if (index == -1 || !activeTags[index].Contains(Tag.Castler))
-			return false;
-		char colorCastler = LegalMoves.GetPieceColor(location);
+			return;
+        char colorCastler = LegalMoves.GetPieceColor(location);
 		List<Vector2I> deletedTags = new();
 		for (int i = 0; i < activeTags.Count; i++)
 		{
@@ -79,22 +71,15 @@ public partial class Tags
 			if (colorCastlee == colorCastler && tags.Contains(Tag.Castlee))
 				deletedTags.Add(tagPositions[i]);
 		}
-		if (deletedTags.Count == 0)
-			return false;
 		foreach (Vector2I deletedLoc in deletedTags)
 			TagDeletion(deletedLoc, Tag.Castlee);
-		entireTagDeleted = TagDeletion(location, Tag.Castler);
-		return true;
+        entireTagDeleted = TagDeletion(location, Tag.Castler);
 	}
-	private static bool CastleeMoved(Vector2I location)
+	private static void CastleeMoved(Vector2I location)
 	{
 		int index = tagPositions.IndexOf(location);
 		if (index > -1 && activeTags[index].Contains(Tag.Castlee))
-		{
 			TagDeletion(location, Tag.Castlee);
-			return true;
-		}
-		return false;
 	}
 	public static void GetRoyalsPerColor()
 	{
@@ -111,7 +96,7 @@ public partial class Tags
 			}
 		}
 	}
-	public static void GetCastlingRightsHash()
+	private static void GetCastlingRights()
 	{
 		CastlingRights = new();
 		for (int i = 0; i < activeTags.Count; i++)
@@ -119,8 +104,7 @@ public partial class Tags
 			if (activeTags[i].Contains(Tag.Castlee))
 				CastlingRights.Add(tagPositions[i]);
 		}
-		CastlingRights.Sort((a, b) => a.Y == b.Y ? a.X.CompareTo(b.X) : a.Y.CompareTo(b.Y));
-		Zobrist.GetCastlingHash();
+		Zobrist.LastCastlingRightHash = Zobrist.GetCastlingHash();
 	}
 	public static void ModifyRoyalPieceList(Vector2I start, Vector2I end)
 	{

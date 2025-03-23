@@ -1,15 +1,12 @@
 using Godot;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 public partial class Zobrist
 {
-    private static ulong LastCastlingRightHash = 0;
+    public static ulong LastCastlingRightHash = 0;
     public static Dictionary<ulong, int> RepeatedPositions;
     private static Dictionary<Vector2I, ulong> Squares;
-    private static Dictionary<string, ulong> CastlingRightsHashes;
-    private static Dictionary<Vector2I, ulong> EnPassantHashes;
     private static ulong[] Pieces;
     private static ulong BlackToMove;
     private static string pieceString = "PNBRQKpnbrqk";
@@ -18,9 +15,7 @@ public partial class Zobrist
         Squares = new();
         Pieces = new ulong[12];
         BlackToMove = GenerateRandom();
-        CastlingRightsHashes = new();
         RepeatedPositions = new();
-        EnPassantHashes = new();
 
         for (int x = 0; x < Chessboard.tileCount.X; x++)
         {
@@ -38,7 +33,8 @@ public partial class Zobrist
         if (Position.colorToMove == 'b')
             hash ^= BlackToMove;
         hash ^= LastCastlingRightHash;
-        hash ^= GetEnPassantHash();
+        if (Position.EnPassantInfo != null)
+            hash ^= Squares[(Position.EnPassantInfo ?? default).target];
         return hash;
     }
     public static bool TriggersRepetitionRule(ulong hash)
@@ -52,37 +48,22 @@ public partial class Zobrist
             return true;
         return false;
     }
-    public static void GetCastlingHash()
+    public static ulong GetCastlingHash()
     {
         if (Tags.CastlingRights.Count == 0)
-        {
-            LastCastlingRightHash = 0;
-            return;
-        }
-        StringBuilder castlingRightsEncoded = new();
-        foreach (Vector2I location in Tags.CastlingRights)
-            castlingRightsEncoded.Append($"{location.X},{location.Y}|");
-        string castlingRightsAsString = castlingRightsEncoded.ToString();
-        ulong castlingHash = 0;
-        if (!CastlingRightsHashes.TryGetValue(castlingRightsAsString, out castlingHash))
-        {
-            castlingHash = GenerateRandom();
-            CastlingRightsHashes.Add(castlingRightsAsString, castlingHash);
-        }
-        LastCastlingRightHash = castlingHash;
-    }
-    public static ulong GetEnPassantHash()
-    {
-        if (Position.EnPassantInfo == null)
             return 0;
-        ulong EnPassantHash = 0;
-        Vector2I enPassantTarget = (Position.EnPassantInfo ?? default).target;
-        if (!EnPassantHashes.TryGetValue(enPassantTarget, out EnPassantHash))
+        ulong castlingHash = 0;
+        Tags.CastlingRights.Sort((a, b) => ComparePositions(a, b));
+        foreach (Vector2I position in Tags.CastlingRights)
+            castlingHash ^= Squares[position];
+        return castlingHash;
+
+        int ComparePositions(Vector2I a, Vector2I b)
         {
-            EnPassantHash = GenerateRandom();
-            EnPassantHashes.Add(enPassantTarget, EnPassantHash);
+            if (a.X != b.X)
+                return a.X.CompareTo(b.X);
+            return a.Y.CompareTo(b.Y);
         }
-        return EnPassantHash;
     }
     private static ulong GenerateRandom()
     {

@@ -70,9 +70,7 @@ public partial class LegalMoves
             Position.GameEndState = Position.EndState.FiftyMoveRule;
         if (Position.GameEndState == Position.EndState.Ongoing && InsufficientMaterial.Check())
             Position.GameEndState = Position.EndState.InsufficientMaterial;
-		if (IsGettingLegalMovesOnLoad)
-            Tags.GetCastlingRightsHash();
-        if (Zobrist.TriggersRepetitionRule(Zobrist.Hash()))
+		if (Zobrist.TriggersRepetitionRule(Zobrist.Hash()))
 			Position.GameEndState = Position.EndState.ThreefoldRepetition;
 
 		if (!Animations.CancelCheckAnimationEarly)
@@ -84,7 +82,10 @@ public partial class LegalMoves
 		if (IsGettingLegalMovesOnLoad)
 		{
             for (int i = 0; i < CheckResponseZones.Count; i++)
+			{
+				GD.Print(CheckResponseZones[i].Count);
                 Animations.CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i);
+            }
         }
 
 		if (Position.GameEndState == Position.EndState.Stalemate)
