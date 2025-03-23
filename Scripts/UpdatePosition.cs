@@ -13,10 +13,10 @@ public partial class UpdatePosition
 		bool enPassant = Position.EnPassantInfo != null && enPassantIndex > -1;
 
 		if (enPassant)
-			DeletePiece((Position.EnPassantInfo ?? default).delete, null, true, true, '\0', null, true);
-		if (leapMoveIndex > -1)
-			Position.EnPassantInfo = LegalMoves.PawnLeapMovesInfo[leapMoveIndex];
-		else
+            DeletePiece((Position.EnPassantInfo ?? default).delete, null, true, true, '\0', null, true);
+        if (leapMoveIndex > -1)
+            Position.EnPassantInfo = LegalMoves.PawnLeapMovesInfo[leapMoveIndex];
+        else
 			Position.EnPassantInfo = null;
 
 		if (Chessboard.tiles.ContainsKey(new(end.X, end.Y, 1)) || Position.pieces[start].ToString().ToLower() == "p")
@@ -118,7 +118,7 @@ public partial class UpdatePosition
 	}
 	private static void DiscoveredCheckAnimation(Vector2I start)
 	{
-		/*for (int i = 0; i < LegalMoves.CheckResponseZones.Count; i++)
+		for (int i = 0; i < LegalMoves.CheckResponseZones.Count; i++)
 		{
 			List<Vector2I> zone = LegalMoves.CheckResponseZones[i];
 			foreach (Vector2I tile in zone)
@@ -126,6 +126,6 @@ public partial class UpdatePosition
 				if (start == tile)
 					Animations.CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i);
 			}
-		}*/
+		}
 	}
 }

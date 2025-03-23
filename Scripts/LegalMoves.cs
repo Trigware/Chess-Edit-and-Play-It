@@ -71,8 +71,8 @@ public partial class LegalMoves
         if (Position.GameEndState == Position.EndState.Ongoing && InsufficientMaterial.Check())
             Position.GameEndState = Position.EndState.InsufficientMaterial;
 		if (IsGettingLegalMovesOnLoad)
-			Tags.GetCastlingRightsHash();
-		if (Zobrist.TriggersRepetitionRule(Zobrist.Hash()))
+            Tags.GetCastlingRightsHash();
+        if (Zobrist.TriggersRepetitionRule(Zobrist.Hash()))
 			Position.GameEndState = Position.EndState.ThreefoldRepetition;
 
 		if (!Animations.CancelCheckAnimationEarly)

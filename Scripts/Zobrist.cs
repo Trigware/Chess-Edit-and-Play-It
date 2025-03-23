@@ -9,6 +9,7 @@ public partial class Zobrist
     public static Dictionary<ulong, int> RepeatedPositions;
     private static Dictionary<Vector2I, ulong> Squares;
     private static Dictionary<string, ulong> CastlingRightsHashes;
+    private static Dictionary<Vector2I, ulong> EnPassantHashes;
     private static ulong[] Pieces;
     private static ulong BlackToMove;
     private static string pieceString = "PNBRQKpnbrqk";
@@ -19,6 +20,7 @@ public partial class Zobrist
         BlackToMove = GenerateRandom();
         CastlingRightsHashes = new();
         RepeatedPositions = new();
+        EnPassantHashes = new();
 
         for (int x = 0; x < Chessboard.tileCount.X; x++)
         {
@@ -36,8 +38,7 @@ public partial class Zobrist
         if (Position.colorToMove == 'b')
             hash ^= BlackToMove;
         hash ^= LastCastlingRightHash;
-        if (Position.EnPassantInfo != null)
-            hash ^= Squares[(Position.EnPassantInfo ?? default).target];
+        hash ^= GetEnPassantHash();
         return hash;
     }
     public static bool TriggersRepetitionRule(ulong hash)
@@ -69,6 +70,19 @@ public partial class Zobrist
             CastlingRightsHashes.Add(castlingRightsAsString, castlingHash);
         }
         LastCastlingRightHash = castlingHash;
+    }
+    public static ulong GetEnPassantHash()
+    {
+        if (Position.EnPassantInfo == null)
+            return 0;
+        ulong EnPassantHash = 0;
+        Vector2I enPassantTarget = (Position.EnPassantInfo ?? default).target;
+        if (!EnPassantHashes.TryGetValue(enPassantTarget, out EnPassantHash))
+        {
+            EnPassantHash = GenerateRandom();
+            EnPassantHashes.Add(enPassantTarget, EnPassantHash);
+        }
+        return EnPassantHash;
     }
     private static ulong GenerateRandom()
     {
