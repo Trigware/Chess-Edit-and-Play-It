@@ -85,7 +85,7 @@ public partial class Animations : Update
 		spr.ZIndex = 1;
 		if (endPosition == null)
 			return;
-		if (Position.GameEndState != Position.EndState.Ongoing)
+		if (Position.GameEndState != Position.EndState.Ongoing && Position.GameEndState != Position.EndState.Checkmate)
 			return;
 		Vector2I endNotNull = (Vector2I)endPosition;
 		for (int i = 0; i < LegalMoves.RoyalAttackers.Count; i++)

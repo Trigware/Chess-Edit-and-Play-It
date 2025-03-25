@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Text;
 
 public partial class PieceMoves : LegalMoves
 {
@@ -42,18 +43,8 @@ public partial class PieceMoves : LegalMoves
 					continue;
 			}
 			bool promotion = false;
-			if (isPawn && AnalysePawnMove(dirIter, range, addedFlatPosition, pieceColor, legalCount + rangeMoves.Count, opponent, piece, out promotion))
-				break;
-			if (targetColor == Position.colorToMove)
-			{
-				if (opponent)
-					ProtectedPieces.Add(addedFlatPosition);
-				if (opponent && Position.EnPassantInfo != null && addedFlatPosition == (Position.EnPassantInfo ?? default).delete && CanMeetRoyal(addedFlatPosition, dir, pieceRange - range))
-					EnPassantBlocked = true;
-				if (pinnedPieceMoveAnalyse)
-					PinnedPieceZones.RemoveAt(PinnedPieceZones.Count-1);
-				break;
-			}
+			if (isPawn && AnalysePawnMove(dirIter, range, addedFlatPosition, pieceColor, legalCount + rangeMoves.Count, opponent, piece, out promotion)) break;
+			if (ReachedSameColor(targetColor, opponent, addedFlatPosition, pinnedPieceMoveAnalyse, dir, pieceRange - range)) break;
 			if (!opponent && BlockMovementForPinnedPiece(piece.Key, addedFlatPosition))
 			{
 				if (promotion)
@@ -86,6 +77,17 @@ public partial class PieceMoves : LegalMoves
 		}
 		return true;
 	}
+	private static bool ReachedSameColor(char targetColor, bool opponent, Vector2I addedFlatPosition, bool pinnedPieceMoveAnalyse, Vector2I dir, int range)
+	{
+		if (targetColor != Position.colorToMove) return false;
+        if (opponent)
+            ProtectedPieces.Add(addedFlatPosition);
+        if (opponent && Position.EnPassantInfo != null && addedFlatPosition == (Position.EnPassantInfo ?? default).delete && CanMeetRoyal(addedFlatPosition, dir, range))
+            EnPassantBlocked = true;
+        if (pinnedPieceMoveAnalyse)
+            PinnedPieceZones.RemoveAt(PinnedPieceZones.Count - 1);
+		return true;
+    }
 	private static bool BlockMovementForPinnedPiece(Vector2I start, Vector2I end)
 	{
 		int pinnedPieceZone = -1;

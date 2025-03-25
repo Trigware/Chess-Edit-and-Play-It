@@ -6,52 +6,10 @@ public partial class UpdatePosition
 	public static void MovePiece(Vector2I start, Vector2I end, int leapMoveIndex, int enPassantIndex, int promotionIndex, int castlingIndex)
 	{
 		bool enPassant = Position.EnPassantInfo != null && enPassantIndex > -1;
-
-		if (enPassant)
-            DeletePiece((Position.EnPassantInfo ?? default).delete, null, true, true, '\0', null, true);
-        if (leapMoveIndex > -1)
-            Position.EnPassantInfo = LegalMoves.PawnLeapMovesInfo[leapMoveIndex];
-        else
-			Position.EnPassantInfo = null;
-
-		if (Chessboard.tiles.ContainsKey(new(end.X, end.Y, 1)) || Position.pieces[start].ToString().ToLower() == "p")
-			Position.HalfmoveClock = 0;
-		else
-			Position.HalfmoveClock++;
-		if (Position.colorToMove == Position.oppositeStartColorToMove)
-			Position.FullmoveNumber++;
-
-		Audio.playedCheck = false;
-		Tags.ModifyRoyalPieceList(start, end);
-		Sprite2D handledSprite = GetPiece(start);
-        if (castlingIndex > -1)
-            MoveCastlee(LegalMoves.CastleeMoves[castlingIndex]);
-        EditPiecePositions(start, end, handledSprite, !enPassant && castlingIndex == -1, promotionIndex > -1, castlingIndex > -1, true);
-
-		Interaction.Deselect(start);
-		if (Position.InCheck && PieceMoves.SuccessfulResponseInEveryZone(end))
-			Colors.ColorCheckedRoyalTiles(Colors.Enum.Default);
-		Position.LastMoveInfo = (start, end);
-		if (promotionIndex == -1 || Promotion.PromotionOptionsPieces.Count == 0)
-			Interaction.PreviousMoveTiles(Colors.Enum.PreviousMove);
-		History.Play(start, end);
-
-		if (promotionIndex == -1)
-		{
-			LegalMoves.ReverseColor(Position.colorToMove);
-			LegalMoves.GetLegalMoves();
-		}
-		else
-		{
-			LegalMoves.legalMoves = new();
-			if (Promotion.CanBePromotedTo.Length > 1)
-			{
-				Promotion.AvailablePromotions(end, Position.colorToMove);
-				Position.colorToMove = '\0';
-			}
-			else
-				Promotion.AutomaticPromotion(end);
-		}
+		HandleEnPassantAndClocks(enPassant, leapMoveIndex, start, end);
+		MovePiecesInternally(enPassant, castlingIndex, promotionIndex, start, end);
+		UpdateForUserFeatures(start, end, promotionIndex);
+        NextMovePreparations(promotionIndex, end);
 		DiscoveredCheckAnimation(end);
 	}
 	public static void MovePiece(Vector2I start, Vector2I end, int legalIndex)
@@ -62,6 +20,60 @@ public partial class UpdatePosition
         int castlingIndex = LegalMoves.CastlingMoves.IndexOf(legalIndex);
         MovePiece(start, end, leapMoveIndex, enPassantIndex, promotionIndex, castlingIndex);
 	}
+	private static void HandleEnPassantAndClocks(bool enPassant, int leapMoveIndex, Vector2I start, Vector2I end)
+	{
+        Audio.playedCheck = false;
+        if (enPassant)
+            DeletePiece((Position.EnPassantInfo ?? default).delete, null, true, true, '\0', null, true);
+        if (leapMoveIndex > -1)
+            Position.EnPassantInfo = LegalMoves.PawnLeapMovesInfo[leapMoveIndex];
+        else
+            Position.EnPassantInfo = null;
+
+        if (Chessboard.tiles.ContainsKey(new(end.X, end.Y, 1)) || Position.pieces[start].ToString().ToLower() == "p")
+            Position.HalfmoveClock = 0;
+        else
+            Position.HalfmoveClock++;
+        if (Position.colorToMove == Position.oppositeStartColorToMove)
+            Position.FullmoveNumber++;
+    }
+	private static void MovePiecesInternally(bool enPassant, int castlingIndex, int promotionIndex, Vector2I start, Vector2I end)
+	{
+        Tags.ModifyRoyalPieceList(start, end);
+        Sprite2D handledSprite = GetPiece(start);
+        if (castlingIndex > -1)
+            MoveCastlee(LegalMoves.CastleeMoves[castlingIndex]);
+        EditPiecePositions(start, end, handledSprite, !enPassant && castlingIndex == -1, promotionIndex > -1, castlingIndex > -1, true);
+    }
+	private static void UpdateForUserFeatures(Vector2I start, Vector2I end, int promotionIndex)
+	{
+        Interaction.Deselect(start);
+        if (Position.InCheck && PieceMoves.SuccessfulResponseInEveryZone(end))
+            Colors.ColorCheckedRoyalTiles(Colors.Enum.Default);
+        Position.LastMoveInfo = (start, end);
+        if (promotionIndex == -1 || Promotion.PromotionOptionsPieces.Count == 0)
+            Interaction.PreviousMoveTiles(Colors.Enum.PreviousMove);
+        History.Play(start, end);
+    }
+	private static void NextMovePreparations(int promotionIndex, Vector2I end)
+	{
+        if (promotionIndex == -1)
+        {
+            LegalMoves.ReverseColor(Position.colorToMove);
+            LegalMoves.GetLegalMoves();
+        }
+        else
+        {
+            LegalMoves.legalMoves = new();
+            if (Promotion.CanBePromotedTo.Length > 1)
+            {
+                Promotion.AvailablePromotions(end, Position.colorToMove);
+                Position.colorToMove = '\0';
+            }
+            else
+                Promotion.AutomaticPromotion(end);
+        }
+    }
 	public static void DeletePiece(Vector2I start, Vector2I? end, bool playSound, bool animation = true, char replace = '\0', Sprite2D handledSprite = null, bool enPassant = false)
 	{
 		Vector2I endUsed = start;
