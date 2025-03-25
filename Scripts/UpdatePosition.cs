@@ -3,20 +3,15 @@ using System.Collections.Generic;
 
 public partial class UpdatePosition
 {
-	public static void MovePiece(Vector2I start, Vector2I end, int legalIndex)
+	public static void MovePiece(Vector2I start, Vector2I end, int leapMoveIndex, int enPassantIndex, int promotionIndex, int castlingIndex)
 	{
-		int leapMoveIndex = LegalMoves.PawnLeapMoves.IndexOf(legalIndex);
-		int enPassantIndex = LegalMoves.EnPassantMoves.IndexOf(legalIndex);
-		int promotionIndex = LegalMoves.PromotionMoves.IndexOf(legalIndex);
-		int castlingIndex = LegalMoves.CastlingMoves.IndexOf(legalIndex);
-
 		bool enPassant = Position.EnPassantInfo != null && enPassantIndex > -1;
 
 		if (enPassant)
-			DeletePiece((Position.EnPassantInfo ?? default).delete, null, true, true, '\0', null, true);
-		if (leapMoveIndex > -1)
-			Position.EnPassantInfo = LegalMoves.PawnLeapMovesInfo[leapMoveIndex];
-		else
+            DeletePiece((Position.EnPassantInfo ?? default).delete, null, true, true, '\0', null, true);
+        if (leapMoveIndex > -1)
+            Position.EnPassantInfo = LegalMoves.PawnLeapMovesInfo[leapMoveIndex];
+        else
 			Position.EnPassantInfo = null;
 
 		if (Chessboard.tiles.ContainsKey(new(end.X, end.Y, 1)) || Position.pieces[start].ToString().ToLower() == "p")
@@ -26,11 +21,12 @@ public partial class UpdatePosition
 		if (Position.colorToMove == Position.oppositeStartColorToMove)
 			Position.FullmoveNumber++;
 
+		Audio.playedCheck = false;
 		Tags.ModifyRoyalPieceList(start, end);
 		Sprite2D handledSprite = GetPiece(start);
-		EditPiecePositions(start, end, handledSprite, !enPassant && castlingIndex == -1, promotionIndex > -1, castlingIndex > -1);
-		if (castlingIndex > -1)
-			MoveCastlee(LegalMoves.CastleeMoves[castlingIndex]);
+        if (castlingIndex > -1)
+            MoveCastlee(LegalMoves.CastleeMoves[castlingIndex]);
+        EditPiecePositions(start, end, handledSprite, !enPassant && castlingIndex == -1, promotionIndex > -1, castlingIndex > -1, true);
 
 		Interaction.Deselect(start);
 		if (Position.InCheck && PieceMoves.SuccessfulResponseInEveryZone(end))
@@ -38,6 +34,8 @@ public partial class UpdatePosition
 		Position.LastMoveInfo = (start, end);
 		if (promotionIndex == -1 || Promotion.PromotionOptionsPieces.Count == 0)
 			Interaction.PreviousMoveTiles(Colors.Enum.PreviousMove);
+		History.Play(start, end);
+
 		if (promotionIndex == -1)
 		{
 			LegalMoves.ReverseColor(Position.colorToMove);
@@ -54,13 +52,15 @@ public partial class UpdatePosition
 			else
 				Promotion.AutomaticPromotion(end);
 		}
-		DiscoveredCheckAnimation(start);
-		for (int i = 0; i < Tags.activeTags.Count; i++)
-		{
-			GD.Print(Tags.tagPositions[i]);
-			foreach (Tags.Tag tag in Tags.activeTags[i])
-				GD.Print(tag);
-		}
+		DiscoveredCheckAnimation(end);
+	}
+	public static void MovePiece(Vector2I start, Vector2I end, int legalIndex)
+	{
+        int leapMoveIndex = LegalMoves.PawnLeapMoves.IndexOf(legalIndex);
+        int enPassantIndex = LegalMoves.EnPassantMoves.IndexOf(legalIndex);
+        int promotionIndex = LegalMoves.PromotionMoves.IndexOf(legalIndex);
+        int castlingIndex = LegalMoves.CastlingMoves.IndexOf(legalIndex);
+        MovePiece(start, end, leapMoveIndex, enPassantIndex, promotionIndex, castlingIndex);
 	}
 	public static void DeletePiece(Vector2I start, Vector2I? end, bool playSound, bool animation = true, char replace = '\0', Sprite2D handledSprite = null, bool enPassant = false)
 	{
@@ -91,10 +91,10 @@ public partial class UpdatePosition
 		if (playSound)
 			Audio.Play(Audio.Enum.Capture);
 	}
-	private static void EditPiecePositions(Vector2I start, Vector2I end, Sprite2D handledSprite, bool playSound, bool promotion, bool castling)
+	private static void EditPiecePositions(Vector2I start, Vector2I end, Sprite2D handledSprite, bool playSound, bool promotion, bool castling, bool updateCastlingRightsHash)
 	{
 		char handledPiece = Position.pieces[start];
-		Tags.ModifyTags(start, end, handledPiece);
+		Tags.ModifyTags(start, end, handledPiece, updateCastlingRightsHash);
 		Position.pieces.Remove(start);
 		Chessboard.tiles.Remove(new(start.X, start.Y, 1));
 		Vector3I endPiece = new(end.X, end.Y, 1);
@@ -115,23 +115,25 @@ public partial class UpdatePosition
 	}
 	private static void MoveCastlee((Vector2I start, Vector2I end) castleePosition)
 	{
-		EditPiecePositions(castleePosition.start, castleePosition.end, Chessboard.tiles[new(castleePosition.start.X, castleePosition.start.Y, 1)], false, false, false);
+		EditPiecePositions(castleePosition.start, castleePosition.end, Chessboard.tiles[new(castleePosition.start.X, castleePosition.start.Y, 1)], false, false, false, false);
 		Audio.Play(Audio.Enum.Castle);
 	}
 	private static Sprite2D GetPiece(Vector2I location)
 	{
 		return Chessboard.tiles[new(location.X, location.Y, 1)];
 	}
-	private static void DiscoveredCheckAnimation(Vector2I start)
+	private static void DiscoveredCheckAnimation(Vector2I end)
 	{
-		for (int i = 0; i < LegalMoves.CheckResponseZones.Count; i++)
+		Animations.firstCheckZone = 0;
+		for (int i = 0; i < LegalMoves.RoyalAttackers.Count; i++)
 		{
-			List<Vector2I> zone = LegalMoves.CheckResponseZones[i];
-			foreach (Vector2I tile in zone)
+			Vector2I attackerPosition = LegalMoves.RoyalAttackers[i];
+            if (attackerPosition != end)
 			{
-				if (start == tile)
-					Animations.CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i);
-			}
-		}
+                Animations.CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i);
+				if (Animations.firstCheckZone == 0)
+					Animations.firstCheckZone = i;
+            }	
+        }
 	}
 }

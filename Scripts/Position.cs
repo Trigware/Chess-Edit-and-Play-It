@@ -33,7 +33,7 @@ public partial class Position
             FEN.ProtectedBlock => "4K/3q/3r",
             FEN.PawnRoyalBlock => "4k//3PPP b",
             FEN.EnPassantBlock => "/2p/3p/KP5r/1R3p1k//4P1P",
-            FEN.CastlingTest => "r3k2r///////R3K2R w KQkq",
+            FEN.CastlingTest => "r3k2r///////R3P2R w KQkq",
             FEN.Checkmate => "3qKq",
             FEN.KingVsKing => "K//k",
             FEN.KingVsKingKnightKnight => "KNN//knn",
@@ -41,6 +41,9 @@ public partial class Position
             FEN.MoveFlagFilterBug => "/q1P1K//////4k",
 			FEN.PerpetualCheck => "4k////Q///4K b",
             FEN.EnPassantFen => "4k3/8/8/8/2pPp3/8/8/4K3 b - d3 99 1",
+			FEN.WrongPin => "4k/3r/4Q/5K/",
+			FEN.BrokenCheckAnimation => "2R1k//4Q",
+			FEN.DoubleCheckDiscovered => "4k//4N/4R",
             _ => ""
         };
         Load(fenCall);
@@ -69,6 +72,9 @@ public partial class Position
         MoveFlagFilterBug,
         EnPassantFen,
 		PerpetualCheck,
+		WrongPin,
+		BrokenCheckAnimation,
+		DoubleCheckDiscovered,
         Empty
     }
     public enum EndState
@@ -90,6 +96,7 @@ public partial class Position
 			return;
         Zobrist.GenerateKeys();
         LegalMoves.IsGettingLegalMovesOnLoad = true;
+		Animations.firstCheckZone = 0;
 		GameEndState = EndState.Ongoing;
 		HalfmoveClock = 0; FullmoveNumber = 1;
 		WinningPlayer = '\0';

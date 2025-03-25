@@ -85,13 +85,7 @@ public partial class Colors : Interaction
 	}
 	public static void SetTileColors(Vector2I flatMousePosition)
 	{
-		if (LegalMoves.CheckedRoyals.Contains(flatMousePosition) && !Animations.CancelCheckAnimationEarly && !Animations.CancelFlag)
-		{
-			Animations.CancelFlag = true;
-			Animations.CancelCheckAnimationEarly = true;
-			ChangeTileColorBack();
-			Audio.Play(Audio.Enum.Check);
-		}
+		Animations.CheckAnimationCancelEarly(flatMousePosition);
 		Sprite2D currentSprite = tiles[new(flatMousePosition.X, flatMousePosition.Y, 0)];
 		if (selectedTile != null)
 			Deselect((Vector3I)selectedTile);

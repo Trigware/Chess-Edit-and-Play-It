@@ -13,6 +13,8 @@ public partial class Interaction : Chessboard
 		leftMouseButtonPressed = leftActuallyPressed && !leftMouseOld;
 		if (leftMouseButtonPressed || Input.IsKeyPressed(Key.Escape))
 			Select();
+		if (Input.IsKeyPressed(Key.Z))
+			History.Undo();
 		leftMouseOld = leftActuallyPressed;
 	}
 	private Vector2I GetPositionOnBoard()
@@ -57,8 +59,10 @@ public partial class Interaction : Chessboard
 			Vector2I selectedTileFlat = new(selectedNotNull.X, selectedNotNull.Y);
 			int legalIndex = LegalMoves.legalMoves.IndexOf((selectedTileFlat, flatMousePosition));
 			if (legalIndex > -1)
-				UpdatePosition.MovePiece(selectedTileFlat, flatMousePosition, legalIndex);
-		}
+			{
+                UpdatePosition.MovePiece(selectedTileFlat, flatMousePosition, legalIndex);
+            }
+        }
 	}
 	public static void Deselect(Vector2I start)
 	{

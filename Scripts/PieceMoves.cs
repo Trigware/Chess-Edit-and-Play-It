@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 
 public partial class PieceMoves : LegalMoves
@@ -33,18 +34,11 @@ public partial class PieceMoves : LegalMoves
 			if (!isWithinGrid(addedFlatPosition))
 				break;
 			char targetColor = GetPieceColor(addedFlatPosition);
-			if (!opponent)
-			{
-				if (isMovedPieceRoyal && (OpponentMoves.Contains(addedFlatPosition) || CheckRoyalsCount > 1 || ProtectedPieces.Contains(addedFlatPosition)))
-					continue;
-				if (!isMovedPieceRoyal && !SuccessfulResponseInEveryZone(addedFlatPosition))
-				{
-					if (targetColor == Position.colorToMove)
-						break;
-					else
-						continue;
-				}
-				if (CheckResponseZones.Count > 0 && isMovedPieceRoyal && !CheckedRoyals.Contains(piece.Key))
+			if (RoyalDangerRestriction(opponent, isMovedPieceRoyal, addedFlatPosition, piece.Key))
+            {
+				if (targetColor == Position.colorToMove)
+					break;
+				else
 					continue;
 			}
 			bool promotion = false;
@@ -67,21 +61,12 @@ public partial class PieceMoves : LegalMoves
 				continue;
 			}
 			bool isTargetRoyal = IsRoyal(addedFlatPosition);
-			if (isTargetRoyal && opponent && !pinnedPieceMoveAnalyse && !beyondRoyalAnalyse)
+			if (DetectRoyalAttack(isTargetRoyal, opponent, pinnedPieceMoveAnalyse, beyondRoyalAnalyse, rangeMoves, piece.Key, addedFlatPosition))
 			{
-				CheckResponseZones.Add(new() { piece.Key });
-				CheckResponseZones.Last().AddRange(GetOnlyTargets(rangeMoves));
-				int responseCount = CheckResponseZones.Last().Count();
-				if (responseCount > maxResponseRange)
-					maxResponseRange = responseCount;
-				if (!CheckedRoyals.Contains(addedFlatPosition))
-					CheckRoyalsCount++;
-				CheckedRoyals.Add(addedFlatPosition);
-				RoyalAttackers.Add(piece.Key);
-				beyondRoyalAnalyse = true;
-				continue;
+                rangeMoves.Add((piece.Key, addedFlatPosition));
+                continue;
 			}
-			if (!pinnedPieceMoveAnalyse)
+            if (!pinnedPieceMoveAnalyse)
 				rangeMoves.Add((piece.Key, addedFlatPosition));
 			else if (opponent)
 				PinnedPieceZones.Last().Add(addedFlatPosition);
@@ -126,7 +111,7 @@ public partial class PieceMoves : LegalMoves
 			if (deltaVector.X * direction.Y != deltaVector.Y * direction.X)
 				return false;
 			int steps = (direction.X != 0) ? deltaVector.X / direction.X : deltaVector.Y / direction.Y;
-			return steps > 0 && steps <= pieceRange;
+			return steps > 0 && steps < pieceRange - 1;
 		}
 		return false;
 	}
@@ -192,4 +177,30 @@ public partial class PieceMoves : LegalMoves
 		int tagIndex = Tags.tagPositions.IndexOf(location);
 		return tagIndex > -1 ? Tags.activeTags[tagIndex].Contains(Tags.Tag.Royal) : false;
 	}
+	private static bool RoyalDangerRestriction(bool opponent, bool isMovedPieceRoyal, Vector2I addedFlatPosition, Vector2I start)
+	{
+		if (opponent)
+			return false;
+        if (isMovedPieceRoyal && (OpponentMoves.Contains(addedFlatPosition) || CheckRoyalsCount > 1 || ProtectedPieces.Contains(addedFlatPosition)))
+			return true;
+		if (!isMovedPieceRoyal && !SuccessfulResponseInEveryZone(addedFlatPosition))
+			return true;
+		return CheckResponseZones.Count > 0 && isMovedPieceRoyal && !CheckedRoyals.Contains(start);
+    }
+	private static bool DetectRoyalAttack(bool isTargetRoyal, bool opponent, bool pinnedPieceMoveAnalyse, bool beyondRoyalAnalyse, List<(Vector2I, Vector2I)> rangeMoves, Vector2I start, Vector2I end)
+    {
+		if (!(isTargetRoyal && opponent && !pinnedPieceMoveAnalyse && !beyondRoyalAnalyse))
+			return false;
+        CheckResponseZones.Add(new() { start });
+        CheckResponseZones.Last().AddRange(GetOnlyTargets(rangeMoves));
+        int responseCount = CheckResponseZones.Last().Count();
+        if (responseCount > maxResponseRange)
+            maxResponseRange = responseCount;
+        if (!CheckedRoyals.Contains(end))
+            CheckRoyalsCount++;
+        CheckedRoyals.Add(end);
+        RoyalAttackers.Add(start);
+        beyondRoyalAnalyse = true;
+		return true;
+    }
 }

@@ -4,6 +4,7 @@ public partial class Audio : AudioStreamPlayer
 {
 	private static AudioStreamPlayer audioPlayer = new();
 	public static float sfxVolume = 1;
+	public static bool playedCheck = false;
 	public enum Enum
 	{
 		Capture,
@@ -25,6 +26,10 @@ public partial class Audio : AudioStreamPlayer
 	}
 	public static void PlaySettings(Enum name, float pitchShift = 0, float volumeShift = 0, float pitch = 0, float volume = 0)
 	{
+		if (playedCheck)
+			return;
+		if (name == Enum.Check)
+			playedCheck = true;
 		float minPitch = 1 - pitchShift, maxPitch = 1 + pitchShift;
 		float minVolume = 1 - volumeShift, maxVolume = 1 + volumeShift;
 		if (LoadAudio.audioDict.TryGetValue(name, out AudioStream sound))
