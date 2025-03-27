@@ -1,0 +1,4 @@
+[gd_scene format=3 uid="uid://c17b0l78cd6vu"]
+
+[node name="Tile" type="Sprite2D"]
+texture_filter = 4
