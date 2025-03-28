@@ -1,4 +1,5 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 
 public partial class UpdatePosition
@@ -6,9 +7,10 @@ public partial class UpdatePosition
 	public static void MovePiece(Vector2I start, Vector2I end, int leapMoveIndex, int enPassantIndex, int promotionIndex, int castlingIndex)
 	{
 		bool enPassant = Position.EnPassantInfo != null && enPassantIndex > -1;
-		HandleEnPassantAndClocks(enPassant, leapMoveIndex, start, end);
+		char capturedPiece = Position.pieces.TryGetValue(end, out char val) ? val : '\0', pieceMoved = Position.pieces[start];
+		HandleEnPassantAndClocks(enPassant, leapMoveIndex, start, end, pieceMoved);
 		MovePiecesInternally(enPassant, castlingIndex, promotionIndex, start, end);
-		UpdateForUserFeatures(start, end, promotionIndex);
+		UpdateForUserFeatures(start, end, promotionIndex != -1, capturedPiece, pieceMoved);
         NextMovePreparations(promotionIndex, end);
 		DiscoveredCheckAnimation(end);
 	}
@@ -20,7 +22,7 @@ public partial class UpdatePosition
         int castlingIndex = LegalMoves.CastlingMoves.IndexOf(legalIndex);
         MovePiece(start, end, leapMoveIndex, enPassantIndex, promotionIndex, castlingIndex);
 	}
-	private static void HandleEnPassantAndClocks(bool enPassant, int leapMoveIndex, Vector2I start, Vector2I end)
+	private static void HandleEnPassantAndClocks(bool enPassant, int leapMoveIndex, Vector2I start, Vector2I end, char pieceMoved)
 	{
         Audio.playedCheck = false;
         if (enPassant)
@@ -30,7 +32,7 @@ public partial class UpdatePosition
         else
             Position.EnPassantInfo = null;
 
-        if (Chessboard.tiles.ContainsKey(new(end.X, end.Y, 1)) || Position.pieces[start].ToString().ToLower() == "p")
+        if (Chessboard.tiles.ContainsKey(new(end.X, end.Y, 1)) || pieceMoved.ToString().ToLower() == "p")
             Position.HalfmoveClock = 0;
         else
             Position.HalfmoveClock++;
@@ -45,15 +47,15 @@ public partial class UpdatePosition
             MoveCastlee(LegalMoves.CastleeMoves[castlingIndex]);
         EditPiecePositions(start, end, handledSprite, !enPassant && castlingIndex == -1, promotionIndex > -1, castlingIndex > -1, true);
     }
-	private static void UpdateForUserFeatures(Vector2I start, Vector2I end, int promotionIndex)
+	private static void UpdateForUserFeatures(Vector2I start, Vector2I end, bool isPromoting, char capturedPiece, char pieceMoved)
 	{
         Interaction.Deselect(start);
-        if (Position.InCheck && PieceMoves.SuccessfulResponseInEveryZone(end))
+        if (Position.InCheck)
             Colors.ColorCheckedRoyalTiles(Colors.Enum.Default);
         Position.LastMoveInfo = (start, end);
-        if (promotionIndex == -1 || Promotion.PromotionOptionsPieces.Count == 0)
+        if (!isPromoting || Promotion.PromotionOptionsPieces.Count == 0)
             Interaction.PreviousMoveTiles(Colors.Enum.PreviousMove);
-        History.Play(start, end);
+        History.Play(start, end, capturedPiece, isPromoting ? pieceMoved : '\0');
     }
 	private static void NextMovePreparations(int promotionIndex, Vector2I end)
 	{
@@ -84,9 +86,9 @@ public partial class UpdatePosition
 			if (animation)
 			{
 				if (enPassant)
-					Animations.Tween(Chessboard.tiles[new(endUsed.X, endUsed.Y, 1)], Animations.animationSpeed, start, null, null, 0, true);
+					Animations.Tween(Chessboard.GetPiece(endUsed), Animations.animationSpeed, start, null, null, 0, true);
 				else
-					Animations.Tween(Chessboard.tiles[new(endUsed.X, endUsed.Y, 1)], Animations.animationSpeed, start, null, new(), null, true);
+					Animations.Tween(Chessboard.GetPiece(endUsed), Animations.animationSpeed, start, null, new(), null, true);
 			}
 			if (replace == '\0')
 			{
@@ -103,9 +105,10 @@ public partial class UpdatePosition
 		if (playSound)
 			Audio.Play(Audio.Enum.Capture);
 	}
-	private static void EditPiecePositions(Vector2I start, Vector2I end, Sprite2D handledSprite, bool playSound, bool promotion, bool castling, bool updateCastlingRightsHash)
+	public static void EditPiecePositions(Vector2I start, Vector2I end, Sprite2D handledSprite, bool playSound, bool promotion, bool castling, bool updateCastlingRightsHash, char handledPiece = '\0', bool promotionUndo = false, float durationMultiplier = 1)
 	{
-		char handledPiece = Position.pieces[start];
+		if (handledPiece == '\0')
+			handledPiece = Position.pieces[start];
 		Tags.ModifyTags(start, end, handledPiece, updateCastlingRightsHash);
 		Position.pieces.Remove(start);
 		Chessboard.tiles.Remove(new(start.X, start.Y, 1));
@@ -123,11 +126,20 @@ public partial class UpdatePosition
 		if (castling)
 			Castling.TweenCastle(handledSprite, Animations.animationSpeed, start, end.X);
 		else
-			Animations.Tween(handledSprite, Animations.animationSpeed, start, end, null, promotion ? 0 : null, promotion);
+		{
+			Vector2I animationEnd = promotionUndo ? new(start.X, end.Y + (Position.colorToMove == 'w' ? 2 : -2)) : end;
+			Animations.Tween(handledSprite, Animations.animationSpeed * durationMultiplier, start, animationEnd, null, promotion || promotionUndo ? 0 : null, promotion || promotionUndo, promotion);
+        }
+    }
+	public static Sprite2D AddPiece(Vector2I location, char piece)
+	{
+		Sprite2D handledPiece = Chessboard.DrawTile(Convert.ToString(piece), location.X, location.Y, 1, LoadGraphics.I, 0);
+		Position.pieces.Add(location, piece);
+        return handledPiece;
 	}
 	private static void MoveCastlee((Vector2I start, Vector2I end) castleePosition)
 	{
-		EditPiecePositions(castleePosition.start, castleePosition.end, Chessboard.tiles[new(castleePosition.start.X, castleePosition.start.Y, 1)], false, false, false, false);
+		EditPiecePositions(castleePosition.start, castleePosition.end, GetPiece(castleePosition.start), false, false, false, false);
 		Audio.Play(Audio.Enum.Castle);
 	}
 	private static Sprite2D GetPiece(Vector2I location)

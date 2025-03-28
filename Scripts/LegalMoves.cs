@@ -23,7 +23,7 @@ public partial class LegalMoves
 		{ 'Q', ( new Vector2I[] {new(-1, 0), new(1, 0), new(0, -1), new(0, 1), new(-1, -1), new(1, -1), new(-1, 1), new(1, 1)}, int.MaxValue ) },
 		{ 'K', ( new Vector2I[] {new(-1, 0), new(1, 0), new(0, -1), new(0, 1), new(-1, -1), new(1, -1), new(-1, 1), new(1, 1)}, 1 ) }
 	};
-	public static List<(Vector2I, Vector2I)> GetLegalMoves(bool opponent = false)
+	public static List<(Vector2I, Vector2I)> GetLegalMoves(bool opponent = false, bool undo = false)
 	{
 		List<(Vector2I, Vector2I)> legalMovesLocal = new();
 		if (!opponent)
@@ -47,7 +47,7 @@ public partial class LegalMoves
 		if (!opponent)
 		{
             legalMoves = legalMovesLocal;
-			PostMoveGeneration();
+			PostMoveGeneration(undo);
         }
         return legalMovesLocal;
 	}
@@ -58,7 +58,7 @@ public partial class LegalMoves
 		ReverseColor(Position.colorToMove);
 		return opponentMoves;
 	}
-	private static void PostMoveGeneration()
+	private static void PostMoveGeneration(bool undo)
 	{
         Position.EndState[] NotDefaultGameEndSound = new Position.EndState[] { Position.EndState.Ongoing, Position.EndState.Checkmate, Position.EndState.Stalemate };
 		Position.EndState[] WinLoss = new Position.EndState[] { Position.EndState.Checkmate, Position.EndState.Timeout, Position.EndState.Resignation };
@@ -72,7 +72,7 @@ public partial class LegalMoves
             Position.GameEndState = Position.EndState.InsufficientMaterial;
 		if (IsGettingLegalMovesOnLoad)
             Tags.GetCastlingRightsHash();
-        if (Zobrist.TriggersRepetitionRule(Zobrist.Hash()))
+        if (Zobrist.TriggersRepetitionRule(Zobrist.Hash(undo), undo))
 			Position.GameEndState = Position.EndState.ThreefoldRepetition;
 
 		Animations.CancelCheckEarly = false;

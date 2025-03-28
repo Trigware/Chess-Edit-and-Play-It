@@ -5,16 +5,19 @@ public partial class Interaction : Chessboard
 {
 	public static Vector3I? selectedTile = null;
 	private bool leftMouseButtonPressed = false, leftMouseOld = false;
+	public static int movesUndoInASession = 0;
 	public override void _Process(double delta)
 	{
+		if (Input.IsKeyPressed(Key.Z) && !Promotion.MoveHistoryDisable)
+            History.Undo();
+        else
+			movesUndoInASession = 0;
 		if (Position.GameEndState != Position.EndState.Ongoing)
 			return;
 		bool leftActuallyPressed = Input.IsMouseButtonPressed(MouseButton.Left);
 		leftMouseButtonPressed = leftActuallyPressed && !leftMouseOld;
 		if (leftMouseButtonPressed || Input.IsKeyPressed(Key.Escape))
 			Select();
-		if (Input.IsKeyPressed(Key.Z))
-			History.Undo();
 		leftMouseOld = leftActuallyPressed;
 	}
 	private Vector2I GetPositionOnBoard()

@@ -13,6 +13,7 @@ public partial class Zobrist
     private static ulong[] Pieces;
     private static ulong BlackToMove;
     private static string pieceString = "PNBRQKpnbrqk";
+    private static ulong LastHash = 0;
     public static void GenerateKeys()
     {
         Squares = new();
@@ -30,8 +31,10 @@ public partial class Zobrist
         for (int i = 0; i < 12; i++)
             Pieces[i] = GenerateRandom();
     }
-    public static ulong Hash()
+    public static ulong Hash(bool undo)
     {
+        if (undo)
+            return 0;
         ulong hash = 0;
         foreach (KeyValuePair<Vector2I, char> piece in Position.pieces)
             hash ^= Squares[piece.Key] ^ Pieces[pieceString.IndexOf(piece.Value)];
@@ -39,10 +42,16 @@ public partial class Zobrist
             hash ^= BlackToMove;
         hash ^= LastCastlingRightHash;
         hash ^= GetEnPassantHash();
+        LastHash = hash;
         return hash;
     }
-    public static bool TriggersRepetitionRule(ulong hash)
+    public static bool TriggersRepetitionRule(ulong hash, bool undo)
     {
+        if (undo)
+        {
+            RepeatedPositions.Remove(LastHash);
+            return false;
+        }
         int positionRepeated = 1;
         if (RepeatedPositions.ContainsKey(hash))
             positionRepeated = ++RepeatedPositions[hash];

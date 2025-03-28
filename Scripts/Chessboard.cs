@@ -17,7 +17,7 @@ public partial class Chessboard : Node
 
 	public override void _Ready()
 	{
-		Position.Load(Position.FEN.DoubleCheck);
+		Position.Load(Position.FEN.Default);
 	}
 	public override void _Process(double delta)
 	{
@@ -50,7 +50,7 @@ public partial class Chessboard : Node
 		{
 			for (int y = 0; y < tileCount.Y; y++)
 			{
-				DrawTile("tile", x, y, 0, parentNode);
+				DrawTile("tile", x, y, 0, parentNode, gridScale);
 				DrawTile(x, y, 1, parentNode);
 			}
 		}
@@ -59,45 +59,52 @@ public partial class Chessboard : Node
 	private static void DrawTile(int x, int y, int z, Node parentNode, int i = 0)
 	{
 		if (Position.pieces.ContainsKey(new(x, y)))
-			DrawTile(Position.pieces[new(x, y)].ToString(), x, y, z, parentNode);
+			DrawTile(Position.pieces[new(x, y)].ToString(), x, y, z, parentNode, gridScale);
 	}
-	private static void DrawTile(string name, int x, int y, int z, Node parentNode, int i = 0)
+	public static Sprite2D DrawTile(string name, int x, int y, int z, Node parentNode, float gridScale, int i = 0)
 	{
-		if (LoadGraphics.textureDict.ContainsKey(name))
+		if (!LoadGraphics.textureDict.ContainsKey(name))
 		{
-			Texture2D texture = LoadGraphics.textureDict[name];
-			PackedScene tileScene = (PackedScene)ResourceLoader.Load("res://Scenes/Tile.tscn");
-			Node tileClone = tileScene.Instantiate();
-			if (tileClone is Sprite2D tileSprite)
-			{
-				tileSprite.Texture = texture;
-				tileSprite.Scale = new Vector2(gridScale, gridScale);
-				float xFloat = x, yFloat = y;
-				if (z == 3)
-				{
-					xFloat -= 0.3f; yFloat += 0.3f;
-					xFloat += 0.3f * i;
-					tileSprite.Scale /= 1.35f;
-				}
-				Vector2 position = CalculateTilePosition(xFloat, yFloat);
-				tileSprite.Position = position;
-				if (z != 0)
-					tileSprite.Scale /= Update.svgScale;
-				if (z == 0)
-				{
-					if (x == 0 && y == 0)
-						leftUpCorner = position - new Vector2(actualTileSize / 2, actualTileSize / 2);
-					Colors.Set(tileSprite, Colors.Enum.Default, x, y);
-				}
-				if (z < 3)
-					tiles.Add(new(x, y, z), tileSprite);
-				else
-					Tags.spriteTags.Add((new(x, y), tileSprite, i));
-				parentNode.AddChild(tileSprite);
-			}
-		}
-		else
-			GD.PrintErr($"The texture '{name}' cannot be loaded because it doesn't exist or it has a different name!");
+            GD.PrintErr($"The texture '{name}' cannot be loaded because it doesn't exist or it has a different name!");
+			return new();
+        }
+        Texture2D texture = LoadGraphics.textureDict[name];
+        PackedScene tileScene = (PackedScene)ResourceLoader.Load("res://Scenes/Tile.tscn");
+        Node tileClone = tileScene.Instantiate();
+        if (tileClone is Sprite2D tileSprite)
+        {
+            tileSprite.Texture = texture;
+            tileSprite.Scale = new Vector2(gridScale, gridScale);
+            float xFloat = x, yFloat = y;
+            if (z == 3)
+            {
+                xFloat -= 0.3f; yFloat += 0.3f;
+                xFloat += 0.3f * i;
+                tileSprite.Scale /= 1.35f;
+            }
+            Vector2 position = CalculateTilePosition(xFloat, yFloat);
+            tileSprite.Position = position;
+            if (z != 0)
+                tileSprite.Scale /= Update.svgScale;
+            if (z == 0)
+            {
+                if (x == 0 && y == 0)
+                    leftUpCorner = position - new Vector2(actualTileSize / 2, actualTileSize / 2);
+                Colors.Set(tileSprite, Colors.Enum.Default, x, y);
+            }
+            if (z < 3)
+                tiles.Add(new(x, y, z), tileSprite);
+            else
+                Tags.spriteTags.Add((new(x, y), tileSprite, i));
+            parentNode.AddChild(tileSprite);
+			return tileSprite;
+        }
+		GD.PrintErr("Tile scene 'Tile.tscn' doesn't have a Sprite2D node for it's root.");
+		return new();
+    }
+	public static Sprite2D GetPiece(Vector2I location)
+	{
+		return tiles[new(location.X, location.Y, 1)];
 	}
 	public static Vector2 CalculateTilePosition(float x, float y)
 	{

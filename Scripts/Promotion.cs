@@ -13,12 +13,14 @@ public partial class Promotion
 	private static char promotionColor;
 	private static Vector2I originalPromotionPosition;
 	public static Vector2I? promotionPending = null;
+	public static bool MoveHistoryDisable = false;
 	public static void AvailablePromotions(Vector2I promotionPosition, char colorToMove)
 	{
 		originalPromotionPosition = promotionPosition;
 		promotionColor = colorToMove;
 		PromotionOptionsPieces = new(); PromotionOptionsPositions = new();
 		int optionDirection = colorToMove == 'w' ? -1 : 1;
+		MoveHistoryDisable = true;
 		for (int i = 0; i < CanBePromotedTo.Count(); i++)
 		{
 			char promotable = CanBePromotedTo[i];
@@ -39,13 +41,13 @@ public partial class Promotion
 			(char piece, Vector2I position) option = (PromotionOptionsPieces[i], PromotionOptionsPositions[i]);
 			Vector2I optionPosition = new(promotionPosition.X, promotionPosition.Y + optionDirection * (CanBePromotedTo.Count() - i));
 			Colors.Set(Colors.Enum.Promotion, option.position.X, option.position.Y);
-			PromotionChosen(option.piece, option.position, optionPosition, PromotionOptionTransparency, 2);
+			OptionChosen(option.piece, option.position, optionPosition, PromotionOptionTransparency, 2);
 		}
 	}
 	public static void Promote(Vector2I promotionPosition)
 	{
 		promotionPending = promotionPosition;
-		if (!Animations.promotionUnsafe || Animations.animationSpeed == 0)
+        if ((!Animations.promotionUnsafe || Animations.animationSpeed == 0) && Animations.ActiveTweens.Count == 0)
 		{
 			PromoteLogic(promotionPosition);
 			promotionPending = null;
@@ -54,18 +56,22 @@ public partial class Promotion
 	public static void AutomaticPromotion(Vector2I location)
 	{
 		char chosenPiece = Position.colorToMove == 'w' ? CanBePromotedTo[0] : Convert.ToChar(CanBePromotedTo[0].ToString().ToLower());
-        Position.pieces[location] = chosenPiece;
-		PromotionChosen(chosenPiece, location, location, 1, 1);
+		Position.pieces[location] = chosenPiece;
+		OptionChosen(chosenPiece, location, location, 1, 1);
 		LegalMoves.ReverseColor(Position.colorToMove);
 		LegalMoves.GetLegalMoves();
 	}
-	private static void PromotionChosen(char chosenPiece, Vector2I promotionLocation, Vector2I animationStartPosition, float endTransparency, int tileLayer)
+	public static void OptionChosen(char chosenPiece, Vector2I promotionLocation, Vector2I animationStartPosition, float endTransparency, int tileLayer, float durationMultiplier = 2)
 	{
-        Sprite2D sprite = CreateOptionPiece(chosenPiece, animationStartPosition);
-        Chessboard.tiles.Add(new(promotionLocation.X, promotionLocation.Y, tileLayer), sprite);
+		Sprite2D sprite = CreateOptionPiece(chosenPiece, animationStartPosition);
+		Vector3I tilePositionInDict = new(promotionLocation.X, promotionLocation.Y, tileLayer);
+		if (Chessboard.tiles.ContainsKey(tilePositionInDict))
+			Chessboard.tiles[tilePositionInDict] = sprite;
+		else
+            Chessboard.tiles.Add(tilePositionInDict, sprite);
         LoadGraphics.I.AddChild(sprite);
-        Animations.Tween(sprite, Animations.animationSpeed * 2, animationStartPosition, promotionLocation, null, endTransparency, false, true);
-    }
+		Animations.Tween(sprite, Animations.animationSpeed * durationMultiplier, animationStartPosition, promotionLocation, null, endTransparency, false, false);
+	}
 	private static Sprite2D CreateOptionPiece(char piece, Vector2I position)
 	{
 		return new()
@@ -89,7 +95,7 @@ public partial class Promotion
 			Sprite2D handledSprite = Chessboard.tiles[new(location.X, location.Y, 2)];
 			if (location == promotionPosition)
 			{
-				Animations.Tween(handledSprite, Animations.animationSpeed, location, originalPromotionPosition, null, 1, false);
+				Animations.Tween(handledSprite, Animations.animationSpeed, location, originalPromotionPosition, null, 1, false, false, true, -1, -1, true);
 				selectedPromotionSprite = handledSprite;
 				selectedIndex = i;
 			}

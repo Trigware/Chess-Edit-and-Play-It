@@ -10,7 +10,7 @@ public partial class Animations : Update
 	public static List<Vector2I> PreviousCheckTiles = new();
 	public static Dictionary<Tween, (Sprite2D spr, bool deleteOnFinish, float? transparency)> ActiveTweens = new();
 	public static int firstCheckZone = 0;
-	public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale, float? endTransparency, bool deleteOnFinished, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = -1, int castlingAnimation = -1)
+	public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale, float? endTransparency, bool deleteOnFinished, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = -1, int castlingAnimation = -1, bool promotionConfirmation = false)
 	{
 		Tween tween = spr.CreateTween();
 		ActiveTweens.Add(tween, (spr, deleteOnFinished, endTransparency));
@@ -24,7 +24,8 @@ public partial class Animations : Update
 		if (endScale != null)
 		{
 			float usedEndScale = (float)endScale;
-			TweenSetup(spr, tween, "scale", new Vector2(usedEndScale, usedEndScale), duration);
+			float rescaledForScreenSize = usedEndScale * gridScale / svgScale;
+			TweenSetup(spr, tween, "scale", new Vector2(rescaledForScreenSize, rescaledForScreenSize), duration);
 		}
 		if (endTransparency != null)
 		{
@@ -33,7 +34,7 @@ public partial class Animations : Update
 		}
 		if (endPosition != null)
 			tween.Finished += () => OnFinishedPosition(spr);
-		OnFinishedDelete(spr, startPosition, tween, endPosition, duration, deleteOnFinished, promotion, deleteFromPiecesDict, chainIterator, castlingAnimation);
+		OnFinishedDelete(spr, startPosition, tween, endPosition, duration, deleteOnFinished, promotion, deleteFromPiecesDict, chainIterator, castlingAnimation, promotionConfirmation);
 	}
 	private static void TweenSetup(Sprite2D spr, Tween tween, string type, Variant end, float duration)
 	{
@@ -43,7 +44,7 @@ public partial class Animations : Update
 	{
 		spr.ZIndex = 1;
 	}
-	private static void OnFinishedDelete(Sprite2D spr, Vector2I startPosition, Tween tween, Vector2? endPosition, float duration, bool deleteOnFinished, bool promotion, bool deleteFromPiecesDict, int chainIterator, int castlingAnimation)
+	private static void OnFinishedDelete(Sprite2D spr, Vector2I startPosition, Tween tween, Vector2? endPosition, float duration, bool deleteOnFinished, bool promotion, bool deleteFromPiecesDict, int chainIterator, int castlingAnimation, bool promotionConfirmation)
 	{
 		if (deleteOnFinished && deleteFromPiecesDict)
 			UpdatePosition.DeletePiece(startPosition, (Vector2I?)endPosition, false, false, '\0', spr);
@@ -72,13 +73,16 @@ public partial class Animations : Update
 				Castling.endXpositions.RemoveAt(0);
 				Castling.elipsePathUp.RemoveAt(0);
 			}
-			if (promotion && Promotion.promotionPending != null)
+			if (Promotion.promotionPending != null)
 				Promotion.Promote((Vector2I)Promotion.promotionPending);
+			if (promotionConfirmation)
+				Promotion.MoveHistoryDisable = false;
 		};
 		timer.Start();
 	}
 	private static void AnimationEnd(Tween tween, bool deleteOnFinished, Sprite2D spr, Vector2? endPosition)
 	{
+		History.DisableReplay = false;
 		ActiveTweens.Remove(tween);
 		if (deleteOnFinished)
 			spr.QueueFree();
@@ -143,6 +147,7 @@ public partial class Animations : Update
 		if (ActiveTweens.Count == 0)
 			return;
 		CancelCastlingEarly = true;
+		promotionUnsafe = false;
 		for (int i = ActiveTweens.Count-1; i >= 0; i--)
 		{
 			ActiveTweens.Keys.Last().Kill();
@@ -157,11 +162,11 @@ public partial class Animations : Update
 	}
 	public static void CheckAnimationCancelEarly(Vector2I flatMousePosition)
 	{
-        if (LegalMoves.CheckedRoyals.Contains(flatMousePosition) && !Animations.CancelCheckEarly && !Audio.playedCheck)
-        {
-            Colors.ChangeTileColorBack();
-            Animations.CancelCheckEarly = true;
-            Audio.Play(Audio.Enum.Check);
-        }
-    }
+		if (LegalMoves.CheckedRoyals.Contains(flatMousePosition) && !Animations.CancelCheckEarly && !Audio.playedCheck)
+		{
+			Colors.ChangeTileColorBack();
+			Animations.CancelCheckEarly = true;
+			Audio.Play(Audio.Enum.Check);
+		}
+	}
 }
