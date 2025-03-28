@@ -4,7 +4,7 @@ using Godot;
 public partial class History
 {
     public static Stack<Move> UndoMoves = new(), RedoMoves = new();
-    public static bool DisableReplay = false;
+    public static bool DisableReplay = false, cooldownOngoing = false;
     private static float MoveReplayAnimationSpeedMultiplier = 0.75f;
 
     public struct Move
@@ -39,7 +39,7 @@ public partial class History
     }
     public static void Undo()
     {
-        if (UndoMoves.Count == 0 || DisableReplay)
+        if (UndoMoves.Count == 0 || DisableReplay || cooldownOngoing)
             return;
         if (Animations.ActiveTweens.Count > 0)
         {
@@ -58,6 +58,7 @@ public partial class History
         Colors.ColorCheckedRoyalTiles(Colors.Enum.Default);
         LegalMoves.CheckedRoyals = new();
         Interaction.movesUndoInASession++;
+        MoveReplayCooldown();
     }
     private static void UndoMoveMain()
     {
@@ -71,6 +72,23 @@ public partial class History
         ModifyLastMoveInfo();
         MoveReplayGetBack(previousMove);
         UpdatePosition.DiscoveredCheckAnimation(previousMove.End, MoveReplayAnimationSpeedMultiplier);
+    }
+    private static void MoveReplayCooldown()
+    {
+        if (Animations.animationSpeed < Animations.lowAnimationDurationBoundary)
+        {
+            Timer cooldown = new() { WaitTime = Animations.lowAnimationDurationBoundary * MoveReplayAnimationSpeedMultiplier, OneShot = true };
+            cooldownOngoing = true;
+            LoadGraphics.I.AddChild(cooldown);
+            cooldown.Timeout += () =>
+            {
+                cooldownOngoing = false;
+                cooldown.QueueFree();
+            };
+            cooldown.Start();
+        }
+        else
+            cooldownOngoing = false;
     }
     private static void ModifyLastMoveInfo()
     {

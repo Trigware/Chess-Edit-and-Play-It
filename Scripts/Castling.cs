@@ -44,7 +44,7 @@ public partial class Castling : Node
 	}
 	public static void TweenCastle(Sprite2D spr, float duration, Vector2I startPosition, int endXLocal)
 	{
-		if (duration < 0.3f || !CanDoElipseAnimation(startPosition, endXLocal, duration))
+		if (duration < Animations.lowAnimationDurationBoundary || !CanDoElipseAnimation(startPosition, endXLocal, duration))
 		{
 			Animations.Tween(spr, duration, startPosition, new(endXLocal, startPosition.Y), null, null, false);
 			return;
@@ -58,7 +58,7 @@ public partial class Castling : Node
 	}
 	private static bool CanDoElipseAnimation(Vector2I startPosition, int endXLocal, float duration)
 	{
-		if (duration < 0.3f)
+		if (duration < Animations.lowAnimationDurationBoundary)
 			return false;
 		bool elipsePath = true;
 		bool shortCastle = endXLocal > startPosition.X;

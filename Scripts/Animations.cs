@@ -10,6 +10,7 @@ public partial class Animations : Update
 	public static List<Vector2I> PreviousCheckTiles = new();
 	public static Dictionary<Tween, (Sprite2D spr, bool deleteOnFinish, float? transparency)> ActiveTweens = new();
 	public static int firstCheckZone = 0;
+	public const float lowAnimationDurationBoundary = 0.3f;
 	public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale, float? endTransparency, bool deleteOnFinished, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = -1, int castlingAnimation = -1, bool promotionConfirmation = false)
 	{
 		Tween tween = spr.CreateTween();
@@ -53,6 +54,7 @@ public partial class Animations : Update
 		if (duration == 0)
 		{
 			AnimationEnd(tween, deleteOnFinished, spr, endPosition);
+			Promotion.MoveHistoryDisable = false;
 			return;
 		}
 		Timer timer = new() { WaitTime = duration, OneShot = true };

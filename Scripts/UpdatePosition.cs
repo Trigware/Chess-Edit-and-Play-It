@@ -158,7 +158,7 @@ public partial class UpdatePosition
 		for (int i = 0; i < LegalMoves.RoyalAttackers.Count; i++)
 		{
 			Vector2I attackerPosition = LegalMoves.RoyalAttackers[i];
-			if (attackerPosition != end)
+			if (attackerPosition != end || Animations.animationSpeed == 0)
 			{
 				Animations.CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i, durationMultiplier);
 				if (Animations.firstCheckZone == 0)
