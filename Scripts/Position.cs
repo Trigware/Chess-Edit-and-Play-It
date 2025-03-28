@@ -1,11 +1,12 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public partial class Position
 {
 	public static Dictionary<Vector2I, char> pieces = new();
-	public static char colorToMove = 'w', WinningPlayer = '\0', oppositeStartColorToMove = 'b';
+	public static char colorToMove, WinningPlayer = '\0', oppositeStartColorToMove = playerColors.Last();
 	public static (Vector2I target, Vector2I delete)? EnPassantInfo = null;
 	public static (Vector2I start, Vector2I end)? LastMoveInfo = null;
 	public static bool startPositionLoaded = false;
@@ -94,6 +95,7 @@ public partial class Position
 	{
 		if (startPositionLoaded)
 			return;
+		colorToMove = 'w';
         Zobrist.GenerateKeys();
         LegalMoves.IsGettingLegalMovesOnLoad = true;
 		Animations.firstCheckZone = 0;

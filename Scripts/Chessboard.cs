@@ -17,12 +17,12 @@ public partial class Chessboard : Node
 
 	public override void _Ready()
 	{
-		Position.Load(Position.FEN.Default);
+		Position.Load(Position.FEN.CheckTest);
 	}
 	public override void _Process(double delta)
 	{
 		gameviewSize = DisplayServer.WindowGetSize();
-		if (gameviewSize != oldviewSize)
+        if (gameviewSize != oldviewSize)
 		{
             Draw();
 			Animations.CancelEarly();
@@ -56,12 +56,12 @@ public partial class Chessboard : Node
 		}
 		LegalMoves.GetLegalMoves();
 	}
-	private static void DrawTile(int x, int y, int z, Node parentNode, int i = 0)
+	private static void DrawTile(int x, int y, int z, Node parentNode, float transparency = 1)
 	{
 		if (Position.pieces.ContainsKey(new(x, y)))
-			DrawTile(Position.pieces[new(x, y)].ToString(), x, y, z, parentNode, gridScale);
+			DrawTile(Position.pieces[new(x, y)].ToString(), x, y, z, parentNode, gridScale, transparency);
 	}
-	public static Sprite2D DrawTile(string name, int x, int y, int z, Node parentNode, float gridScale, int i = 0)
+	public static Sprite2D DrawTile(string name, int x, int y, int z, Node parentNode, float gridScale, float transparency = 1, int i = 0)
 	{
 		if (!LoadGraphics.textureDict.ContainsKey(name))
 		{
@@ -75,6 +75,7 @@ public partial class Chessboard : Node
         {
             tileSprite.Texture = texture;
             tileSprite.Scale = new Vector2(gridScale, gridScale);
+			tileSprite.Modulate = new(tileSprite.Modulate.R, tileSprite.Modulate.G, tileSprite.Modulate.B, transparency);
             float xFloat = x, yFloat = y;
             if (z == 3)
             {

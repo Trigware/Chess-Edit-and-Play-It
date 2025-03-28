@@ -34,7 +34,7 @@ public partial class Zobrist
     public static ulong Hash(bool undo)
     {
         if (undo)
-            return 0;
+            RepeatedPositions.Remove(LastHash);
         ulong hash = 0;
         foreach (KeyValuePair<Vector2I, char> piece in Position.pieces)
             hash ^= Squares[piece.Key] ^ Pieces[pieceString.IndexOf(piece.Value)];
@@ -48,10 +48,7 @@ public partial class Zobrist
     public static bool TriggersRepetitionRule(ulong hash, bool undo)
     {
         if (undo)
-        {
-            RepeatedPositions.Remove(LastHash);
             return false;
-        }
         int positionRepeated = 1;
         if (RepeatedPositions.ContainsKey(hash))
             positionRepeated = ++RepeatedPositions[hash];
