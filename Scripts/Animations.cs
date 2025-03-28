@@ -5,7 +5,7 @@ using System.Linq;
 
 public partial class Animations : Update
 {
-	public const float animationSpeed = 0.3f;
+	public const float animationSpeed = 0;
 	public static bool promotionUnsafe = false, CancelCheckEarly = false, CancelCastlingEarly = false;
 	public static List<Vector2I> PreviousCheckTiles = new();
 	public static Dictionary<Tween, (Sprite2D spr, bool deleteOnFinish, float? transparency)> ActiveTweens = new();
@@ -87,6 +87,7 @@ public partial class Animations : Update
 		if (deleteOnFinished)
 			spr.QueueFree();
 		spr.ZIndex = 1;
+		firstCheckZone = 0;
 		if (endPosition == null)
 			return;
 		if (Position.GameEndState != Position.EndState.Ongoing && Position.GameEndState != Position.EndState.Checkmate)
@@ -98,20 +99,22 @@ public partial class Animations : Update
 				CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i);
 		}
 	}
-	public static void CheckAnimation(int i, Node main, int j)
+	public static void CheckAnimation(int i, Node main, int j, float durationMultiplier = 1)
 	{
+		bool isCheckmate = Position.GameEndState == Position.EndState.Checkmate && History.RedoMoves.Count == 0;
 		if (animationSpeed == 0)
 		{
 			foreach (Vector2I location in LegalMoves.CheckedRoyals)
 				Colors.Set(Colors.Enum.Check, location.X, location.Y);
-			Audio.Play(Position.GameEndState == Position.EndState.Checkmate ? Audio.Enum.Checkmate : Audio.Enum.Check);
+			Audio.Play(isCheckmate ? Audio.Enum.Checkmate : Audio.Enum.Check);
 			return;
 		}
-		if (CancelCheckEarly)
+		if (LegalMoves.CheckResponseZones.Count <= j)
 			return;
-
-		List<Color> previousColors = new();
 		List<Vector2I> zone = LegalMoves.CheckResponseZones[j];
+		if (CancelCheckEarly || zone.Count < i)
+			return;
+		List<Color> previousColors = new();
 		if (j == firstCheckZone)
 			Colors.ChangeTileColorBack();
 		if (i >= zone.Count)
@@ -124,16 +127,16 @@ public partial class Animations : Update
 
 		if (i >= LegalMoves.maxResponseRange)
 		{
-			Audio.Play(Position.GameEndState == Position.EndState.Checkmate ? Audio.Enum.Checkmate : Audio.Enum.Check);
-			if (Position.GameEndState == Position.EndState.Checkmate)
+			Audio.Play(isCheckmate ? Audio.Enum.Checkmate : Audio.Enum.Check);
+			if (isCheckmate)
 				CheckmateColors();
 			return;
 		}
-		Timer timer = new() { WaitTime = animationSpeed/LegalMoves.maxResponseRange, OneShot = true };
+		Timer timer = new() { WaitTime = animationSpeed/LegalMoves.maxResponseRange*durationMultiplier, OneShot = true };
 		main.AddChild(timer);
 		timer.Timeout += () =>
 		{
-			CheckAnimation(i+1, main, j);
+			CheckAnimation(i+1, main, j, durationMultiplier);
 		};
 		timer.Start();
 	}
@@ -160,12 +163,17 @@ public partial class Animations : Update
 			ActiveTweens.Remove(ActiveTweens.Keys.Last());
 		}
 	}
+	public static void ActiveAllCheckAnimationZones()
+	{
+		for (int i = 0; i < LegalMoves.CheckResponseZones.Count; i++)
+			CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i, 1);
+	}
 	public static void CheckAnimationCancelEarly(Vector2I flatMousePosition)
 	{
-		if (LegalMoves.CheckedRoyals.Contains(flatMousePosition) && !Animations.CancelCheckEarly && !Audio.playedCheck)
+		if (LegalMoves.CheckedRoyals.Contains(flatMousePosition) && !CancelCheckEarly && !Audio.playedCheck)
 		{
 			Colors.ChangeTileColorBack();
-			Animations.CancelCheckEarly = true;
+			CancelCheckEarly = true;
 			Audio.Play(Audio.Enum.Check);
 		}
 	}

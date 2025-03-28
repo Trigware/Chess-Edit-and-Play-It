@@ -152,7 +152,7 @@ public partial class UpdatePosition
 	{
 		return Chessboard.tiles[new(location.X, location.Y, 1)];
 	}
-	private static void DiscoveredCheckAnimation(Vector2I end)
+	public static void DiscoveredCheckAnimation(Vector2I end, float durationMultiplier = 1)
 	{
 		Animations.firstCheckZone = 0;
 		for (int i = 0; i < LegalMoves.RoyalAttackers.Count; i++)
@@ -160,7 +160,7 @@ public partial class UpdatePosition
 			Vector2I attackerPosition = LegalMoves.RoyalAttackers[i];
 			if (attackerPosition != end)
 			{
-				Animations.CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i);
+				Animations.CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i, durationMultiplier);
 				if (Animations.firstCheckZone == 0)
 					Animations.firstCheckZone = i;
 			}	

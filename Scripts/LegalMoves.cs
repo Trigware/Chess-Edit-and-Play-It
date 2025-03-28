@@ -35,6 +35,8 @@ public partial class LegalMoves
 		{
 			PawnLeapMovesInfo = new(); PawnLeapMoves = new(); EnPassantMoves = new(); PromotionMoves = new(); CastlingMoves = new(); CastleeMoves = new();
 		}
+		if (!opponent && Position.GameEndState != Position.EndState.Ongoing)
+			return new();
 		foreach (KeyValuePair<Vector2I, char> piece in Position.pieces)
 		{
 			if (GetPieceColor(piece.Value) != Position.colorToMove)
@@ -79,11 +81,7 @@ public partial class LegalMoves
 		Animations.PreviousCheckTiles = new();
         if (Position.InCheck)
             Colors.ResetAllColors();
-		if (IsGettingLegalMovesOnLoad)
-		{
-            for (int i = 0; i < CheckResponseZones.Count; i++)
-                Animations.CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i);
-        }
+		if (IsGettingLegalMovesOnLoad) Animations.ActiveAllCheckAnimationZones();
 
 		if (Position.GameEndState == Position.EndState.Stalemate)
 			Audio.Play(Audio.Enum.Stalemate);
