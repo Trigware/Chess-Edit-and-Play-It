@@ -7,13 +7,15 @@ public partial class UpdatePosition
 	private static (Vector2I target, Vector2I delete)? previousEnPassantInfo;
 	private static char enPassantDelete;
 	private static int previousHalfmoveClock;
+	public static bool LastMoveCapture;
 	public static void MovePiece(Vector2I start, Vector2I end, int leapMoveIndex, int enPassantIndex, int promotionIndex, int castlingIndex)
 	{
 		bool enPassant = Position.EnPassantInfo != null && enPassantIndex > -1;
 		char capturedPiece = Position.pieces.TryGetValue(end, out char val) ? val : '\0', pieceMoved = Position.pieces[start];
+		LastMoveCapture = enPassant || capturedPiece != '\0';
 		HandleEnPassantAndClocks(enPassant, leapMoveIndex, start, end, pieceMoved);
 		MovePiecesInternally(enPassant, castlingIndex, promotionIndex, start, end);
-		UpdateForUserFeatures(start, end, promotionIndex != -1, capturedPiece, pieceMoved);
+		UpdateForUserFeatures(start, end, promotionIndex != -1, capturedPiece, pieceMoved, castlingIndex);
 		NextMovePreparations(promotionIndex, end);
 		DiscoveredCheckAnimation(end);
 	}
@@ -29,6 +31,7 @@ public partial class UpdatePosition
 	{
         Audio.playedCheck = false;
         previousEnPassantInfo = Position.EnPassantInfo;
+        Animations.CheckAnimationsStarted = new();
         enPassantDelete = enPassant ? Position.pieces[(previousEnPassantInfo ?? default).delete] : '\0';
         previousHalfmoveClock = Position.HalfmoveClock;
         if (enPassant)
@@ -53,7 +56,7 @@ public partial class UpdatePosition
 			MoveCastlee(LegalMoves.CastleeMoves[castlingIndex]);
 		EditPiecePositions(start, end, handledSprite, !enPassant && castlingIndex == -1, promotionIndex > -1, castlingIndex > -1, true);
 	}
-	private static void UpdateForUserFeatures(Vector2I start, Vector2I end, bool isPromoting, char capturedPiece, char pieceMoved)
+	private static void UpdateForUserFeatures(Vector2I start, Vector2I end, bool isPromoting, char capturedPiece, char pieceMoved, int castlingIndex)
 	{
 		Interaction.Deselect(start);
 		if (Position.InCheck)
@@ -61,7 +64,7 @@ public partial class UpdatePosition
 		Position.LastMoveInfo = (start, end);
 		if (!isPromoting || Promotion.PromotionOptionsPieces.Count == 0)
 			Interaction.PreviousMoveTiles(Colors.Enum.PreviousMove);
-		History.Play(start, end, capturedPiece, isPromoting ? pieceMoved : '\0', previousEnPassantInfo, enPassantDelete, previousHalfmoveClock);
+		History.Play(start, end, capturedPiece, isPromoting ? pieceMoved : '\0', previousEnPassantInfo, enPassantDelete, previousHalfmoveClock, castlingIndex == -1 ? null : LegalMoves.CastleeMoves[castlingIndex]);
 	}
 	private static void NextMovePreparations(int promotionIndex, Vector2I end)
 	{
@@ -130,8 +133,8 @@ public partial class UpdatePosition
 		else
 			DeletePiece(start, end, playSound, true, handledPiece, handledSprite);
 		if (castling)
-			Castling.TweenCastle(handledSprite, Animations.animationSpeed, start, end.X);
-		else
+            Castling.TweenCastle(handledSprite, Animations.animationSpeed, start, end.X);
+        else
 		{
 			Vector2I animationEnd = promotionUndo ? new(start.X, end.Y + (Position.colorToMove == 'w' ? 2 : -2)) : end;
 			Animations.Tween(handledSprite, Animations.animationSpeed * durationMultiplier, start, animationEnd, null, promotion || promotionUndo ? 0 : null, promotion || promotionUndo, promotion);

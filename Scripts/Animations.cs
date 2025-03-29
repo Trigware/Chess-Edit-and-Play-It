@@ -5,9 +5,9 @@ using System.Linq;
 
 public partial class Animations : Update
 {
-	public const float animationSpeed = 0;
+	public const float animationSpeed = 0.3f;
 	public static bool promotionUnsafe = false, CancelCheckEarly = false, CancelCastlingEarly = false;
-	public static List<Vector2I> PreviousCheckTiles = new();
+	public static List<Vector2I> PreviousCheckTiles = new(), CheckAnimationsStarted;
 	public static Dictionary<Tween, (Sprite2D spr, bool deleteOnFinish, float? transparency)> ActiveTweens = new();
 	public static int firstCheckZone = 0;
 	public const float lowAnimationDurationBoundary = 0.3f;
@@ -65,7 +65,8 @@ public partial class Animations : Update
 			if (chainIterator != -1 && chainIterator < Castling.elipseQuality && !CancelCastlingEarly)
 			{
 				castlingAnimation = castlingAnimation == Castling.endXpositions.Count ? castlingAnimation - 1 : castlingAnimation;
-				Tween(spr, animationSpeed/Castling.elipseQuality, startPosition, Castling.CalculatePointOnElipse(chainIterator+1, startPosition, Castling.endXpositions[castlingAnimation], Castling.elipsePathUp[castlingAnimation]), null, null, false, false, false, chainIterator+1, castlingAnimation);
+				Tween(spr, animationSpeed / Castling.elipseQuality, startPosition, Castling.CalculatePointOnElipse(chainIterator + 1, startPosition, Castling.endXpositions[castlingAnimation], Castling.elipsePathUp[castlingAnimation]), null, null, false, false, false, chainIterator + 1, castlingAnimation);
+				ActiveTweens.Remove(tween);
 				return;
 			}
 			promotionUnsafe = false;
@@ -116,6 +117,11 @@ public partial class Animations : Update
 		List<Vector2I> zone = LegalMoves.CheckResponseZones[j];
 		if (CancelCheckEarly || zone.Count < i)
 			return;
+		if (i == 1 && !CheckAnimationsStarted.Contains(LegalMoves.RoyalAttackers[j]))
+			CheckAnimationsStarted.Add(LegalMoves.RoyalAttackers[j]);
+		else if (i == 1)
+			return;
+
 		List<Color> previousColors = new();
 		if (j == firstCheckZone)
 			Colors.ChangeTileColorBack();

@@ -6,10 +6,9 @@ public partial class Interaction : Chessboard
 	public static Vector3I? selectedTile = null;
 	private bool leftMouseButtonPressed = false, leftMouseOld = false;
 	public static int movesUndoInASession = 0;
-	public static bool undoPending = false;
 	public override void _Process(double delta)
 	{
-		if ((Input.IsKeyPressed(Key.Z) || undoPending) && !Promotion.MoveHistoryDisable)
+		if ((Input.IsKeyPressed(Key.Z) && !Promotion.MoveHistoryDisable) || History.undoPending)
             History.Undo();
         else
 			movesUndoInASession = 0;

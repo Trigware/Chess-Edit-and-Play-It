@@ -80,6 +80,8 @@ public partial class Castling : Node
 			endX = start.X - endX;
 			direction = -1;
 		}
+		else
+			endX -= start.X;
 
 		float angle = (float)elipsePointUnit / elipseQuality * Mathf.Pi;
 		float xRadius = Mathf.Abs(endX) / 2f;
@@ -87,6 +89,6 @@ public partial class Castling : Node
 
 		float xPoint = xRadius * Mathf.Cos(angle) - xRadius;
 		float yPoint = yRadius * Mathf.Sin(angle);
-		return start + new Vector2(xPoint * direction, -yPoint);
+        return start + new Vector2(xPoint * direction, -yPoint);
 	}
 }

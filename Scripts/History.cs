@@ -4,7 +4,7 @@ using Godot;
 public partial class History
 {
     public static Stack<Move> UndoMoves = new(), RedoMoves = new();
-    public static bool DisableReplay = false, cooldownOngoing = false;
+    public static bool DisableReplay = false, cooldownOngoing = false, undoPending = false;
     private static float MoveReplayAnimationSpeedMultiplier = 0.75f;
 
     public struct Move
@@ -12,12 +12,14 @@ public partial class History
         public Vector2I Start, End;
         public char CapturedPiece, PiecePromotedFrom, EnPassantCapture;
         public (Vector2I target, Vector2I delete)? EnPassantInfo;
+        public (Vector2I start, Vector2I end)? CastleeInfo;
         public int HalfmoveClock;
-        public Move(Vector2I start, Vector2I end, char capturedPiece, char piecePromotedFrom, (Vector2I target, Vector2I delete)? enPassantInfo, char enPassantCapture, int halfmoveClock)
+        public Move(Vector2I start, Vector2I end, char capturedPiece, char piecePromotedFrom, (Vector2I target, Vector2I delete)? enPassantInfo, char enPassantCapture, int halfmoveClock, (Vector2I start, Vector2I end)? castleeInfo)
         {
             Start = start; End = end;
             CapturedPiece = capturedPiece; PiecePromotedFrom = piecePromotedFrom;
             EnPassantInfo = enPassantInfo; EnPassantCapture = enPassantCapture;
+            CastleeInfo = castleeInfo;
             HalfmoveClock = halfmoveClock;
         }
         public (Vector2I, Vector2I) GetTuple()
@@ -29,29 +31,32 @@ public partial class History
             return $"Start: {Start.ToString()}, End: {End.ToString()}\n" +
                    $"Captured Piece: {(CapturedPiece == '\0' ? "none" : CapturedPiece)}, Piece Promoted From: {(PiecePromotedFrom == '\0' ? "none" : PiecePromotedFrom)}\n" +
                    $"EnPassantInfo: {(EnPassantInfo == null ? "none" : EnPassantInfo)}, EnPassantCapture: {(EnPassantCapture == '\0' ? "none" : EnPassantCapture)}\n" +
+                   $"CastleeInfo: {(CastleeInfo == null ? "none" : CastleeInfo)}\n" + 
                    $"Halfmove Clock: {HalfmoveClock}";
         }
     }
-    public static void Play(Vector2I start, Vector2I end, char capturedPiece, char piecePromotedFrom, (Vector2I target, Vector2I delete)? enPassantInfo, char enPassantCapture, int halfmoveClock)
+    public static void Play(Vector2I start, Vector2I end, char capturedPiece, char piecePromotedFrom, (Vector2I target, Vector2I delete)? enPassantInfo, char enPassantCapture, int halfmoveClock, (Vector2I start, Vector2I end)? castleeInfo)
     {
         RedoMoves = new();
-        UndoMoves.Push(new(start, end, capturedPiece, piecePromotedFrom, enPassantInfo, enPassantCapture, halfmoveClock));
+        UndoMoves.Push(new(start, end, capturedPiece, piecePromotedFrom, enPassantInfo, enPassantCapture, halfmoveClock, castleeInfo));
     }
     public static void Undo()
     {
+        Animations.CheckAnimationsStarted = new();
+        if ((UpdatePosition.LastMoveCapture && Animations.ActiveTweens.Count > 0) || Castling.endXpositions.Count > 0)
+        {
+            undoPending = true;
+            return;
+        } else
+            undoPending = false;
         if (UndoMoves.Count == 0 || DisableReplay || cooldownOngoing)
             return;
-        if (Animations.ActiveTweens.Count > 0)
-        {
-            Interaction.undoPending = true;
-            return;
-        }
         UpdateTileColorsAndUndoTimer();
         UndoMoveMain();
     }
     private static void UpdateTileColorsAndUndoTimer()
     {
-        Interaction.undoPending = false;
+        UpdatePosition.LastMoveCapture = false;
         Colors.ChangeTileColorBack();
         MoveReplayAnimationSpeedMultiplier = Mathf.Lerp(1, 0.3f, Mathf.Min(10f, Interaction.movesUndoInASession) / 10);
         DisableReplay = true;
@@ -75,20 +80,15 @@ public partial class History
     }
     private static void MoveReplayCooldown()
     {
-        if (Animations.animationSpeed < Animations.lowAnimationDurationBoundary)
+        Timer cooldown = new() { WaitTime = Mathf.Max(Animations.lowAnimationDurationBoundary, Animations.animationSpeed) * MoveReplayAnimationSpeedMultiplier, OneShot = true };
+        cooldownOngoing = true;
+        LoadGraphics.I.AddChild(cooldown);
+        cooldown.Timeout += () =>
         {
-            Timer cooldown = new() { WaitTime = Animations.lowAnimationDurationBoundary * MoveReplayAnimationSpeedMultiplier, OneShot = true };
-            cooldownOngoing = true;
-            LoadGraphics.I.AddChild(cooldown);
-            cooldown.Timeout += () =>
-            {
-                cooldownOngoing = false;
-                cooldown.QueueFree();
-            };
-            cooldown.Start();
-        }
-        else
             cooldownOngoing = false;
+            cooldown.QueueFree();
+        };
+        cooldown.Start();
     }
     private static void ModifyLastMoveInfo()
     {
@@ -105,18 +105,19 @@ public partial class History
     }
     private static void MoveReplayGetBack(Move replayedMove)
     {
-        bool promotion = replayedMove.PiecePromotedFrom != '\0', enPassant = replayedMove.EnPassantCapture != '\0', capture = replayedMove.CapturedPiece != '\0';
+        bool promotion = replayedMove.PiecePromotedFrom != '\0', enPassant = replayedMove.EnPassantCapture != '\0', capture = replayedMove.CapturedPiece != '\0', castling = replayedMove.CastleeInfo != null;
+        LegalMoves.ReverseColor(Position.colorToMove);
         Audio.playedCheck = false;
-        Audio.silenceAudio = promotion || enPassant;
-        ReplayRegularMove(replayedMove, capture, promotion);
+        Audio.silenceAudio = promotion || enPassant || castling;
+        ReplayRegularMove(replayedMove, capture, promotion, castling);
         if (promotion) ReplayPromotion(replayedMove);
         if (enPassant) ReplayEnPassant(replayedMove);
-        LegalMoves.ReverseColor(Position.colorToMove);
+        if (castling) ReplayCastling(replayedMove);
         LegalMoves.GetLegalMoves(false, true);
     }
-    private static void ReplayRegularMove(Move replayedMove, bool capture, bool promotion)
+    private static void ReplayRegularMove(Move replayedMove, bool capture, bool promotion, bool castling)
     {
-        UpdatePosition.EditPiecePositions(replayedMove.End, replayedMove.Start, Chessboard.GetPiece(replayedMove.End), false, false, false, false, replayedMove.PiecePromotedFrom, promotion, MoveReplayAnimationSpeedMultiplier);
+        UpdatePosition.EditPiecePositions(replayedMove.End, replayedMove.Start, Chessboard.GetPiece(replayedMove.End), false, false, castling, false, replayedMove.PiecePromotedFrom, promotion, MoveReplayAnimationSpeedMultiplier);
         if (!capture)
             Audio.Play(Audio.Enum.Move);
         else
@@ -130,16 +131,25 @@ public partial class History
     }
     private static void ReplayPromotion(Move replayedMove)
     {
-        Audio.silenceAudio = false;
-        Audio.Play(Audio.Enum.Promotion);
         Vector2I promotionAnimationStart = new(replayedMove.Start.X, replayedMove.End.Y + (Position.colorToMove == 'w' ? 2 : -2));
         Promotion.OptionChosen(replayedMove.PiecePromotedFrom, replayedMove.Start, promotionAnimationStart, 1, 1, MoveReplayAnimationSpeedMultiplier);
+        ReplayMoveAudio(Audio.Enum.Promotion);
     }
     private static void ReplayEnPassant(Move replayedMove)
     {
-        Audio.silenceAudio = false;
         Vector2I enPassantDelete = (replayedMove.EnPassantInfo ?? default).delete;
         Animations.Tween(UpdatePosition.AddPiece(enPassantDelete, replayedMove.EnPassantCapture, Chessboard.gridScale, 0), Animations.animationSpeed * MoveReplayAnimationSpeedMultiplier, replayedMove.End, null, 1, 1, false);
-        Audio.Play(Audio.Enum.Capture);
+        ReplayMoveAudio(Audio.Enum.Capture);
+    }
+    private static void ReplayCastling(Move replayedMove)
+    {
+        (Vector2I end, Vector2I start) castleeReplay = replayedMove.CastleeInfo ?? default;
+        UpdatePosition.EditPiecePositions(castleeReplay.start, castleeReplay.end, Chessboard.tiles[new(castleeReplay.start.X, castleeReplay.start.Y, 1)], false, false, false, false);
+        ReplayMoveAudio(Audio.Enum.Castle);
+    }
+    private static void ReplayMoveAudio(Audio.Enum audio)
+    {
+        Audio.silenceAudio = false;
+        Audio.Play(audio);
     }
 }
