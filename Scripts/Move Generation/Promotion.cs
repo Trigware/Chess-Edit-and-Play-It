@@ -47,21 +47,20 @@ public partial class Promotion
 	public static void Promote(Vector2I promotionPosition)
 	{
 		promotionPending = promotionPosition;
-        GD.Print(Animations.ActiveTweens.Count);
         if ((!Animations.promotionUnsafe || Animations.animationSpeed == 0) && Animations.ActiveTweens.Count == 0)
 		{
 			PromoteLogic(promotionPosition);
 			promotionPending = null;
 		}
 	}
-	public static void AutomaticPromotion(Vector2I location)
+	public static void AutomaticPromotion(Vector2I location, char piecePromotedTo)
 	{
-		char chosenPiece = Position.colorToMove == 'w' ? CanBePromotedTo[0] : Convert.ToChar(CanBePromotedTo[0].ToString().ToLower());
+		char chosenPiece = Position.colorToMove == 'w' ? piecePromotedTo : Convert.ToChar(piecePromotedTo.ToString().ToLower());
 		Position.pieces[location] = chosenPiece;
 		OptionChosen(chosenPiece, location, location, 1, 1);
-		LegalMoves.ReverseColor(Position.colorToMove);
-		LegalMoves.GetLegalMoves();
-	}
+        LegalMoves.ReverseColor(Position.colorToMove);
+        LegalMoves.GetLegalMoves();
+    }
 	public static void OptionChosen(char chosenPiece, Vector2I promotionLocation, Vector2I animationStartPosition, float endTransparency, int tileLayer, float durationMultiplier = 2)
 	{
 		Sprite2D sprite = CreateOptionPiece(chosenPiece, animationStartPosition);
@@ -80,7 +79,7 @@ public partial class Promotion
 			Texture = LoadGraphics.textureDict[piece.ToString()],
 			Position = Chessboard.CalculateTilePosition(position.X, position.Y),
 			Modulate = new Color(1, 1, 1, 0),
-			Scale = new Vector2(Chessboard.gridScale, Chessboard.gridScale) / Update.svgScale
+			Scale = new Vector2(Chessboard.gridScale, Chessboard.gridScale) / Chessboard.svgScale
 		};
 	}
 	private static void PromoteLogic(Vector2I promotionPosition)
@@ -105,7 +104,10 @@ public partial class Promotion
 			Chessboard.tiles.Remove(new(location.X, location.Y, 2));
 		}
 		Chessboard.tiles.Add(new(originalPromotionPosition.X, originalPromotionPosition.Y, 1), selectedPromotionSprite);
-		Position.pieces.Add(originalPromotionPosition, PromotionOptionsPieces[selectedIndex]);
+		char piecePromotedTo = PromotionOptionsPieces[selectedIndex];
+		Position.pieces.Add(originalPromotionPosition, piecePromotedTo);
+		UpdatePosition.LatestMove.PiecePromotedTo = piecePromotedTo;
+		History.Play(UpdatePosition.LatestMove);
 		RestoreObscuredPieces();
 		PromotionOptionsPieces = new(); PromotionOptionsPositions = new();
 		LegalMoves.GetLegalMoves();

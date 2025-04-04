@@ -1,11 +1,12 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public partial class Position
 {
 	public static Dictionary<Vector2I, char> pieces = new();
-	public static char colorToMove = 'w', WinningPlayer = '\0', oppositeStartColorToMove = 'b';
+	public static char colorToMove, WinningPlayer = '\0', oppositeStartColorToMove = playerColors.Last();
 	public static (Vector2I target, Vector2I delete)? EnPassantInfo = null;
 	public static (Vector2I start, Vector2I end)? LastMoveInfo = null;
 	public static bool startPositionLoaded = false;
@@ -23,7 +24,7 @@ public partial class Position
             FEN.NoRange => "8/1n6/6k1/8/3N4/8/5K2/8 w - - 0 1",
             FEN.Range => "8/8/3q1b2/8/3R1r2/8/3Q1B2/8 w - - 0 1",
             FEN.PawnTest => "8/pppppppp/8/8/8/8/PPPPPPPP/8 w - - 0 1",
-            FEN.PromotionTest => "2q5/2qP3k/2q5/2q5/2Q5/2Q4K/2Qp4/2Q5 b - - 0 1",
+            FEN.PromotionTest => "8/PPPPPPPP/Q/8/8/q/pppppppp/8 w - - 0 1",
             FEN.TagTest => "4k3/4K///r w - - 0 1",
             FEN.CheckTest => "4k//1R/////4k",
             FEN.DoubleCheck => "q3K//R//4q///4k",
@@ -33,10 +34,10 @@ public partial class Position
             FEN.ProtectedBlock => "4K/3q/3r",
             FEN.PawnRoyalBlock => "4k//3PPP b",
             FEN.EnPassantBlock => "/2p/3p/KP5r/1R3p1k//4P1P",
-            FEN.CastlingTest => "r3k2r///////R3P2R w KQkq",
+            FEN.CastlingTest => "r3k2r/8/8/8/8/8/PPPP4/R3K2R w KQkq - 0 1",
             FEN.Checkmate => "3qKq",
             FEN.KingVsKing => "K//k",
-            FEN.KingVsKingKnightKnight => "KNN//knn",
+            FEN.KingVsKingKnightKnight => "KNN//nn",
             FEN.TwoRoyalsUnderAttack => "4K///4q////4K",
             FEN.MoveFlagFilterBug => "/q1P1K//////4k",
 			FEN.PerpetualCheck => "4k////Q///4K b",
@@ -44,6 +45,9 @@ public partial class Position
 			FEN.WrongPin => "4k/3r/4Q/5K/",
 			FEN.BrokenCheckAnimation => "2R1k//4Q",
 			FEN.DoubleCheckDiscovered => "4k//4N/4R",
+			FEN.TagRemovalTest => "r3k2r/8/R/8/8/r/8/R3K2R w KQkq - 0 1",
+			FEN.UndoCheckAnimationByCapturedAttacker => "4k3/8/8/8/8/2R5/2n5/4K3 w - - 0 1",
+			FEN.KingVsQueenQueen => "4K3/1qq5/8/8/8/8/8/8 w - - 0 1",
             _ => ""
         };
         Load(fenCall);
@@ -75,6 +79,9 @@ public partial class Position
 		WrongPin,
 		BrokenCheckAnimation,
 		DoubleCheckDiscovered,
+		TagRemovalTest,
+		UndoCheckAnimationByCapturedAttacker,
+		KingVsQueenQueen,
         Empty
     }
     public enum EndState
@@ -94,6 +101,7 @@ public partial class Position
 	{
 		if (startPositionLoaded)
 			return;
+		colorToMove = 'w';
         Zobrist.GenerateKeys();
         LegalMoves.IsGettingLegalMovesOnLoad = true;
 		Animations.firstCheckZone = 0;

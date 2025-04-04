@@ -35,6 +35,8 @@ public partial class LegalMoves
 		{
 			PawnLeapMovesInfo = new(); PawnLeapMoves = new(); EnPassantMoves = new(); PromotionMoves = new(); CastlingMoves = new(); CastleeMoves = new();
 		}
+		if (!opponent && History.RedoMoves.Count > 0 && Position.GameEndState != Position.EndState.Ongoing)
+			return new();
 		foreach (KeyValuePair<Vector2I, char> piece in Position.pieces)
 		{
 			if (GetPieceColor(piece.Value) != Position.colorToMove)
@@ -47,7 +49,7 @@ public partial class LegalMoves
 		if (!opponent)
 		{
             legalMoves = legalMovesLocal;
-			PostMoveGeneration(undo);
+            PostMoveGeneration(undo);
         }
         return legalMovesLocal;
 	}
@@ -60,9 +62,16 @@ public partial class LegalMoves
 	}
 	private static void PostMoveGeneration(bool undo)
 	{
+		if (Position.GameEndState != Position.EndState.Ongoing)
+		{
+			if (Position.GameEndState == Position.EndState.Checkmate) return;
+			Audio.Play(Position.GameEndState == Position.EndState.Stalemate ? Audio.Enum.Stalemate : Audio.Enum.GameEnd);
+            return;
+        }
+
         Position.EndState[] NotDefaultGameEndSound = new Position.EndState[] { Position.EndState.Ongoing, Position.EndState.Checkmate, Position.EndState.Stalemate };
 		Position.EndState[] WinLoss = new Position.EndState[] { Position.EndState.Checkmate, Position.EndState.Timeout, Position.EndState.Resignation };
-		
+
         Position.InCheck = CheckResponseZones.Count >= 1;
         if (legalMoves.Count == 0)
             Position.GameEndState = Position.InCheck ? Position.EndState.Checkmate : Position.EndState.Stalemate;
@@ -79,11 +88,7 @@ public partial class LegalMoves
 		Animations.PreviousCheckTiles = new();
         if (Position.InCheck)
             Colors.ResetAllColors();
-		if (IsGettingLegalMovesOnLoad)
-		{
-            for (int i = 0; i < CheckResponseZones.Count; i++)
-                Animations.CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i);
-        }
+		if (IsGettingLegalMovesOnLoad) Animations.ActiveAllCheckAnimationZones();
 
 		if (Position.GameEndState == Position.EndState.Stalemate)
 			Audio.Play(Audio.Enum.Stalemate);

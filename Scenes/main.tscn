@@ -1,38 +1,18 @@
 [gd_scene load_steps=5 format=3 uid="uid://b1a51vags0u1x"]
 
-[ext_resource type="Script" path="res://Scripts/LoadGraphics.cs" id="1_coymj"]
-[ext_resource type="Script" path="res://Scripts/Chessboard.cs" id="2_ogc18"]
-[ext_resource type="Script" path="res://Scripts/Interaction.cs" id="8_pbtar"]
-[ext_resource type="Script" path="res://Scripts/Audio.cs" id="14_qbwyj"]
+[ext_resource type="Script" path="res://Scripts/Asset Handling/LoadGraphics.cs" id="1_coymj"]
+[ext_resource type="Script" path="res://Scripts/Sprite Maintenance/Chessboard.cs" id="2_ogc18"]
+[ext_resource type="Script" path="res://Scripts/Sprite Maintenance/Interaction.cs" id="8_pbtar"]
+[ext_resource type="Script" path="res://Scripts/Asset Handling/Audio.cs" id="14_qbwyj"]
 
-[node name="Main" type="Node"]
+[node name="Graphics Root" type="Node"]
 script = ExtResource("1_coymj")
 
 [node name="Chessboard" type="Node" parent="."]
 script = ExtResource("2_ogc18")
 
-[node name="Load" type="Node" parent="Chessboard"]
-
-[node name="Update" type="Node" parent="Chessboard"]
-
-[node name="Animations" type="Node" parent="Chessboard/Update"]
-
-[node name="Pieces" type="Node" parent="Chessboard/Update"]
-
-[node name="Tags" type="Node" parent="Chessboard/Update"]
-
 [node name="Interaction" type="Node" parent="."]
 script = ExtResource("8_pbtar")
 
-[node name="Legal Moves" type="Node" parent="."]
-
-[node name="Pieces" type="Node" parent="Legal Moves"]
-
-[node name="Promotions" type="Node" parent="Legal Moves"]
-
-[node name="Castling" type="Node" parent="Legal Moves"]
-
-[node name="Audio" type="Node" parent="."]
-
-[node name="Audio Player" type="AudioStreamPlayer" parent="Audio"]
+[node name="Audio Player" type="AudioStreamPlayer" parent="."]
 script = ExtResource("14_qbwyj")

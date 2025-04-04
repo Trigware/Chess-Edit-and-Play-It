@@ -36,7 +36,7 @@ public partial class PieceMoves : LegalMoves
 				break;
 			char targetColor = GetPieceColor(addedFlatPosition);
 			if (RoyalDangerRestriction(opponent, isMovedPieceRoyal, addedFlatPosition, piece.Key))
-            {
+			{
 				if (targetColor == Position.colorToMove)
 					break;
 				else
@@ -44,20 +44,23 @@ public partial class PieceMoves : LegalMoves
 			}
 			bool promotion = false;
 			if (isPawn && AnalysePawnMove(dirIter, range, addedFlatPosition, pieceColor, legalCount + rangeMoves.Count, opponent, piece, out promotion)) break;
-			if (ReachedSameColor(targetColor, opponent, addedFlatPosition, pinnedPieceMoveAnalyse, dir, pieceRange - range)) break;
-			if (!opponent && BlockMovementForPinnedPiece(piece.Key, addedFlatPosition))
+			if (ReachedSameColor(targetColor, opponent, addedFlatPosition, pinnedPieceMoveAnalyse, dir, pieceRange - range))
 			{
-				if (promotion)
-					PromotionMoves.RemoveAt(PromotionMoves.Count - 1);
+                RemovePromotionAttribute(promotion);
+                break;
+            }
+            if (!opponent && BlockMovementForPinnedPiece(piece.Key, addedFlatPosition))
+			{
+				RemovePromotionAttribute(promotion);
 				continue;
 			}
 			bool isTargetRoyal = IsRoyal(addedFlatPosition);
 			if (DetectRoyalAttack(isTargetRoyal, opponent, pinnedPieceMoveAnalyse, beyondRoyalAnalyse, rangeMoves, piece.Key, addedFlatPosition))
 			{
-                rangeMoves.Add((piece.Key, addedFlatPosition));
-                continue;
+				rangeMoves.Add((piece.Key, addedFlatPosition));
+				continue;
 			}
-            if (!pinnedPieceMoveAnalyse)
+			if (!pinnedPieceMoveAnalyse)
 				rangeMoves.Add((piece.Key, addedFlatPosition));
 			else if (opponent)
 				PinnedPieceZones.Last().Add(addedFlatPosition);
@@ -80,14 +83,14 @@ public partial class PieceMoves : LegalMoves
 	private static bool ReachedSameColor(char targetColor, bool opponent, Vector2I addedFlatPosition, bool pinnedPieceMoveAnalyse, Vector2I dir, int range)
 	{
 		if (targetColor != Position.colorToMove) return false;
-        if (opponent)
-            ProtectedPieces.Add(addedFlatPosition);
-        if (opponent && Position.EnPassantInfo != null && addedFlatPosition == (Position.EnPassantInfo ?? default).delete && CanMeetRoyal(addedFlatPosition, dir, range))
-            EnPassantBlocked = true;
-        if (pinnedPieceMoveAnalyse)
-            PinnedPieceZones.RemoveAt(PinnedPieceZones.Count - 1);
+		if (opponent)
+			ProtectedPieces.Add(addedFlatPosition);
+		if (opponent && Position.EnPassantInfo != null && addedFlatPosition == (Position.EnPassantInfo ?? default).delete && CanMeetRoyal(addedFlatPosition, dir, range))
+			EnPassantBlocked = true;
+		if (pinnedPieceMoveAnalyse)
+			PinnedPieceZones.RemoveAt(PinnedPieceZones.Count - 1);
 		return true;
-    }
+	}
 	private static bool BlockMovementForPinnedPiece(Vector2I start, Vector2I end)
 	{
 		int pinnedPieceZone = -1;
@@ -151,9 +154,9 @@ public partial class PieceMoves : LegalMoves
 		if (enPassant)
 		{
 			(Vector2I target, Vector2I delete) enPassantNotNull = Position.EnPassantInfo ?? default;
-            enPassant = addedFlatPosition == enPassantNotNull.target && GetPieceColor(enPassantNotNull.delete) != Position.colorToMove && !EnPassantBlocked;
-        }
-        bool targetCapture = Position.pieces.TryGetValue(addedFlatPosition, out _) || enPassant || opponent;
+			enPassant = addedFlatPosition == enPassantNotNull.target && GetPieceColor(enPassantNotNull.delete) != Position.colorToMove && !EnPassantBlocked;
+		}
+		bool targetCapture = Position.pieces.TryGetValue(addedFlatPosition, out _) || enPassant || opponent;
 		if (dirIter == 0 && targetCapture)
 			return true;
 		if (dirIter > 0 && !targetCapture)
@@ -183,26 +186,31 @@ public partial class PieceMoves : LegalMoves
 	{
 		if (opponent)
 			return false;
-        if (isMovedPieceRoyal && (OpponentMoves.Contains(addedFlatPosition) || CheckRoyalsCount > 1 || ProtectedPieces.Contains(addedFlatPosition)))
+		if (isMovedPieceRoyal && (OpponentMoves.Contains(addedFlatPosition) || CheckRoyalsCount > 1 || ProtectedPieces.Contains(addedFlatPosition)))
 			return true;
 		if (!isMovedPieceRoyal && !SuccessfulResponseInEveryZone(addedFlatPosition))
 			return true;
 		return CheckResponseZones.Count > 0 && isMovedPieceRoyal && !CheckedRoyals.Contains(start);
-    }
+	}
 	private static bool DetectRoyalAttack(bool isTargetRoyal, bool opponent, bool pinnedPieceMoveAnalyse, bool beyondRoyalAnalyse, List<(Vector2I, Vector2I)> rangeMoves, Vector2I start, Vector2I end)
-    {
+	{
 		if (!(isTargetRoyal && opponent && !pinnedPieceMoveAnalyse && !beyondRoyalAnalyse))
 			return false;
-        CheckResponseZones.Add(new() { start });
-        CheckResponseZones.Last().AddRange(GetOnlyTargets(rangeMoves));
-        int responseCount = CheckResponseZones.Last().Count();
-        if (responseCount > maxResponseRange)
-            maxResponseRange = responseCount;
-        if (!CheckedRoyals.Contains(end))
-            CheckRoyalsCount++;
-        CheckedRoyals.Add(end);
-        RoyalAttackers.Add(start);
-        beyondRoyalAnalyse = true;
+		CheckResponseZones.Add(new() { start });
+		CheckResponseZones.Last().AddRange(GetOnlyTargets(rangeMoves));
+		int responseCount = CheckResponseZones.Last().Count();
+		if (responseCount > maxResponseRange)
+			maxResponseRange = responseCount;
+		if (!CheckedRoyals.Contains(end))
+			CheckRoyalsCount++;
+		CheckedRoyals.Add(end);
+		RoyalAttackers.Add(start);
+		beyondRoyalAnalyse = true;
 		return true;
-    }
+	}
+	private static void RemovePromotionAttribute(bool promotion)
+	{
+		if (promotion)
+			PromotionMoves.RemoveAt(PromotionMoves.Count - 1);
+	}
 }

@@ -1,19 +1,20 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 public partial class Zobrist
 {
-    private static ulong LastCastlingRightHash = 0;
+    public static ulong LastCastlingRightHash = 0;
     public static Dictionary<ulong, int> RepeatedPositions;
     private static Dictionary<Vector2I, ulong> Squares;
     private static Dictionary<string, ulong> CastlingRightsHashes;
     private static Dictionary<Vector2I, ulong> EnPassantHashes;
     private static ulong[] Pieces;
     private static ulong BlackToMove;
+    private static Stack<ulong> LastHashes;
     private static string pieceString = "PNBRQKpnbrqk";
-    private static ulong LastHash = 0;
     public static void GenerateKeys()
     {
         Squares = new();
@@ -22,6 +23,7 @@ public partial class Zobrist
         CastlingRightsHashes = new();
         RepeatedPositions = new();
         EnPassantHashes = new();
+        LastHashes = new();
 
         for (int x = 0; x < Chessboard.tileCount.X; x++)
         {
@@ -33,8 +35,6 @@ public partial class Zobrist
     }
     public static ulong Hash(bool undo)
     {
-        if (undo)
-            return 0;
         ulong hash = 0;
         foreach (KeyValuePair<Vector2I, char> piece in Position.pieces)
             hash ^= Squares[piece.Key] ^ Pieces[pieceString.IndexOf(piece.Value)];
@@ -42,14 +42,20 @@ public partial class Zobrist
             hash ^= BlackToMove;
         hash ^= LastCastlingRightHash;
         hash ^= GetEnPassantHash();
-        LastHash = hash;
+        if (!undo)
+            LastHashes.Push(hash);
         return hash;
     }
     public static bool TriggersRepetitionRule(ulong hash, bool undo)
     {
         if (undo)
         {
-            RepeatedPositions.Remove(LastHash);
+            ulong searchedHash = LastHashes.Pop();
+            if (RepeatedPositions.ContainsKey(searchedHash))
+            {
+                if (--RepeatedPositions[searchedHash] == 0)
+                    RepeatedPositions.Remove(searchedHash);
+            }
             return false;
         }
         int positionRepeated = 1;

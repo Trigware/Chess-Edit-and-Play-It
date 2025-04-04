@@ -3,17 +3,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-public partial class Animations : Update
+public partial class Animations : Chessboard
 {
 	public const float animationSpeed = 0.3f;
 	public static bool promotionUnsafe = false, CancelCheckEarly = false, CancelCastlingEarly = false;
-	public static List<Vector2I> PreviousCheckTiles = new();
+	public static List<Vector2I> PreviousCheckTiles = new(), CheckAnimationsStarted = new();
 	public static Dictionary<Tween, (Sprite2D spr, bool deleteOnFinish, float? transparency)> ActiveTweens = new();
 	public static int firstCheckZone = 0;
+	public const float lowAnimationDurationBoundary = 0.3f;
 	public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale, float? endTransparency, bool deleteOnFinished, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = -1, int castlingAnimation = -1, bool promotionConfirmation = false)
 	{
-        Tween tween = spr.CreateTween();
-        ActiveTweens.Add(tween, (spr, deleteOnFinished, endTransparency));
+		Tween tween = spr.CreateTween();
+		ActiveTweens.Add(tween, (spr, deleteOnFinished, endTransparency));
 		if (endPosition != null)
 			spr.ZIndex = 2;
 		if (endPosition != null)
@@ -49,10 +50,11 @@ public partial class Animations : Update
 		if (deleteOnFinished && deleteFromPiecesDict)
 			UpdatePosition.DeletePiece(startPosition, (Vector2I?)endPosition, false, false, '\0', spr);
 		if (promotion)
-            promotionUnsafe = true;
-        if (duration == 0)
+			promotionUnsafe = true;
+		if (duration == 0)
 		{
 			AnimationEnd(tween, deleteOnFinished, spr, endPosition);
+			Promotion.MoveHistoryDisable = false;
 			return;
 		}
 		Timer timer = new() { WaitTime = duration, OneShot = true };
@@ -63,7 +65,8 @@ public partial class Animations : Update
 			if (chainIterator != -1 && chainIterator < Castling.elipseQuality && !CancelCastlingEarly)
 			{
 				castlingAnimation = castlingAnimation == Castling.endXpositions.Count ? castlingAnimation - 1 : castlingAnimation;
-				Tween(spr, animationSpeed/Castling.elipseQuality, startPosition, Castling.CalculatePointOnElipse(chainIterator+1, startPosition, Castling.endXpositions[castlingAnimation], Castling.elipsePathUp[castlingAnimation]), null, null, false, false, false, chainIterator+1, castlingAnimation);
+				Tween(spr, animationSpeed / Castling.elipseQuality, startPosition, Castling.CalculatePointOnElipse(chainIterator + 1, startPosition, Castling.endXpositions[castlingAnimation], Castling.elipsePathUp[castlingAnimation]), null, null, false, false, false, chainIterator + 1, castlingAnimation);
+				ActiveTweens.Remove(tween);
 				return;
 			}
 			promotionUnsafe = false;
@@ -74,19 +77,19 @@ public partial class Animations : Update
 				Castling.elipsePathUp.RemoveAt(0);
 			}
 			if (Promotion.promotionPending != null)
-                Promotion.Promote((Vector2I)Promotion.promotionPending);
-            if (promotionConfirmation)
+				Promotion.Promote((Vector2I)Promotion.promotionPending);
+			if (promotionConfirmation)
 				Promotion.MoveHistoryDisable = false;
 		};
 		timer.Start();
 	}
 	private static void AnimationEnd(Tween tween, bool deleteOnFinished, Sprite2D spr, Vector2? endPosition)
 	{
-		History.DisableReplay = false;
 		ActiveTweens.Remove(tween);
-        if (deleteOnFinished)
+		if (deleteOnFinished)
 			spr.QueueFree();
 		spr.ZIndex = 1;
+		firstCheckZone = 0;
 		if (endPosition == null)
 			return;
 		if (Position.GameEndState != Position.EndState.Ongoing && Position.GameEndState != Position.EndState.Checkmate)
@@ -98,20 +101,27 @@ public partial class Animations : Update
 				CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i);
 		}
 	}
-	public static void CheckAnimation(int i, Node main, int j)
+	public static void CheckAnimation(int i, Node main, int j, float durationMultiplier = 1)
 	{
+		bool isCheckmate = Position.GameEndState == Position.EndState.Checkmate && History.RedoMoves.Count == 0;
 		if (animationSpeed == 0)
 		{
 			foreach (Vector2I location in LegalMoves.CheckedRoyals)
 				Colors.Set(Colors.Enum.Check, location.X, location.Y);
-			Audio.Play(Position.GameEndState == Position.EndState.Checkmate ? Audio.Enum.Checkmate : Audio.Enum.Check);
+			Audio.Play(isCheckmate ? Audio.Enum.Checkmate : Audio.Enum.Check);
 			return;
 		}
-		if (CancelCheckEarly)
+		if (LegalMoves.CheckResponseZones.Count <= j)
+			return;
+		List<Vector2I> zone = LegalMoves.CheckResponseZones[j];
+		if (CancelCheckEarly || zone.Count < i)
+			return;
+		if (i == 1 && !CheckAnimationsStarted.Contains(LegalMoves.RoyalAttackers[j]))
+			CheckAnimationsStarted.Add(LegalMoves.RoyalAttackers[j]);
+		else if (i == 1)
 			return;
 
 		List<Color> previousColors = new();
-		List<Vector2I> zone = LegalMoves.CheckResponseZones[j];
 		if (j == firstCheckZone)
 			Colors.ChangeTileColorBack();
 		if (i >= zone.Count)
@@ -124,16 +134,16 @@ public partial class Animations : Update
 
 		if (i >= LegalMoves.maxResponseRange)
 		{
-			Audio.Play(Position.GameEndState == Position.EndState.Checkmate ? Audio.Enum.Checkmate : Audio.Enum.Check);
-			if (Position.GameEndState == Position.EndState.Checkmate)
+			Audio.Play(isCheckmate ? Audio.Enum.Checkmate : Audio.Enum.Check);
+			if (isCheckmate)
 				CheckmateColors();
 			return;
 		}
-		Timer timer = new() { WaitTime = animationSpeed/LegalMoves.maxResponseRange, OneShot = true };
+		Timer timer = new() { WaitTime = animationSpeed/LegalMoves.maxResponseRange*durationMultiplier, OneShot = true };
 		main.AddChild(timer);
 		timer.Timeout += () =>
 		{
-			CheckAnimation(i+1, main, j);
+			CheckAnimation(i+1, main, j, durationMultiplier);
 		};
 		timer.Start();
 	}
@@ -160,12 +170,17 @@ public partial class Animations : Update
 			ActiveTweens.Remove(ActiveTweens.Keys.Last());
 		}
 	}
+	public static void ActiveAllCheckAnimationZones()
+	{
+		for (int i = 0; i < LegalMoves.CheckResponseZones.Count; i++)
+			CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i, 1);
+	}
 	public static void CheckAnimationCancelEarly(Vector2I flatMousePosition)
 	{
-		if (LegalMoves.CheckedRoyals.Contains(flatMousePosition) && !Animations.CancelCheckEarly && !Audio.playedCheck)
+		if (LegalMoves.CheckedRoyals.Contains(flatMousePosition) && !CancelCheckEarly && !Audio.playedCheck)
 		{
 			Colors.ChangeTileColorBack();
-			Animations.CancelCheckEarly = true;
+			CancelCheckEarly = true;
 			Audio.Play(Audio.Enum.Check);
 		}
 	}

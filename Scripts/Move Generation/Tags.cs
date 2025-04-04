@@ -1,12 +1,11 @@
 using Godot;
-using System;
 using System.Collections.Generic;
 
 public partial class Tags
 {
 	public static List<Vector2I> tagPositions = new() { new(4, 0), new(4, 7) };
 	public static List<HashSet<Tag>> activeTags = new() { new() { Tag.Royal, Tag.Castler }, new() { Tag.Royal, Tag.Castler } };
-	public static List<(Vector2I location, Sprite2D sprite, int offset)> spriteTags = new();
+	public static Dictionary<Vector2I, HashSet<Tag>> lastDeletedTags;
 	public static List<Vector2I> CastlingRights = new();
 	public enum Tag
 	{
@@ -20,20 +19,20 @@ public partial class Tags
 		if (tagIndex == -1)
 		{
 			tagPositions.Add(location);
-			activeTags.Add(new() {tag});
+			activeTags.Add(new() { tag });
 		}
 		else
 			activeTags[tagIndex].Add(tag);
 	}
-	public static void ModifyTags(Vector2I start, Vector2I end, char handledPiece, bool updateCastlingRightsHash)
+	public static void ModifyTags(Vector2I start, Vector2I end, char handledPiece, bool updateCastlingRightsHash, bool castling)
 	{
 		bool updatedCastlingRights = false;
+		if (!updateCastlingRightsHash || !castling)
+			UpdateCastlingRightsForLastDeletedTags(start, start, !updateCastlingRightsHash, out _);
 		if (tagPositions.Contains(end))
 		{
-			int endIndex = tagPositions.IndexOf(end);
-			HashSet<Tag> tagsAtPosition = activeTags[endIndex];
-			if (tagsAtPosition.Contains(Tag.Castlee) || tagsAtPosition.Contains(Tag.Castler))
-				updatedCastlingRights = true;
+			Vector2I usedPosition = ContainsCastlingTag(start, out _, out _) && ContainsCastlingTag(end, out _, out _) ? start : end;
+			updatedCastlingRights = UpdateCastlingRightsForLastDeletedTags(usedPosition, end, true, out int endIndex);
 			tagPositions.RemoveAt(endIndex);
 			activeTags.RemoveAt(endIndex);
 			CastlerAction(end, out _, out _);
@@ -44,16 +43,20 @@ public partial class Tags
 				updatedCastlingRights = true;
 			if (!entireTagDeleted)
 				tagPositions[index] = end;
-			if (CastleeMoved(end))
+			if (CastleeMoved(end, updatedCastlingRights ? null : start))
 				updatedCastlingRights = true;
 		}
 		if (updateCastlingRightsHash && updatedCastlingRights)
 			GetCastlingRightsHash();
 	}
-	private static bool TagDeletion(Vector2I location, Tag tag)
+	public static bool Delete(Vector2I location, Tag tag, bool updateLastDeletedTags, Vector2I? updateLocation = null)
 	{
 		int index = tagPositions.IndexOf(location);
+		if (index == -1)
+			return false;
 		activeTags[index].Remove(tag);
+		if (updateLastDeletedTags)
+			UpdateLastDeletedTags(updateLocation == null ? location : (updateLocation ?? default), tag);
 		if (activeTags[index].Count == 0)
 		{
 			tagPositions.RemoveAt(index);
@@ -82,16 +85,16 @@ public partial class Tags
 		if (deletedTags.Count == 0)
 			return false;
 		foreach (Vector2I deletedLoc in deletedTags)
-			TagDeletion(deletedLoc, Tag.Castlee);
-		entireTagDeleted = TagDeletion(location, Tag.Castler);
+			Delete(deletedLoc, Tag.Castlee, true);
+		entireTagDeleted = Delete(location, Tag.Castler, true);
 		return true;
 	}
-	private static bool CastleeMoved(Vector2I location)
+	private static bool CastleeMoved(Vector2I location, Vector2I? start)
 	{
 		int index = tagPositions.IndexOf(location);
 		if (index > -1 && activeTags[index].Contains(Tag.Castlee))
 		{
-			TagDeletion(location, Tag.Castlee);
+			Delete(location, Tag.Castlee, true, start);
 			return true;
 		}
 		return false;
@@ -137,5 +140,37 @@ public partial class Tags
 			Position.RoyalPiecesColor.Add(end, royalColor);
 		else
 			Position.RoyalsPerColor[royalColor]--;
+	}
+	private static void UpdateLastDeletedTags(Vector2I location, Tag tag)
+	{
+		if (lastDeletedTags.ContainsKey(location))
+			lastDeletedTags[location].Add(tag);
+		else
+			lastDeletedTags.Add(location, new() { tag });
+	}
+	private static bool UpdateCastlingRightsForLastDeletedTags(Vector2I start, Vector2I end, bool updateLastDeletedTags, out int endIndex)
+	{
+		bool containsCastlingTag = ContainsCastlingTag(end, out endIndex, out HashSet<Tag> tagsAtPosition);
+		if (!updateLastDeletedTags)
+			return containsCastlingTag;
+		if (containsCastlingTag)
+		{
+			foreach (Tag tag in tagsAtPosition)
+			{
+				if (tag != Tag.Castlee && tag != Tag.Castler) continue;
+				UpdateLastDeletedTags(start, tag);
+			}
+			return true;
+		}
+		return false;
+	}
+	private static bool ContainsCastlingTag(Vector2I position, out int tagIndex, out HashSet<Tag> tagsAtPosition)
+	{
+		tagIndex = tagPositions.IndexOf(position);
+		tagsAtPosition = new();
+		if (tagIndex == -1)
+			return false;
+		tagsAtPosition = activeTags[tagIndex];
+		return tagsAtPosition.Contains(Tag.Castlee) || tagsAtPosition.Contains(Tag.Castler);
 	}
 }

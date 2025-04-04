@@ -42,29 +42,30 @@ public partial class Castling : Node
 		}
 		return castlingMoves;
 	}
-	public static void TweenCastle(Sprite2D spr, float duration, Vector2I startPosition, int endXLocal)
+	public static void TweenCastle(Sprite2D spr, float duration, Vector2I startPosition, int endXLocal, bool isRedo)
 	{
-		if (duration < 0.3f || !CanDoElipseAnimation(startPosition, endXLocal, duration))
+		if (duration < Animations.lowAnimationDurationBoundary || !CanDoElipseAnimation(startPosition, endXLocal, duration, isRedo))
 		{
 			Animations.Tween(spr, duration, startPosition, new(endXLocal, startPosition.Y), null, null, false);
 			return;
 		}
-		bool elipseUp = Position.colorToMove == 'w';
+		bool elipseUp = Position.colorToMove == (isRedo ? 'b' : 'w');
         Animations.CancelCastlingEarly = false;
 		endXpositions.Add(endXLocal);
 		elipsePathUp.Add(elipseUp);
 		elipseQuality = Convert.ToInt32(elipseQualityConst * Animations.animationSpeed);
 		Animations.Tween(spr, duration / elipseQuality, startPosition, CalculatePointOnElipse(1, startPosition, endXLocal, elipseUp), null, null, false, false, true, 1, endXpositions.Count-1);
 	}
-	private static bool CanDoElipseAnimation(Vector2I startPosition, int endXLocal, float duration)
+	private static bool CanDoElipseAnimation(Vector2I startPosition, int endXLocal, float duration, bool isRedo)
 	{
-		if (duration < 0.3f)
+		if (duration < Animations.lowAnimationDurationBoundary)
 			return false;
 		bool elipsePath = true;
 		bool shortCastle = endXLocal > startPosition.X;
 		for (int x = startPosition.X; shortCastle ? x <= endXLocal : x >= endXLocal; x += shortCastle ? 1 : -1)
 		{
-			if (Position.pieces.ContainsKey(new(x, startPosition.Y + (Position.colorToMove == 'b' ? 1 : -1))))
+			Vector2I scannedLocation = new(x, startPosition.Y + (Position.colorToMove == (isRedo ? 'w' : 'b') ? 1 : -1));
+            if (Position.pieces.ContainsKey(scannedLocation))
 			{
 				elipsePath = false;
 				break;
@@ -80,6 +81,8 @@ public partial class Castling : Node
 			endX = start.X - endX;
 			direction = -1;
 		}
+		else
+			endX -= start.X;
 
 		float angle = (float)elipsePointUnit / elipseQuality * Mathf.Pi;
 		float xRadius = Mathf.Abs(endX) / 2f;
@@ -87,6 +90,6 @@ public partial class Castling : Node
 
 		float xPoint = xRadius * Mathf.Cos(angle) - xRadius;
 		float yPoint = yRadius * Mathf.Sin(angle);
-		return start + new Vector2(xPoint * direction, -yPoint);
+        return start + new Vector2(xPoint * direction, -yPoint);
 	}
 }
