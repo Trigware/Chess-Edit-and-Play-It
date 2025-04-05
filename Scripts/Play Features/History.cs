@@ -124,7 +124,7 @@ public partial class History
 		Stack<Move> movePushedTo = isUndo ? RedoMoves : UndoMoves;
 		Animations.CheckAnimationCancelEarly(replayedMove.End);
 		Position.EnPassantInfo = isUndo ? replayedMove.EnPassantInfo : replayedMove.LeapMoveInfo;
-		Interaction.Deselect(Interaction.selectedTile ?? default);
+		Interaction.Deselect((Interaction.selectedTile ?? default).Location);
 		if (Position.pieces.ContainsKey(replayedMove.Start))
 			replayedMove.SwapLocations();
 		Tags.ModifyRoyalPieceList(replayedMove.End, replayedMove.Start);
@@ -156,7 +156,7 @@ public partial class History
 		Position.LastMoveInfo = UndoMoves.Peek().GetTuple();
 		Interaction.PreviousMoveTiles(Colors.Enum.PreviousMove);
 		if (Interaction.selectedTile != null)
-			Interaction.Deselect(Interaction.selectedTile ?? default);
+			Interaction.Deselect((Interaction.selectedTile ?? default).Location);
 	}
 	private static void MoveReplayGetBack(Move replayedMove, bool isUndo)
 	{
@@ -184,7 +184,7 @@ public partial class History
 	private static void ReplayPromotion(Move replayedMove, bool isUndo)
 	{
 		Vector2I promotionAnimationStart = new(replayedMove.Start.X, replayedMove.End.Y + (Position.colorToMove == 'w' ? 2 : -2));
-		Promotion.OptionChosen(isUndo ? replayedMove.PiecePromotedFrom : replayedMove.PiecePromotedTo, replayedMove.Start, promotionAnimationStart, 1, 1, MoveReplayAnimationSpeedMultiplier);
+		Promotion.OptionChosen(isUndo ? replayedMove.PiecePromotedFrom : replayedMove.PiecePromotedTo, replayedMove.Start, promotionAnimationStart, 1, Chessboard.Layer.Piece, MoveReplayAnimationSpeedMultiplier);
 		ReplayMoveAudio(Audio.Enum.Promotion);
 	}
 	private static void ReplayEnPassant(Move replayedMove, bool isUndo)
@@ -199,7 +199,7 @@ public partial class History
 	private static void ReplayCastling(Move replayedMove)
 	{
 		(Vector2I end, Vector2I start) castleeReplay = replayedMove.CastleeInfo ?? default;
-		UpdatePosition.EditPiecePositions(castleeReplay.start, castleeReplay.end, Chessboard.tiles[new(castleeReplay.start.X, castleeReplay.start.Y, 1)], false, false, false, false, '\0', false, MoveReplayAnimationSpeedMultiplier);
+		UpdatePosition.EditPiecePositions(castleeReplay.start, castleeReplay.end, Chessboard.tiles[new(castleeReplay.start, Chessboard.Layer.Piece)], false, false, false, false, '\0', false, MoveReplayAnimationSpeedMultiplier);
 		ReplayMoveAudio(Audio.Enum.Castle);
 	}
 	private static void ReplayTags(Move replayedMove, bool isUndo)

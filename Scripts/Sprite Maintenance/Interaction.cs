@@ -3,7 +3,7 @@ using System;
 
 public partial class Interaction : Chessboard
 {
-	public static Vector3I? selectedTile = null;
+	public static TilesElement? selectedTile = null;
 	private bool leftMouseButtonPressed = false, leftMouseOld = false;
 	public override void _Process(double delta)
 	{
@@ -35,11 +35,11 @@ public partial class Interaction : Chessboard
 		}
 		if (Position.colorToMove == '\0')
 			return;
-		Vector3I mousePositionBoard = new(flatMousePosition.X, flatMousePosition.Y, 0), mousePositionPieces = new(flatMousePosition.X, flatMousePosition.Y, 1);
+		TilesElement mousePositionBoard = new(flatMousePosition, Layer.Tile), mousePositionPieces = new(flatMousePosition, Layer.Tile);
 		bool canSwitchSelectedTile = PieceMoves.GetPieceColor(flatMousePosition) == Position.colorToMove;
-		if ((Input.IsKeyPressed(Key.Escape) && selectedTile != null) || (leftMouseButtonPressed && selectedTile == mousePositionBoard))
+		if ((Input.IsKeyPressed(Key.Escape) && selectedTile != null) || (leftMouseButtonPressed && (selectedTile ?? default).Location == mousePositionBoard.Location))
 		{
-			Deselect((Vector3I)selectedTile);
+			Deselect((selectedTile ?? default).Location);
 			PreviousMoveTiles(Colors.Enum.PreviousMove);
 			return;
 		}
@@ -52,8 +52,7 @@ public partial class Interaction : Chessboard
 			}
 			if (selectedTile == null)
 				return;
-			Vector3I selectedNotNull = (Vector3I)selectedTile;
-			Vector2I selectedTileFlat = new(selectedNotNull.X, selectedNotNull.Y);
+			Vector2I selectedTileFlat = (selectedTile ?? default).Location;
 			int legalIndex = LegalMoves.legalMoves.IndexOf((selectedTileFlat, flatMousePosition));
 			if (legalIndex > -1)
 			{
@@ -80,10 +79,6 @@ public partial class Interaction : Chessboard
 		(Vector2I start, Vector2I end) lastMoveNotNull = Position.LastMoveInfo ?? default;
 		Colors.Set(color, lastMoveNotNull.start.X, lastMoveNotNull.start.Y);
 		Colors.Set(color, lastMoveNotNull.end.X, lastMoveNotNull.end.Y);
-	}
-	public static void Deselect(Vector3I start)
-	{
-		Deselect(new Vector2I(start.X, start.Y));
 	}
 	public static Sprite2D GetTile(Vector2I location)
 	{

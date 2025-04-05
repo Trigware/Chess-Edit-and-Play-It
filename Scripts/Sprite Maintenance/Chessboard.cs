@@ -8,16 +8,31 @@ public partial class Chessboard : Node
 	private const int tileSize = 45;
 	private const float maxOccupiedSpace = 0.85f;
 	public static Vector2I tileCount = new(8, 8);
-	public static Dictionary<Vector3I, Sprite2D> tiles = new();
+	public static Dictionary<TilesElement, Sprite2D> tiles = new();
 	protected static Vector2 gameviewSize = new(), oldviewSize = new(), vectorCenter = new();
 	public static float gridScale = 1, svgScale = 5;
 	public static float actualTileSize = 45;
 	public static Vector2? leftUpCorner = null;
 	public const int PositionRepetitionCount = 3;
-
+	public struct TilesElement
+	{
+		public Vector2I Location;
+		public Layer Layer;
+		public TilesElement(Vector2I location, Layer layer)
+		{
+			Location = location;
+			Layer = layer;
+		}
+		public TilesElement(int x, int y, Layer layer)
+		{
+			Location = new(x, y);
+			Layer = layer;
+		}
+	}
+	public enum Layer { Tile, Piece, Promotion, Selector }
 	public override void _Ready()
 	{
-		Position.Load(Position.FEN.PromotionTest);
+		Position.Load(Position.FEN.Default);
 	}
 	public override void _Process(double delta)
 	{
@@ -50,18 +65,19 @@ public partial class Chessboard : Node
 		{
 			for (int y = 0; y < tileCount.Y; y++)
 			{
-				DrawTilesElement("tile", x, y, 0, parentNode, gridScale);
-				DrawTile(x, y, 1, parentNode);
+				DrawTilesElement("tile", x, y, Layer.Tile, parentNode, gridScale);
+				DrawTilesElement(x, y, Layer.Piece, parentNode);
 			}
 		}
+		//DrawTilesElement("cursor", 0, 0, Layer.Selector, parentNode, gridScale);
 		LegalMoves.GetLegalMoves();
 	}
-	private static void DrawTile(int x, int y, int z, Node parentNode, float transparency = 1)
+	private static void DrawTilesElement(int x, int y, Layer layer, Node parentNode, float transparency = 1)
 	{
 		if (Position.pieces.ContainsKey(new(x, y)))
-			DrawTilesElement(Position.pieces[new(x, y)].ToString(), x, y, z, parentNode, gridScale, transparency);
+			DrawTilesElement(Position.pieces[new(x, y)].ToString(), x, y, layer, parentNode, gridScale, transparency);
 	}
-	public static Sprite2D DrawTilesElement(string name, int x, int y, int z, Node parentNode, float gridScale, float transparency = 1, bool update = false)
+	public static Sprite2D DrawTilesElement(string name, int x, int y, Layer layer, Node parentNode, float gridScale, float transparency = 1, bool update = false)
 	{
 		if (!LoadGraphics.textureDict.ContainsKey(name))
 		{
@@ -71,65 +87,68 @@ public partial class Chessboard : Node
 		Texture2D texture = update ? null : LoadGraphics.textureDict[name];
 		PackedScene tileScene = update ? null : (PackedScene)ResourceLoader.Load("res://Scenes/Tile.tscn");
 		Node tileClone = update ? null : tileScene.Instantiate();
-		Sprite2D tileSprite = update ? tiles[new(x, y, z)] : tileClone as Sprite2D;
-		bool tileAvailable = tileSprite != null || update && tiles.ContainsKey(new(x, y, z));
+		Sprite2D tileSprite = update ? tiles[new(x, y, layer)] : tileClone as Sprite2D;
+		bool tileAvailable = tileSprite != null || update && tiles.ContainsKey(new(x, y, layer));
 		if (!tileAvailable)
 		{
-            GD.PrintErr("Tile scene 'Tile.tscn' doesn't have a Sprite2D node for it's root.");
-            return new();
-        }
-        if (!update)
+			GD.PrintErr("Tile scene 'Tile.tscn' doesn't have a Sprite2D node for it's root.");
+			return new();
+		}
+		if (!update)
 		{
-            tileSprite.Texture = texture;
-            tileSprite.Modulate = new(tileSprite.Modulate.R, tileSprite.Modulate.G, tileSprite.Modulate.B, transparency);
-        }
-        tileSprite.Scale = new Vector2(gridScale, gridScale);
-        float xFloat = x, yFloat = y;
-        Vector2 position = CalculateTilePosition(xFloat, yFloat);
-        tileSprite.Position = position;
-        if (z != 0)
-            tileSprite.Scale /= svgScale;
-        if (z == 0)
-        {
-            if (x == 0 && y == 0)
-                leftUpCorner = position - new Vector2(actualTileSize / 2, actualTileSize / 2);
-            if (!update)
-                Colors.Set(tileSprite, Colors.Enum.Default, x, y);
-        }
-        if (!update)
-        {
-            tiles.Add(new(x, y, z), tileSprite);
-            parentNode.AddChild(tileSprite);
-        }
-        return tileSprite;
-    }
+			tileSprite.Texture = texture;
+			tileSprite.Modulate = new(tileSprite.Modulate.R, tileSprite.Modulate.G, tileSprite.Modulate.B, transparency);
+		}
+		tileSprite.Scale = new Vector2(gridScale, gridScale);
+		tileSprite.ZIndex = (int)layer;
+		if (layer == Layer.Selector)
+			tileSprite.TextureFilter = CanvasItem.TextureFilterEnum.Nearest;
+		float xFloat = x, yFloat = y;
+		Vector2 position = CalculateTilePosition(xFloat, yFloat);
+		tileSprite.Position = position;
+		if (layer == Layer.Piece || layer == Layer.Promotion)
+			tileSprite.Scale /= svgScale;
+		if (layer == Layer.Tile)
+		{
+			if (x == 0 && y == 0)
+				leftUpCorner = position - new Vector2(actualTileSize / 2, actualTileSize / 2);
+			if (!update)
+				Colors.Set(tileSprite, Colors.Enum.Default, x, y);
+		}
+		if (!update)
+		{
+			tiles.Add(new(x, y, layer), tileSprite);
+			parentNode.AddChild(tileSprite);
+		}
+		return tileSprite;
+	}
 	public static Sprite2D GetPiece(Vector2I location)
 	{
-		return tiles[new(location.X, location.Y, 1)];
+		return tiles[new(location, Layer.Piece)];
 	}
 	public static Vector2 CalculateTilePosition(float x, float y)
 	{
 		return new Vector2(x, y) * actualTileSize + vectorCenter;
 	}
-    public static void Update()
-    {
-        foreach (KeyValuePair<Vector3I, Sprite2D> keyValue in tiles)
+	public static void Update()
+	{
+		foreach (KeyValuePair<TilesElement, Sprite2D> keyValue in tiles)
 		{
-			Vector2I chessboardElementLocation = new(keyValue.Key.X, keyValue.Key.Y);
-			string textureName = keyValue.Key.Z switch
+			string textureName = keyValue.Key.Layer switch
 			{
-				0 => "tile",
-				1 => Position.pieces[chessboardElementLocation].ToString(),
-                _ => Promotion.PromotionOptionsPieces[Promotion.PromotionOptionsPositions.IndexOf(chessboardElementLocation)].ToString()
-            };
-            DrawTilesElement(textureName, keyValue.Key.X, keyValue.Key.Y, keyValue.Key.Z, LoadGraphics.I, gridScale, 1, true);
-        }
-    }
-    public static void Delete()
-    {
-        foreach (Sprite2D sprite in tiles.Values)
-            sprite.QueueFree();
-        tiles = new();
-        leftUpCorner = null;
-    }
+				Layer.Tile => "tile",
+				Layer.Piece => Position.pieces[keyValue.Key.Location].ToString(),
+				Layer.Promotion => Promotion.PromotionOptionsPieces[Promotion.PromotionOptionsPositions.IndexOf(keyValue.Key.Location)].ToString(),
+				_ => "cursor"
+			};
+			DrawTilesElement(textureName, keyValue.Key.Location.X, keyValue.Key.Location.Y, keyValue.Key.Layer, LoadGraphics.I, gridScale, 1, true);
+		}
+	}
+	public static void Delete()
+	{
+		foreach (Sprite2D sprite in tiles.Values)
+			sprite.QueueFree();
+		tiles = new();
+		leftUpCorner = null;
+	}
 }

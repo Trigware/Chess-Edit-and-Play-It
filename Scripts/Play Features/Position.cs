@@ -20,7 +20,7 @@ public partial class Position
     {
         string fenCall = fen switch
         {
-            FEN.Default => "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            FEN.Default => "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1",
             FEN.NoRange => "8/1n6/6k1/8/3N4/8/5K2/8 w - - 0 1",
             FEN.Range => "8/8/3q1b2/8/3R1r2/8/3Q1B2/8 w - - 0 1",
             FEN.PawnTest => "8/pppppppp/8/8/8/8/PPPPPPPP/8 w - - 0 1",

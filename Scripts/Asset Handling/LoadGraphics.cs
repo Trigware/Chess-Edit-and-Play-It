@@ -13,7 +13,7 @@ public partial class LoadGraphics : Node
 	private static Texture2D LoadTexture(string name)
 	{
 		string extension = "svg";
-		if (name == "tile")
+		if (name.Length != 2)
 			extension = "png";
 		string fileLocation = $"res://Graphics/{name}.{extension}";
 		Texture2D texture = GD.Load<Texture2D>(fileLocation);
@@ -26,7 +26,7 @@ public partial class LoadGraphics : Node
 	}
 	private static void LoadAllTextures()
 	{
-		string[] textureArray = new string[] { "tile", "wP", "wN", "wB", "wR", "wQ", "wK", "bP", "bN", "bB", "bR", "bQ", "bK" };
+		string[] textureArray = new string[] { "tile", "cursor", "wP", "wN", "wB", "wR", "wQ", "wK", "bP", "bN", "bB", "bR", "bQ", "bK" };
 		foreach (string texture in textureArray)
 		{
 			string spriteName = texture;
