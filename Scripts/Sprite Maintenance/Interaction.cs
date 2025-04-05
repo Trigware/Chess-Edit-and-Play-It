@@ -37,7 +37,7 @@ public partial class Interaction : Chessboard
 			return;
 		TilesElement mousePositionBoard = new(flatMousePosition, Layer.Tile), mousePositionPieces = new(flatMousePosition, Layer.Tile);
 		bool canSwitchSelectedTile = PieceMoves.GetPieceColor(flatMousePosition) == Position.colorToMove;
-		if ((Input.IsKeyPressed(Key.Escape) && selectedTile != null) || (leftMouseButtonPressed && (selectedTile ?? default).Location == mousePositionBoard.Location))
+		if (selectedTile != null && (Input.IsKeyPressed(Key.Escape) || (leftMouseButtonPressed && (selectedTile ?? default).Location == mousePositionBoard.Location)))
 		{
 			Deselect((selectedTile ?? default).Location);
 			PreviousMoveTiles(Colors.Enum.PreviousMove);
