@@ -91,9 +91,9 @@ public partial class History
 		if (pressedZ && pressedY)
 		{
 			movesReplayedInThisSession = 0;
-            return;
-        }
-        if (pressedZ && !replayDisabled)
+			return;
+		}
+		if (pressedZ && !replayDisabled)
 		{
 			if (UndoMoves.Count == 0 || lastReplay == ReplayType.Redo) movesReplayedInThisSession = 0;
 			if (UndoMoves.Count > 0) { Undo(); return; }
@@ -117,7 +117,7 @@ public partial class History
 		Colors.ColorCheckedRoyalTiles(Colors.Enum.Default);
 		LegalMoves.CheckedRoyals = new();
 		movesReplayedInThisSession++;
-		MoveReplayCooldown(Mathf.Max(Animations.lowAnimationDurationBoundary, Animations.animationSpeed) * MoveReplayAnimationSpeedMultiplier, true);
+		TimerCountdown(Mathf.Max(Animations.lowAnimationDurationBoundary, Animations.animationSpeed) * MoveReplayAnimationSpeedMultiplier, TimerType.Replay);
 	}
 	private static void MoveReplay(Move replayedMove, bool isUndo)
 	{
@@ -133,17 +133,27 @@ public partial class History
 		MoveReplayGetBack(replayedMove, isUndo);
 		UpdatePosition.DiscoveredCheckAnimation(null, true, MoveReplayAnimationSpeedMultiplier);
 	}
-	public static void MoveReplayCooldown(float waitTime, bool isReplay)
+	public enum TimerType { Replay, Cursor, FirstCursorMove }
+	public static void TimerCountdown(float waitTime, TimerType timerType)
 	{
 		Timer cooldown = new() { WaitTime = waitTime, OneShot = true };
-		if (isReplay) cooldownOngoing = true; else Cursor.cooldownOngoing = true;
+		ChangeFieldAfterTimeout(timerType, true);
 		LoadGraphics.I.AddChild(cooldown);
 		cooldown.Timeout += () =>
 		{
-			if (isReplay) cooldownOngoing = false; else Cursor.cooldownOngoing = false;
+			ChangeFieldAfterTimeout(timerType, false);
 			cooldown.QueueFree();
 		};
 		cooldown.Start();
+	}
+	private static void ChangeFieldAfterTimeout(TimerType timerType, bool changeTo)
+	{
+		switch (timerType)
+		{
+			case TimerType.Replay: cooldownOngoing = changeTo; break;
+			case TimerType.Cursor: Cursor.cooldownOngoing = changeTo; break;
+			case TimerType.FirstCursorMove: Cursor.FirstMovedTimerActive = changeTo; break;
+		}
 	}
 	private static void ModifyLastMoveInfo()
 	{

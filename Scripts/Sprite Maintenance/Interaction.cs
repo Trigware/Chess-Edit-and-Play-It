@@ -12,11 +12,11 @@ public partial class Interaction : Chessboard
 		bool leftActuallyPressed = Input.IsMouseButtonPressed(MouseButton.Left);
 		escapePressed = Input.IsKeyPressed(Key.Escape);
 		if (escapePressed) { if (selectedTile != null) lastEscapeSelection = true; } else lastEscapeSelection = false;
-        Cursor.KeyPressDetection();
-        interactionButtonPressed = (leftActuallyPressed && !leftMouseOld) || Cursor.enterPressedNow;
-        if ((interactionButtonPressed || escapePressed) && Position.GameEndState == Position.EndState.Ongoing)
+		Cursor.KeyPressDetection();
+		interactionButtonPressed = (leftActuallyPressed && !leftMouseOld) || Cursor.enterPressedNow;
+		if ((interactionButtonPressed || escapePressed) && Position.GameEndState == Position.EndState.Ongoing)
 			Select();
-        leftMouseOld = leftActuallyPressed;
+		leftMouseOld = leftActuallyPressed;
 	}
 	private Vector2I GetPositionOnBoard()
 	{
@@ -51,18 +51,17 @@ public partial class Interaction : Chessboard
 	}
 	private static void InteractWithPiece(Vector2I targetedPiece)
 	{
-        bool canSwitchSelectedTile = PieceMoves.GetPieceColor(targetedPiece) == Position.colorToMove;
-		GD.Print();
-        if (canSwitchSelectedTile)
-        {
-            Colors.SetTileColors(targetedPiece);
-            return;
-        }
-        if (selectedTile == null)
-            return;
-        Vector2I selectedTileFlat = (selectedTile ?? default).Location;
-        UpdatePosition.MovePiece(selectedTileFlat, targetedPiece);
-    }
+		bool canSwitchSelectedTile = PieceMoves.GetPieceColor(targetedPiece) == Position.colorToMove;
+		if (canSwitchSelectedTile)
+		{
+			Colors.SetTileColors(targetedPiece);
+			return;
+		}
+		if (selectedTile == null)
+			return;
+		Vector2I selectedTileFlat = (selectedTile ?? default).Location;
+		UpdatePosition.MovePiece(selectedTileFlat, targetedPiece);
+	}
 	public static void Deselect(Vector2I start)
 	{
 		PreviousMoveTiles(Colors.Enum.Default);

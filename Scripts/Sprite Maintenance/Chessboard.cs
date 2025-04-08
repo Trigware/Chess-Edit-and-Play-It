@@ -33,6 +33,7 @@ public partial class Chessboard : Node
 	public override void _Ready()
 	{
 		Position.Load(Position.FEN.Default);
+		Tags.GetRoyalsPerColor();
 	}
 	public override void _Process(double delta)
 	{
@@ -69,7 +70,7 @@ public partial class Chessboard : Node
 				DrawTilesElement(x, y, Layer.Piece, parentNode);
 			}
 		}
-		Vector2I cursorLocation = Cursor.InitializeLocation(Position.colorToMove);
+		Vector2I cursorLocation = Cursor.actualLocation;
 		DrawTilesElement("cursor", cursorLocation.X, cursorLocation.Y, Layer.Cursor, parentNode, gridScale, 0);
 		Cursor.GetCursor();
 		LegalMoves.GetLegalMoves();
@@ -89,7 +90,7 @@ public partial class Chessboard : Node
 		Texture2D texture = update ? null : LoadGraphics.textureDict[name];
 		PackedScene tileScene = update ? null : (PackedScene)ResourceLoader.Load("res://Scenes/Tile.tscn");
 		Node tileClone = update ? null : tileScene.Instantiate();
-		Sprite2D tileSprite = update ? tiles[new(x, y, layer)] : tileClone as Sprite2D;
+		Sprite2D tileSprite = update ? (layer == Layer.Cursor ? tiles[new(default, Layer.Cursor)] : tiles[new(x, y, layer)]) : tileClone as Sprite2D;
 		bool tileAvailable = tileSprite != null || update && tiles.ContainsKey(new(x, y, layer));
 		if (!tileAvailable)
 		{
@@ -119,7 +120,8 @@ public partial class Chessboard : Node
 		}
 		if (!update)
 		{
-			tiles.Add(new(x, y, layer), tileSprite);
+			Vector2I tileElementLocation = layer == Layer.Cursor ? default : new(x, y);
+			tiles.Add(new(tileElementLocation, layer), tileSprite);
 			parentNode.AddChild(tileSprite);
 		}
 		return tileSprite;
@@ -143,7 +145,8 @@ public partial class Chessboard : Node
 				Layer.Promotion => Promotion.PromotionOptionsPieces[Promotion.PromotionOptionsPositions.IndexOf(keyValue.Key.Location)].ToString(),
 				_ => "cursor"
 			};
-			DrawTilesElement(textureName, keyValue.Key.Location.X, keyValue.Key.Location.Y, keyValue.Key.Layer, LoadGraphics.I, gridScale, 1, true);
+			Vector2I tilesElementLocation = keyValue.Key.Layer == Layer.Cursor ? Cursor.actualLocation : keyValue.Key.Location;
+			DrawTilesElement(textureName, tilesElementLocation.X, tilesElementLocation.Y, keyValue.Key.Layer, LoadGraphics.I, gridScale, 1, true);
 		}
 	}
 	public static void Delete()

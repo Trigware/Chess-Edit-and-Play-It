@@ -110,7 +110,6 @@ public partial class Position
 		WinningPlayer = '\0';
 		string[] fenSplit = fen.Split(' ');
 		LoadPosition(fenSplit[0]);
-        Tags.GetRoyalsPerColor();
         startPositionLoaded = true;
         if (LoadColorToMove(fenSplit))
 			return;

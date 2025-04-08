@@ -107,15 +107,15 @@ public partial class Tags
 			if (activeTags[i].Contains(Tag.Royal))
 			{
 				Vector2I tagPosition = tagPositions[i];
-                char pieceColor = LegalMoves.GetPieceColor(tagPosition);
+				char pieceColor = LegalMoves.GetPieceColor(tagPosition);
 				if (pieceColor == '\0')
 					continue;
-				Cursor.RoyalPieceInitialPosition.TryAdd(pieceColor, tagPosition);
-				Cursor.Location.TryAdd(pieceColor, tagPosition);
+				if (pieceColor == Position.colorToMove) { Cursor.actualLocation = tagPosition; Cursor.locationInitialized = true; }
 				Position.RoyalPiecesColor.Add(tagPosition, pieceColor);
 				Position.RoyalsPerColor[pieceColor]++;
 			}
 		}
+		if (!Cursor.locationInitialized) Cursor.actualLocation = PickRandomPieceOfColor();
 	}
 	public static void GetCastlingRightsHash()
 	{
@@ -175,5 +175,16 @@ public partial class Tags
 			return false;
 		tagsAtPosition = activeTags[tagIndex];
 		return tagsAtPosition.Contains(Tag.Castlee) || tagsAtPosition.Contains(Tag.Castler);
+	}
+	private static Vector2I PickRandomPieceOfColor()
+	{
+		List<Vector2I> pieceLocationsOfStartColor = new();
+		foreach (KeyValuePair<Vector2I, char> piece in Position.pieces)
+		{
+			if (LegalMoves.GetPieceColor(piece.Value) != Position.colorToMove) continue;
+			pieceLocationsOfStartColor.Add(piece.Key);
+		}
+		Cursor.locationInitialized = true;
+		return pieceLocationsOfStartColor[new RandomNumberGenerator().RandiRange(0, pieceLocationsOfStartColor.Count - 1)];
 	}
 }
