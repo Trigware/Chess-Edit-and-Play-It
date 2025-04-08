@@ -3,16 +3,20 @@ using System;
 
 public partial class Interaction : Chessboard
 {
-	public static Vector3I? selectedTile = null;
-	private bool leftMouseButtonPressed = false, leftMouseOld = false;
+	public static TilesElement? selectedTile = null;
+	public static bool escapePressed, lastEscapeSelection = false;
+	private bool interactionButtonPressed = false, leftMouseOld = false;
 	public override void _Process(double delta)
 	{
 		History.KeyPressDetection();
 		bool leftActuallyPressed = Input.IsMouseButtonPressed(MouseButton.Left);
-		leftMouseButtonPressed = leftActuallyPressed && !leftMouseOld;
-		if ((leftMouseButtonPressed || Input.IsKeyPressed(Key.Escape)) && Position.GameEndState == Position.EndState.Ongoing)
+		escapePressed = Input.IsKeyPressed(Key.Escape);
+		if (escapePressed) { if (selectedTile != null) lastEscapeSelection = true; } else lastEscapeSelection = false;
+        Cursor.KeyPressDetection();
+        interactionButtonPressed = (leftActuallyPressed && !leftMouseOld) || Cursor.enterPressedNow;
+        if ((interactionButtonPressed || escapePressed) && Position.GameEndState == Position.EndState.Ongoing)
 			Select();
-		leftMouseOld = leftActuallyPressed;
+        leftMouseOld = leftActuallyPressed;
 	}
 	private Vector2I GetPositionOnBoard()
 	{
@@ -27,40 +31,38 @@ public partial class Interaction : Chessboard
 	}
 	private void Select()
 	{
-		Vector2I flatMousePosition = GetPositionOnBoard();
-		if (leftMouseButtonPressed && Promotion.PromotionOptionsPositions.Contains(flatMousePosition))
+		Vector2I flatMousePosition = Cursor.enterPressedNow ? Cursor.actualLocation : GetPositionOnBoard();
+		if (interactionButtonPressed && Promotion.PromotionOptionsPositions.Contains(flatMousePosition))
 		{
 			Promotion.Promote(flatMousePosition);
 			return;
 		}
 		if (Position.colorToMove == '\0')
 			return;
-		Vector3I mousePositionBoard = new(flatMousePosition.X, flatMousePosition.Y, 0), mousePositionPieces = new(flatMousePosition.X, flatMousePosition.Y, 1);
-		bool canSwitchSelectedTile = PieceMoves.GetPieceColor(flatMousePosition) == Position.colorToMove;
-		if ((Input.IsKeyPressed(Key.Escape) && selectedTile != null) || (leftMouseButtonPressed && selectedTile == mousePositionBoard))
+		TilesElement mousePositionBoard = new(flatMousePosition, Layer.Tile);
+		if (selectedTile != null && (Input.IsKeyPressed(Key.Escape) || (interactionButtonPressed && (selectedTile ?? default).Location == mousePositionBoard.Location)))
 		{
-			Deselect((Vector3I)selectedTile);
+			Deselect((selectedTile ?? default).Location);
 			PreviousMoveTiles(Colors.Enum.PreviousMove);
 			return;
 		}
-		if (leftMouseButtonPressed)
-		{
-			if (canSwitchSelectedTile)
-			{
-				Colors.SetTileColors(flatMousePosition);
-				return;
-			}
-			if (selectedTile == null)
-				return;
-			Vector3I selectedNotNull = (Vector3I)selectedTile;
-			Vector2I selectedTileFlat = new(selectedNotNull.X, selectedNotNull.Y);
-			int legalIndex = LegalMoves.legalMoves.IndexOf((selectedTileFlat, flatMousePosition));
-			if (legalIndex > -1)
-			{
-                UpdatePosition.MovePiece(selectedTileFlat, flatMousePosition, legalIndex);
-            }
-        }
+		if (interactionButtonPressed)
+			InteractWithPiece(flatMousePosition);
 	}
+	private static void InteractWithPiece(Vector2I targetedPiece)
+	{
+        bool canSwitchSelectedTile = PieceMoves.GetPieceColor(targetedPiece) == Position.colorToMove;
+		GD.Print();
+        if (canSwitchSelectedTile)
+        {
+            Colors.SetTileColors(targetedPiece);
+            return;
+        }
+        if (selectedTile == null)
+            return;
+        Vector2I selectedTileFlat = (selectedTile ?? default).Location;
+        UpdatePosition.MovePiece(selectedTileFlat, targetedPiece);
+    }
 	public static void Deselect(Vector2I start)
 	{
 		PreviousMoveTiles(Colors.Enum.Default);
@@ -80,10 +82,6 @@ public partial class Interaction : Chessboard
 		(Vector2I start, Vector2I end) lastMoveNotNull = Position.LastMoveInfo ?? default;
 		Colors.Set(color, lastMoveNotNull.start.X, lastMoveNotNull.start.Y);
 		Colors.Set(color, lastMoveNotNull.end.X, lastMoveNotNull.end.Y);
-	}
-	public static void Deselect(Vector3I start)
-	{
-		Deselect(new Vector2I(start.X, start.Y));
 	}
 	public static Sprite2D GetTile(Vector2I location)
 	{

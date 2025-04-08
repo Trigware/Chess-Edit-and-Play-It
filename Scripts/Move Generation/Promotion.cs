@@ -27,7 +27,7 @@ public partial class Promotion
 			if (colorToMove == 'b')
 				promotable = Convert.ToChar(promotable.ToString().ToLower());
 			Vector2I optionPosition = new(promotionPosition.X, promotionPosition.Y - optionDirection * i);
-			Vector3I pieceBelowOption = new(optionPosition.X, optionPosition.Y, 1);
+			Chessboard.TilesElement pieceBelowOption = new(optionPosition, Chessboard.Layer.Piece);
 			if (Chessboard.tiles.ContainsKey(pieceBelowOption))
 				Animations.Tween(Chessboard.tiles[pieceBelowOption], Animations.animationSpeed * 2, optionPosition, null, null, 0, false);
 			PromotionOptionsPieces.Add(promotable); PromotionOptionsPositions.Add(optionPosition);
@@ -41,7 +41,7 @@ public partial class Promotion
 			(char piece, Vector2I position) option = (PromotionOptionsPieces[i], PromotionOptionsPositions[i]);
 			Vector2I optionPosition = new(promotionPosition.X, promotionPosition.Y + optionDirection * (CanBePromotedTo.Count() - i));
 			Colors.Set(Colors.Enum.Promotion, option.position.X, option.position.Y);
-			OptionChosen(option.piece, option.position, optionPosition, PromotionOptionTransparency, 2);
+			OptionChosen(option.piece, option.position, optionPosition, PromotionOptionTransparency, Chessboard.Layer.Promotion);
 		}
 	}
 	public static void Promote(Vector2I promotionPosition)
@@ -57,14 +57,14 @@ public partial class Promotion
 	{
 		char chosenPiece = Position.colorToMove == 'w' ? piecePromotedTo : Convert.ToChar(piecePromotedTo.ToString().ToLower());
 		Position.pieces[location] = chosenPiece;
-		OptionChosen(chosenPiece, location, location, 1, 1);
+		OptionChosen(chosenPiece, location, location, 1, Chessboard.Layer.Piece);
         LegalMoves.ReverseColor(Position.colorToMove);
         LegalMoves.GetLegalMoves();
     }
-	public static void OptionChosen(char chosenPiece, Vector2I promotionLocation, Vector2I animationStartPosition, float endTransparency, int tileLayer, float durationMultiplier = 2)
+	public static void OptionChosen(char chosenPiece, Vector2I promotionLocation, Vector2I animationStartPosition, float endTransparency, Chessboard.Layer tileLayer, float durationMultiplier = 2)
 	{
 		Sprite2D sprite = CreateOptionPiece(chosenPiece, animationStartPosition);
-		Vector3I tilePositionInDict = new(promotionLocation.X, promotionLocation.Y, tileLayer);
+		Chessboard.TilesElement tilePositionInDict = new(promotionLocation, tileLayer);
 		if (Chessboard.tiles.ContainsKey(tilePositionInDict))
 			Chessboard.tiles[tilePositionInDict] = sprite;
 		else
@@ -92,7 +92,7 @@ public partial class Promotion
 		{
 			Vector2I location = PromotionOptionsPositions[i];
 			Colors.Set(Colors.Enum.Default, location.X, location.Y);
-			Sprite2D handledSprite = Chessboard.tiles[new(location.X, location.Y, 2)];
+			Sprite2D handledSprite = Chessboard.tiles[new(location, Chessboard.Layer.Promotion)];
 			if (location == promotionPosition)
 			{
 				Animations.Tween(handledSprite, Animations.animationSpeed, location, originalPromotionPosition, null, 1, false, false, true, -1, -1, true);
@@ -101,9 +101,9 @@ public partial class Promotion
 			}
 			else
 				Animations.Tween(handledSprite, Animations.animationSpeed, location, null, null, 0, true, false, false);
-			Chessboard.tiles.Remove(new(location.X, location.Y, 2));
+			Chessboard.tiles.Remove(new(location, Chessboard.Layer.Promotion));
 		}
-		Chessboard.tiles.Add(new(originalPromotionPosition.X, originalPromotionPosition.Y, 1), selectedPromotionSprite);
+		Chessboard.tiles.Add(new(originalPromotionPosition, Chessboard.Layer.Piece), selectedPromotionSprite);
 		char piecePromotedTo = PromotionOptionsPieces[selectedIndex];
 		Position.pieces.Add(originalPromotionPosition, piecePromotedTo);
 		UpdatePosition.LatestMove.PiecePromotedTo = piecePromotedTo;
@@ -117,7 +117,7 @@ public partial class Promotion
 	{
 		foreach (Vector2I location in PromotionOptionsPositions)
 		{
-			Vector3I locationKey = new(location.X, location.Y, 1);
+			Chessboard.TilesElement locationKey = new(location, Chessboard.Layer.Piece);
 			if (Chessboard.tiles.ContainsKey(locationKey))
 				Animations.Tween(Chessboard.tiles[locationKey], Animations.animationSpeed, location, null, null, 1, false);
 		}

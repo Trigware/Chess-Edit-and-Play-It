@@ -85,12 +85,12 @@ public partial class Colors : Interaction
 	}
 	public static void SetTileColors(Vector2I flatMousePosition)
 	{
-		Animations.CheckAnimationCancelEarly(flatMousePosition);
-		Sprite2D currentSprite = tiles[new(flatMousePosition.X, flatMousePosition.Y, 0)];
+        Animations.CheckAnimationCancelEarly(flatMousePosition);
+        Sprite2D currentSprite = tiles[new(flatMousePosition, Layer.Tile)];
 		if (selectedTile != null)
-			Deselect((Vector3I)selectedTile);
+			Deselect((selectedTile ?? default).Location);
 		PreviousMoveTiles(Enum.PreviousMove);
-		selectedTile = new(flatMousePosition.X, flatMousePosition.Y, 0);
+		selectedTile = new(flatMousePosition, Layer.Tile);
 		if (!Position.pieces.ContainsKey(flatMousePosition))
 			return;
 		char piece = Position.pieces[flatMousePosition];
@@ -108,7 +108,7 @@ public partial class Colors : Interaction
 				color = Enum.Promotion;
 			if (LegalMoves.CastlingMoves.Contains(i))
 				color = Enum.Castling;
-			Set(tiles[new(startEndTiles.end.X, startEndTiles.end.Y, 0)], color, startEndTiles.end.X, startEndTiles.end.Y);
+			Set(GetTile(startEndTiles.end), color, startEndTiles.end.X, startEndTiles.end.Y);
 		}
 	}
 	public static void ResetAllColors()
@@ -125,8 +125,8 @@ public partial class Colors : Interaction
 	}
 	public static void ChangeTileColorBack()
 	{
-        (Vector2I start, Vector2I end) lastMoveNotNull = Position.LastMoveInfo ?? default;
-        foreach (Vector2I previousCheckTile in Animations.PreviousCheckTiles)
+		(Vector2I start, Vector2I end) lastMoveNotNull = Position.LastMoveInfo ?? default;
+		foreach (Vector2I previousCheckTile in Animations.PreviousCheckTiles)
 		{
 			Enum color = lastMoveNotNull.start == previousCheckTile || lastMoveNotNull.end == previousCheckTile ? Enum.PreviousMove : Enum.Default;
 			Set(color, previousCheckTile.X, previousCheckTile.Y);

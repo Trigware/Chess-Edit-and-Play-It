@@ -11,7 +11,7 @@ public partial class Animations : Chessboard
 	public static Dictionary<Tween, (Sprite2D spr, bool deleteOnFinish, float? transparency)> ActiveTweens = new();
 	public static int firstCheckZone = 0;
 	public const float lowAnimationDurationBoundary = 0.3f;
-	public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale, float? endTransparency, bool deleteOnFinished, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = -1, int castlingAnimation = -1, bool promotionConfirmation = false)
+	public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale, float? endTransparency, bool deleteOnFinished, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = -1, int castlingAnimation = -1, bool promotionConfirmation = false, Tween.TransitionType transition = Godot.Tween.TransitionType.Sine, Tween.EaseType? easeType = Godot.Tween.EaseType.InOut)
 	{
 		Tween tween = spr.CreateTween();
 		ActiveTweens.Add(tween, (spr, deleteOnFinished, endTransparency));
@@ -20,26 +20,27 @@ public partial class Animations : Chessboard
 		if (endPosition != null)
 		{
 			Vector2 usedEndPos = (Vector2)endPosition;
-			TweenSetup(spr, tween, "position", CalculateTilePosition(usedEndPos.X, usedEndPos.Y), duration);
+			TweenSetup(spr, tween, "position", CalculateTilePosition(usedEndPos.X, usedEndPos.Y), duration, transition, easeType);
 		}
 		if (endScale != null)
 		{
 			float usedEndScale = (float)endScale;
 			float rescaledForScreenSize = usedEndScale * gridScale / svgScale;
-			TweenSetup(spr, tween, "scale", new Vector2(rescaledForScreenSize, rescaledForScreenSize), duration);
+			TweenSetup(spr, tween, "scale", new Vector2(rescaledForScreenSize, rescaledForScreenSize), duration, transition, easeType);
 		}
 		if (endTransparency != null)
 		{
 			float usedEndTransparency = (float)endTransparency;
-			TweenSetup(spr, tween, "modulate:a", usedEndTransparency, duration);
+			TweenSetup(spr, tween, "modulate:a", usedEndTransparency, duration, transition, easeType);
 		}
 		if (endPosition != null)
 			tween.Finished += () => OnFinishedPosition(spr);
 		OnFinishedDelete(spr, startPosition, tween, endPosition, duration, deleteOnFinished, promotion, deleteFromPiecesDict, chainIterator, castlingAnimation, promotionConfirmation);
 	}
-	private static void TweenSetup(Sprite2D spr, Tween tween, string type, Variant end, float duration)
+	private static void TweenSetup(Sprite2D spr, Tween tween, string type, Variant end, float duration, Tween.TransitionType transition, Tween.EaseType? easeType)
 	{
-		tween.Parallel().TweenProperty(spr, type, end, duration).SetTrans(Godot.Tween.TransitionType.Sine).SetEase(Godot.Tween.EaseType.InOut);
+		PropertyTweener property = tween.Parallel().TweenProperty(spr, type, end, duration).SetTrans(transition);
+		if (easeType != null) property.SetEase(easeType ?? default);
 	}
 	private static void OnFinishedPosition(Sprite2D spr)
 	{

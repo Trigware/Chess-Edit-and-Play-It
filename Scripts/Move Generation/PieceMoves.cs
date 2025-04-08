@@ -32,7 +32,7 @@ public partial class PieceMoves : LegalMoves
 		for (int range = 0; range < pieceRange; range++)
 		{
 			Vector2I addedFlatPosition = piece.Key + dir * (range + 1);
-			if (!isWithinGrid(addedFlatPosition))
+			if (!IsWithinGrid(addedFlatPosition))
 				break;
 			char targetColor = GetPieceColor(addedFlatPosition);
 			if (RoyalDangerRestriction(opponent, isMovedPieceRoyal, addedFlatPosition, piece.Key))

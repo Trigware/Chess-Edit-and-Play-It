@@ -20,9 +20,11 @@ public partial class UpdatePosition
 		NextMovePreparations(promotionIndex, end);
 		DiscoveredCheckAnimation(end, false);
 	}
-	public static void MovePiece(Vector2I start, Vector2I end, int legalIndex)
+	public static void MovePiece(Vector2I start, Vector2I end)
 	{
-		int leapMoveIndex = LegalMoves.PawnLeapMoves.IndexOf(legalIndex);
+        int legalIndex = LegalMoves.legalMoves.IndexOf((start, end));
+		if (legalIndex == -1) return;
+        int leapMoveIndex = LegalMoves.PawnLeapMoves.IndexOf(legalIndex);
 		int enPassantIndex = LegalMoves.EnPassantMoves.IndexOf(legalIndex);
 		int promotionIndex = LegalMoves.PromotionMoves.IndexOf(legalIndex);
 		int castlingIndex = LegalMoves.CastlingMoves.IndexOf(legalIndex);
@@ -42,7 +44,7 @@ public partial class UpdatePosition
 		else
 			Position.EnPassantInfo = null;
 
-		if (Chessboard.tiles.ContainsKey(new(end.X, end.Y, 1)) || pieceMoved.ToString().ToLower() == "p" || enPassant)
+		if (Chessboard.tiles.ContainsKey(new(end, Chessboard.Layer.Piece)) || pieceMoved.ToString().ToLower() == "p" || enPassant)
 			Position.HalfmoveClock = 0;
 		else
 			Position.HalfmoveClock++;
@@ -105,12 +107,12 @@ public partial class UpdatePosition
 			if (replace == '\0')
 			{
 				Position.pieces.Remove(endUsed);
-				Chessboard.tiles.Remove(new(endUsed.X, endUsed.Y, 1));
+				Chessboard.tiles.Remove(new(endUsed, Chessboard.Layer.Piece));
 			}
 			else
 			{
 				Position.pieces[endUsed] = replace;
-				Chessboard.tiles[new(endUsed.X, endUsed.Y, 1)] = handledSprite;
+				Chessboard.tiles[new(endUsed, Chessboard.Layer.Piece)] = handledSprite;
 			}
 		}
 		catch { }
@@ -123,8 +125,8 @@ public partial class UpdatePosition
 			handledPiece = Position.pieces[start];
 		Tags.ModifyTags(start, end, handledPiece, updateCastlingRightsHash, castling);
 		Position.pieces.Remove(start);
-		Chessboard.tiles.Remove(new(start.X, start.Y, 1));
-		Vector3I endPiece = new(end.X, end.Y, 1);
+		Chessboard.tiles.Remove(new(start, Chessboard.Layer.Piece));
+		Chessboard.TilesElement endPiece = new(end, Chessboard.Layer.Piece);
 		bool capture = Chessboard.tiles.ContainsKey(endPiece);
 		if (!capture)
 		{
@@ -145,7 +147,7 @@ public partial class UpdatePosition
 	}
 	public static Sprite2D AddPiece(Vector2I location, char piece, float gridScale, float transparency)
 	{
-		Sprite2D handledPiece = Chessboard.DrawTilesElement(Convert.ToString(piece), location.X, location.Y, 1, LoadGraphics.I, gridScale, transparency);
+		Sprite2D handledPiece = Chessboard.DrawTilesElement(Convert.ToString(piece), location.X, location.Y, Chessboard.Layer.Piece, LoadGraphics.I, gridScale, transparency);
 		Position.pieces.Add(location, piece);
 		return handledPiece;
 	}
@@ -156,7 +158,7 @@ public partial class UpdatePosition
 	}
 	private static Sprite2D GetPiece(Vector2I location)
 	{
-		return Chessboard.tiles[new(location.X, location.Y, 1)];
+		return Chessboard.tiles[new(location, Chessboard.Layer.Piece)];
 	}
 	public static void DiscoveredCheckAnimation(Vector2I? end, bool moveReplay, float durationMultiplier = 1)
 	{

@@ -121,7 +121,7 @@ public partial class LegalMoves
             return '\0';
         return (piece.ToString() == piece.ToString().ToUpper()) ? 'w' : 'b';
     }
-    protected static bool isWithinGrid(Vector2I position)
+    public static bool IsWithinGrid(Vector2I position)
     {
         return position.X >= 0 && position.Y >= 0 && position.X < Chessboard.tileCount.X && position.Y < Chessboard.tileCount.Y;
     }

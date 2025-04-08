@@ -106,10 +106,13 @@ public partial class Tags
 		{
 			if (activeTags[i].Contains(Tag.Royal))
 			{
-				char pieceColor = LegalMoves.GetPieceColor(tagPositions[i]);
+				Vector2I tagPosition = tagPositions[i];
+                char pieceColor = LegalMoves.GetPieceColor(tagPosition);
 				if (pieceColor == '\0')
 					continue;
-				Position.RoyalPiecesColor.Add(tagPositions[i], pieceColor);
+				Cursor.RoyalPieceInitialPosition.TryAdd(pieceColor, tagPosition);
+				Cursor.Location.TryAdd(pieceColor, tagPosition);
+				Position.RoyalPiecesColor.Add(tagPosition, pieceColor);
 				Position.RoyalsPerColor[pieceColor]++;
 			}
 		}
