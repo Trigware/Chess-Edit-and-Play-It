@@ -6,12 +6,13 @@ using System.Linq;
 public partial class Chessboard : Node
 {
 	private const int tileSize = 45;
-	private const float maxOccupiedSpace = 0.85f;
+	private const float maxOccupiedSpace = 0.85f, boardFlipTimer = 0.2f;
 	public static Vector2I tileCount = new(8, 8);
 	public static Dictionary<TilesElement, Sprite2D> tiles = new();
 	protected static Vector2 gameviewSize = new(), oldviewSize = new(), vectorCenter = new();
 	public static float gridScale = 1, svgScale = 5;
 	public static float actualTileSize = 45;
+	public static bool isFlipped = false, waitingForBoardFlip = false;
 	public static Vector2? leftUpCorner = null;
 	public const int PositionRepetitionCount = 3;
 	public struct TilesElement
@@ -32,7 +33,7 @@ public partial class Chessboard : Node
 	public enum Layer { Tile, Piece, Promotion, Cursor }
 	public override void _Ready()
 	{
-		Position.Load(Position.FEN.Default);
+		Position.Load(Position.FEN.CastlingTest);
 		Tags.GetRoyalsPerColor();
 	}
 	public override void _Process(double delta)
@@ -106,8 +107,7 @@ public partial class Chessboard : Node
 		tileSprite.ZIndex = (int)layer;
 		if (layer == Layer.Cursor)
 			tileSprite.TextureFilter = CanvasItem.TextureFilterEnum.Nearest;
-		float xFloat = x, yFloat = y;
-		Vector2 position = CalculateTilePosition(xFloat, yFloat);
+		Vector2 position = CalculateTilePosition(x, y);
 		tileSprite.Position = position;
 		if (layer == Layer.Piece || layer == Layer.Promotion)
 			tileSprite.Scale /= svgScale;
@@ -132,7 +132,12 @@ public partial class Chessboard : Node
 	}
 	public static Vector2 CalculateTilePosition(float x, float y)
 	{
-		return new Vector2(x, y) * actualTileSize + vectorCenter;
+		if (isFlipped)
+		{
+            x = tileCount.X - x - 1;
+			y = tileCount.Y - y - 1;
+        }
+        return new Vector2(x, y) * actualTileSize + vectorCenter;
 	}
 	public static void Update()
 	{
@@ -155,5 +160,12 @@ public partial class Chessboard : Node
 			sprite.QueueFree();
 		tiles = new();
 		leftUpCorner = null;
+	}
+	public static void FlipBoard()
+	{
+		if (Position.GameEndState != Position.EndState.Ongoing) return;
+		bool wasPreviouslyFlipped = isFlipped;
+		isFlipped = Position.colorToMove == Position.oppositeStartColorToMove;
+		if (wasPreviouslyFlipped != isFlipped) History.TimerCountdown(boardFlipTimer, History.TimerType.BoardFlip);
 	}
 }

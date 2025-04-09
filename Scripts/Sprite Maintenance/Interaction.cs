@@ -13,9 +13,10 @@ public partial class Interaction : Chessboard
 		escapePressed = Input.IsKeyPressed(Key.Escape);
 		if (escapePressed) { if (selectedTile != null) lastEscapeSelection = true; } else lastEscapeSelection = false;
 		Cursor.KeyPressDetection();
-		interactionButtonPressed = (leftActuallyPressed && !leftMouseOld) || Cursor.enterPressedNow;
+		bool leftMousePressStartNow = leftActuallyPressed && !leftMouseOld;
+        interactionButtonPressed = leftMousePressStartNow || Cursor.enterPressedNow;
 		if ((interactionButtonPressed || escapePressed) && Position.GameEndState == Position.EndState.Ongoing)
-			Select();
+			Select(leftMousePressStartNow);
 		leftMouseOld = leftActuallyPressed;
 	}
 	private Vector2I GetPositionOnBoard()
@@ -27,19 +28,20 @@ public partial class Interaction : Chessboard
 		}
 		Vector2 leftUpNotNull = (Vector2)leftUpCorner;
 		Vector2 mousePosition = GetViewport().GetMousePosition();
-		return (Vector2I)((mousePosition - leftUpNotNull) / actualTileSize).Floor();
+		Vector2 tileSelectionPosition = ((mousePosition - leftUpNotNull) / actualTileSize).Floor().Abs();
+        return (Vector2I)tileSelectionPosition;
 	}
-	private void Select()
+	private void Select(bool leftMousePressStartNow)
 	{
-		Vector2I flatMousePosition = Cursor.enterPressedNow ? Cursor.actualLocation : GetPositionOnBoard();
-		if (interactionButtonPressed && Promotion.PromotionOptionsPositions.Contains(flatMousePosition))
+		Vector2I interactionPosition = leftMousePressStartNow ? GetPositionOnBoard() : Cursor.actualLocation;
+        if (interactionButtonPressed && Promotion.PromotionOptionsPositions.Contains(interactionPosition))
 		{
-			Promotion.Promote(flatMousePosition);
+			Promotion.Promote(interactionPosition);
 			return;
 		}
 		if (Position.colorToMove == '\0')
 			return;
-		TilesElement mousePositionBoard = new(flatMousePosition, Layer.Tile);
+		TilesElement mousePositionBoard = new(interactionPosition, Layer.Tile);
 		if (selectedTile != null && (Input.IsKeyPressed(Key.Escape) || (interactionButtonPressed && (selectedTile ?? default).Location == mousePositionBoard.Location)))
 		{
 			Deselect((selectedTile ?? default).Location);
@@ -47,7 +49,7 @@ public partial class Interaction : Chessboard
 			return;
 		}
 		if (interactionButtonPressed)
-			InteractWithPiece(flatMousePosition);
+			InteractWithPiece(interactionPosition);
 	}
 	private static void InteractWithPiece(Vector2I targetedPiece)
 	{
@@ -55,7 +57,8 @@ public partial class Interaction : Chessboard
 		if (canSwitchSelectedTile)
 		{
 			Colors.SetTileColors(targetedPiece);
-			return;
+            Cursor.MoveCursor(targetedPiece, 0);
+            return;
 		}
 		if (selectedTile == null)
 			return;

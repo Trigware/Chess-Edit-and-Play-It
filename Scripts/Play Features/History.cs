@@ -4,9 +4,9 @@ using Godot;
 public partial class History
 {
 	public static Stack<Move> UndoMoves = new(), RedoMoves = new();
-	public static bool cooldownOngoing = false;
+	public static bool cooldownOngoing = false, undoPending = false;
 	private static float MoveReplayAnimationSpeedMultiplier = 0.75f;
-	private static int movesReplayedInThisSession = 0;
+	public static int movesReplayedInThisSession = 0, activeMoveSuccessionTimers = 0;
 	private static ReplayType lastReplay = ReplayType.None;
 
 	public class Move
@@ -74,7 +74,9 @@ public partial class History
 	}
 	private static void Undo()
 	{
-		lastReplay = ReplayType.Undo;
+		if (Chessboard.waitingForBoardFlip) { undoPending = true; return; }
+		undoPending = false;
+        lastReplay = ReplayType.Undo;
 		UpdateTileColorsAndUndoTimer();
 		MoveReplay(UndoMoves.Pop(), true);
 	}
@@ -93,7 +95,7 @@ public partial class History
 			movesReplayedInThisSession = 0;
 			return;
 		}
-		if (pressedZ && !replayDisabled)
+		if ((pressedZ && !replayDisabled) || undoPending)
 		{
 			if (UndoMoves.Count == 0 || lastReplay == ReplayType.Redo) movesReplayedInThisSession = 0;
 			if (UndoMoves.Count > 0) { Undo(); return; }
@@ -132,8 +134,9 @@ public partial class History
 		ModifyLastMoveInfo();
 		MoveReplayGetBack(replayedMove, isUndo);
 		UpdatePosition.DiscoveredCheckAnimation(null, true, MoveReplayAnimationSpeedMultiplier);
+		TimerCountdown(Animations.animationSpeed * MoveReplayAnimationSpeedMultiplier * 2, TimerType.ReplaySuccession);
 	}
-	public enum TimerType { Replay, Cursor, FirstCursorMove }
+	public enum TimerType { Replay, Cursor, FirstCursorMove, BoardFlip, ReplaySuccession }
 	public static void TimerCountdown(float waitTime, TimerType timerType)
 	{
 		Timer cooldown = new() { WaitTime = waitTime, OneShot = true };
@@ -146,13 +149,15 @@ public partial class History
 		};
 		cooldown.Start();
 	}
-	private static void ChangeFieldAfterTimeout(TimerType timerType, bool changeTo)
+	private static void ChangeFieldAfterTimeout(TimerType timerType, bool timerStart)
 	{
 		switch (timerType)
 		{
-			case TimerType.Replay: cooldownOngoing = changeTo; break;
-			case TimerType.Cursor: Cursor.cooldownOngoing = changeTo; break;
-			case TimerType.FirstCursorMove: Cursor.FirstMovedTimerActive = changeTo; break;
+			case TimerType.Replay: cooldownOngoing = timerStart; break;
+			case TimerType.Cursor: Cursor.cooldownOngoing = timerStart; break;
+			case TimerType.FirstCursorMove: Cursor.FirstMovedTimerActive = timerStart; break;
+			case TimerType.BoardFlip: Chessboard.waitingForBoardFlip = timerStart; if (!timerStart) Chessboard.Update(); break;
+			case TimerType.ReplaySuccession: activeMoveSuccessionTimers += timerStart ? 1 : -1; if (activeMoveSuccessionTimers == 0) Chessboard.FlipBoard(); break;
 		}
 	}
 	private static void ModifyLastMoveInfo()

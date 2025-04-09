@@ -14,6 +14,7 @@ public partial class UpdatePosition
 		bool enPassant = Position.EnPassantInfo != null && enPassantIndex > -1;
 		char capturedPiece = Position.pieces.TryGetValue(end, out char val) ? val : '\0', pieceMoved = Position.pieces[start];
 		Tags.lastDeletedTags = new();
+		Chessboard.waitingForBoardFlip = true;
 		HandleEnPassantAndClocks(enPassant, leapMoveIndex, start, end, pieceMoved);
 		MovePiecesInternally(enPassant, castlingIndex, promotionIndex, start, end);
 		UpdateForUserFeatures(start, end, promotionIndex != -1, capturedPiece, pieceMoved, castlingIndex);
@@ -37,19 +38,11 @@ public partial class UpdatePosition
 		Animations.CheckAnimationsStarted = new();
 		enPassantDelete = enPassant ? Position.pieces[(previousEnPassantInfo ?? default).delete] : '\0';
 		previousHalfmoveClock = Position.HalfmoveClock;
-		if (enPassant)
-			DeletePiece((Position.EnPassantInfo ?? default).delete, null, true, true, '\0', null, true);
-		if (leapMoveIndex > -1)
-			Position.EnPassantInfo = LegalMoves.PawnLeapMovesInfo[leapMoveIndex];
-		else
-			Position.EnPassantInfo = null;
+		if (enPassant) DeletePiece((Position.EnPassantInfo ?? default).delete, null, true, true, '\0', null, true);
+		if (leapMoveIndex > -1) Position.EnPassantInfo = LegalMoves.PawnLeapMovesInfo[leapMoveIndex]; else Position.EnPassantInfo = null;
 
-		if (Chessboard.tiles.ContainsKey(new(end, Chessboard.Layer.Piece)) || pieceMoved.ToString().ToLower() == "p" || enPassant)
-			Position.HalfmoveClock = 0;
-		else
-			Position.HalfmoveClock++;
-		if (Position.colorToMove == Position.oppositeStartColorToMove)
-			Position.FullmoveNumber++;
+		if (Chessboard.tiles.ContainsKey(new(end, Chessboard.Layer.Piece)) || pieceMoved.ToString().ToLower() == "p" || enPassant) Position.HalfmoveClock = 0; else Position.HalfmoveClock++;
+		if (Position.colorToMove == Position.oppositeStartColorToMove) Position.FullmoveNumber++;
 	}
 	private static void MovePiecesInternally(bool enPassant, int castlingIndex, int promotionIndex, Vector2I start, Vector2I end)
 	{

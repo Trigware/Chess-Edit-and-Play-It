@@ -4,14 +4,13 @@ using Godot.Collections;
 public partial class Cursor
 {
 	public static bool cooldownOngoing = false, wasEnterPressed = false, enterPressedNow = false, locationInitialized = false, CursorMovedInRow = false, FirstMovedTimerActive = false;
-	private const float cursorMoveCooldown = 0.14f, FirstMoveInRowCooldown = 0.055f;
-	private static float moveCooldownMultiplier = 1;
+	private const float cursorMoveCooldown = 0.115f, FirstMoveInRowCooldown = 0.06f;
 	private static bool CursorShown = false;
 	public static Vector2I actualLocation, cursorDirectionField = new();
 	private static Sprite2D cursor;
 	public static void KeyPressDetection()
 	{
-		if (cooldownOngoing) return;
+		if (cooldownOngoing || Chessboard.waitingForBoardFlip) return;
 		if (CursorShown && Interaction.escapePressed && !Interaction.lastEscapeSelection) { ShowHideCursor(false); return; }
 		bool enterPressed = Input.IsKeyPressed(Key.Enter);
 		enterPressedNow = !wasEnterPressed && enterPressed && CursorShown;
@@ -37,28 +36,30 @@ public partial class Cursor
 		if (!CursorMovedInRow) History.TimerCountdown(FirstMoveInRowCooldown, History.TimerType.FirstCursorMove);
 		CursorMovedInRow = true;
 		if (FirstMovedTimerActive) return;
-		moveCooldownMultiplier = Input.IsKeyPressed(Key.Shift) ? 0.5f : 1;
+		cursorDirection *= Chessboard.isFlipped ? -1 : 1;
+		float moveCooldownMultiplier = Input.IsKeyPressed(Key.Shift) ? 0.5f : 1;
 		History.TimerCountdown(cursorMoveCooldown * moveCooldownMultiplier, History.TimerType.Cursor);
 		if (!CursorShown)
 			ShowHideCursor(true);
-		IsOutOfBounds(actualLocation + cursorDirection, out bool hitXWall, out bool hitYWall);
-		MoveCursor(actualLocation + cursorDirection, cursorMoveCooldown * moveCooldownMultiplier, hitXWall, hitYWall);
+		Vector2I requestedDestination = actualLocation + cursorDirection;
+        if (!IsOutOfBounds(requestedDestination, out bool outOfBoundsX, out bool outOfBoundsY)) MoveCursor(requestedDestination, cursorMoveCooldown * moveCooldownMultiplier, outOfBoundsX, outOfBoundsY);
 		cursorDirectionField = new();
-
 	}
-	private static void MoveCursor(Vector2I position, float duration, bool hitXWall = false, bool hitYWall = false)
+    private static bool IsOutOfBounds(Vector2I location, out bool X, out bool Y)
+    {
+        X = false; Y = false;
+        if (location.X < 0) X = true; if (location.X >= Chessboard.tileCount.X) X = true;
+        if (location.Y < 0) Y = true; if (location.Y >= Chessboard.tileCount.Y) Y = true;
+		return X && Y;
+    }
+	public static void MoveCursor(Vector2I position, float duration, bool outOfBoundsX = false, bool outOfBoundsY = false)
 	{
-		if (hitXWall) position.X = actualLocation.X;
-		if (hitYWall) position.Y = actualLocation.Y;
+		if ((outOfBoundsX || outOfBoundsY) && Interaction.selectedTile != null) return; // remove when implementing tile snapping
+		if (outOfBoundsX) position.X = actualLocation.X;
+		if (outOfBoundsY) position.Y = actualLocation.Y;
 		if (position == actualLocation) return;
-		Animations.Tween(cursor, duration, actualLocation, actualLocation = position, null, null, false, false, false, -1, -1, false, Tween.TransitionType.Linear, null);
-	}
-	private static void IsOutOfBounds(Vector2I location, out bool X, out bool Y)
-	{
-		X = false; Y = false;
-		if (location.X < 0) X = true; if (location.X >= Chessboard.tileCount.X) X = true;
-		if (location.Y < 0) Y = true; if (location.Y >= Chessboard.tileCount.Y) Y = true;
-	}
+        Animations.Tween(cursor, duration, actualLocation, actualLocation = position, null, null, false, false, false, -1, -1, false, Tween.TransitionType.Linear, null);
+    }
 	public static void GetCursor()
 	{
 		cursor = Chessboard.tiles[new(0, 0, Chessboard.Layer.Cursor)];

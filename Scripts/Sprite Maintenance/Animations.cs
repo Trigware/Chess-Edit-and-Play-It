@@ -71,12 +71,12 @@ public partial class Animations : Chessboard
 				return;
 			}
 			promotionUnsafe = false;
-			AnimationEnd(tween, deleteOnFinished, spr, endPosition);
-			if (castlingAnimation >= 0)
-			{
-				Castling.endXpositions.RemoveAt(0);
-				Castling.elipsePathUp.RemoveAt(0);
-			}
+            if (castlingAnimation >= 0)
+            {
+                Castling.endXpositions.RemoveAt(0);
+                Castling.elipsePathUp.RemoveAt(0);
+            }
+            AnimationEnd(tween, deleteOnFinished, spr, endPosition);
 			if (Promotion.promotionPending != null)
 				Promotion.Promote((Vector2I)Promotion.promotionPending);
 			if (promotionConfirmation)
@@ -91,11 +91,13 @@ public partial class Animations : Chessboard
 			spr.QueueFree();
 		spr.ZIndex = 1;
 		firstCheckZone = 0;
-		if (endPosition == null)
-			return;
 		if (Position.GameEndState != Position.EndState.Ongoing && Position.GameEndState != Position.EndState.Checkmate)
 			return;
-		Vector2I endNotNull = (Vector2I)endPosition;
+		if (ActiveTweens.Count == 0 && Promotion.PromotionOptionsPieces.Count == 0 && History.activeMoveSuccessionTimers == 0)
+			FlipBoard();
+        if (endPosition == null)
+            return;
+        Vector2I endNotNull = (Vector2I)endPosition;
 		for (int i = 0; i < LegalMoves.RoyalAttackers.Count; i++)
 		{
 			if (LegalMoves.RoyalAttackers[i] == endNotNull)
