@@ -6,7 +6,7 @@ using System.Linq;
 public partial class Animations : Chessboard
 {
 	public const float animationSpeed = 0.3f;
-	public static bool promotionUnsafe = false, CancelCheckEarly = false, CancelCastlingEarly = false;
+	public static bool promotionUnsafe = false, CancelCheckEarly = false, CancelCastlingEarly = false, ActiveCheckAnimation = false;
 	public static List<Vector2I> PreviousCheckTiles = new(), CheckAnimationsStarted = new();
 	public static Dictionary<Tween, (Sprite2D spr, bool deleteOnFinish, float? transparency)> ActiveTweens = new();
 	public static int firstCheckZone = 0;
@@ -91,8 +91,7 @@ public partial class Animations : Chessboard
 			spr.QueueFree();
 		spr.ZIndex = 1;
 		firstCheckZone = 0;
-		if (Position.GameEndState != Position.EndState.Ongoing && Position.GameEndState != Position.EndState.Checkmate)
-			return;
+		if (Position.GameEndState != Position.EndState.Ongoing && Position.GameEndState != Position.EndState.Checkmate) return;
 		if (ActiveTweens.Count == 0 && Promotion.PromotionOptionsPieces.Count == 0 && History.activeMoveSuccessionTimers == 0)
 			FlipBoard();
         if (endPosition == null)
@@ -119,12 +118,11 @@ public partial class Animations : Chessboard
 		List<Vector2I> zone = LegalMoves.CheckResponseZones[j];
 		if (CancelCheckEarly || zone.Count < i)
 			return;
-		if (i == 1 && !CheckAnimationsStarted.Contains(LegalMoves.RoyalAttackers[j]))
-			CheckAnimationsStarted.Add(LegalMoves.RoyalAttackers[j]);
-		else if (i == 1)
-			return;
+        if (i == 1 && !CheckAnimationsStarted.Contains(LegalMoves.RoyalAttackers[j])) CheckAnimationsStarted.Add(LegalMoves.RoyalAttackers[j]);
+		else if (i == 1) return;
+        if (i == 1) ActiveCheckAnimation = true;
 
-		List<Color> previousColors = new();
+        List<Color> previousColors = new();
 		if (j == firstCheckZone)
 			Colors.ChangeTileColorBack();
 		if (i >= zone.Count)
@@ -140,6 +138,7 @@ public partial class Animations : Chessboard
 			Audio.Play(isCheckmate ? Audio.Enum.Checkmate : Audio.Enum.Check);
 			if (isCheckmate)
 				CheckmateColors();
+			ActiveCheckAnimation = false;
 			return;
 		}
 		Timer timer = new() { WaitTime = animationSpeed/LegalMoves.maxResponseRange*durationMultiplier, OneShot = true };
@@ -182,6 +181,7 @@ public partial class Animations : Chessboard
 	{
 		if (LegalMoves.CheckedRoyals.Contains(flatMousePosition) && !CancelCheckEarly && !Audio.playedCheck)
 		{
+            ActiveCheckAnimation = false;
 			Colors.ChangeTileColorBack();
 			CancelCheckEarly = true;
 			Audio.Play(Audio.Enum.Check);

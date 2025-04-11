@@ -32,7 +32,8 @@ public partial class Promotion
 				Animations.Tween(Chessboard.tiles[pieceBelowOption], Animations.animationSpeed * 2, optionPosition, null, null, 0, false);
 			PromotionOptionsPieces.Add(promotable); PromotionOptionsPositions.Add(optionPosition);
 		}
-		AnimateOptionPieces(promotionPosition, optionDirection);
+		Chessboard.waitingForBoardFlip = false;
+        AnimateOptionPieces(promotionPosition, optionDirection);
 	}
 	private static void AnimateOptionPieces(Vector2I promotionPosition, int optionDirection)
 	{

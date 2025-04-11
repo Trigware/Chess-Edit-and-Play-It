@@ -15,6 +15,7 @@ public partial class UpdatePosition
 		char capturedPiece = Position.pieces.TryGetValue(end, out char val) ? val : '\0', pieceMoved = Position.pieces[start];
 		Tags.lastDeletedTags = new();
 		Chessboard.waitingForBoardFlip = true;
+		Cursor.Location[Position.colorToMove] = end;
 		HandleEnPassantAndClocks(enPassant, leapMoveIndex, start, end, pieceMoved);
 		MovePiecesInternally(enPassant, castlingIndex, promotionIndex, start, end);
 		UpdateForUserFeatures(start, end, promotionIndex != -1, capturedPiece, pieceMoved, castlingIndex);

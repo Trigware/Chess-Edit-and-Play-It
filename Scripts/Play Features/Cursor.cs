@@ -1,32 +1,29 @@
+using System.Collections.Generic;
 using Godot;
-using Godot.Collections;
 
 public partial class Cursor
 {
-	public static bool cooldownOngoing = false, wasEnterPressed = false, enterPressedNow = false, locationInitialized = false, CursorMovedInRow = false, FirstMovedTimerActive = false;
+	public static Dictionary<char, Vector2I> Location = new();
+	public static bool cooldownOngoing = false, wasEnterPressed = false, enterPressedNow = false, CursorMovedInRow = false, FirstMovedTimerActive = false;
 	private const float cursorMoveCooldown = 0.115f, FirstMoveInRowCooldown = 0.06f;
 	private static bool CursorShown = false;
 	public static Vector2I actualLocation, cursorDirectionField = new();
 	private static Sprite2D cursor;
 	public static void KeyPressDetection()
 	{
-		if (cooldownOngoing || Chessboard.waitingForBoardFlip) return;
+        if (cooldownOngoing || Chessboard.waitingForBoardFlip || Position.GameEndState != Position.EndState.Ongoing) return;
 		if (CursorShown && Interaction.escapePressed && !Interaction.lastEscapeSelection) { ShowHideCursor(false); return; }
 		bool enterPressed = Input.IsKeyPressed(Key.Enter);
 		enterPressedNow = !wasEnterPressed && enterPressed && CursorShown;
 		wasEnterPressed = enterPressed;
-		if (enterPressed)
-		{
-			if (!CursorShown) ShowHideCursor(true);
-			return;
-		}
+		if (enterPressed && !CursorShown) ShowHideCursor(true);
 		if (Input.IsKeyPressed(Key.Left)) { cursorDirectionField.X = -1; }
 		if (Input.IsKeyPressed(Key.Right)) { cursorDirectionField.X = cursorDirectionField.X == -1 ? 0 : 1; }
 		if (Input.IsKeyPressed(Key.Up)) { cursorDirectionField.Y = -1; }
 		if (Input.IsKeyPressed(Key.Down)) { cursorDirectionField.Y = cursorDirectionField.Y == -1 ? 0 : 1; }
 		if (cursorDirectionField != Vector2I.Zero) CursorInput(cursorDirectionField); else CursorMovedInRow = false;
 	}
-	private static void ShowHideCursor(bool show)
+	public static void ShowHideCursor(bool show)
 	{
 		CursorShown = show;
 		Animations.Tween(cursor, Animations.animationSpeed, actualLocation, null, null, show ? 1 : 0, false);
@@ -39,8 +36,7 @@ public partial class Cursor
 		cursorDirection *= Chessboard.isFlipped ? -1 : 1;
 		float moveCooldownMultiplier = Input.IsKeyPressed(Key.Shift) ? 0.5f : 1;
 		History.TimerCountdown(cursorMoveCooldown * moveCooldownMultiplier, History.TimerType.Cursor);
-		if (!CursorShown)
-			ShowHideCursor(true);
+		if (!CursorShown) ShowHideCursor(true);
 		Vector2I requestedDestination = actualLocation + cursorDirection;
         if (!IsOutOfBounds(requestedDestination, out bool outOfBoundsX, out bool outOfBoundsY)) MoveCursor(requestedDestination, cursorMoveCooldown * moveCooldownMultiplier, outOfBoundsX, outOfBoundsY);
 		cursorDirectionField = new();

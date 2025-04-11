@@ -14,7 +14,7 @@ public partial class Interaction : Chessboard
 		if (escapePressed) { if (selectedTile != null) lastEscapeSelection = true; } else lastEscapeSelection = false;
 		Cursor.KeyPressDetection();
 		bool leftMousePressStartNow = leftActuallyPressed && !leftMouseOld;
-        interactionButtonPressed = leftMousePressStartNow || Cursor.enterPressedNow;
+		interactionButtonPressed = leftMousePressStartNow || Cursor.enterPressedNow;
 		if ((interactionButtonPressed || escapePressed) && Position.GameEndState == Position.EndState.Ongoing)
 			Select(leftMousePressStartNow);
 		leftMouseOld = leftActuallyPressed;
@@ -29,14 +29,16 @@ public partial class Interaction : Chessboard
 		Vector2 leftUpNotNull = (Vector2)leftUpCorner;
 		Vector2 mousePosition = GetViewport().GetMousePosition();
 		Vector2 tileSelectionPosition = ((mousePosition - leftUpNotNull) / actualTileSize).Floor().Abs();
-        return (Vector2I)tileSelectionPosition;
+		return (Vector2I)tileSelectionPosition;
 	}
 	private void Select(bool leftMousePressStartNow)
 	{
+		if (waitingForBoardFlip) return;
 		Vector2I interactionPosition = leftMousePressStartNow ? GetPositionOnBoard() : Cursor.actualLocation;
-        if (interactionButtonPressed && Promotion.PromotionOptionsPositions.Contains(interactionPosition))
+		if (interactionButtonPressed && Promotion.PromotionOptionsPositions.Contains(interactionPosition))
 		{
-			Promotion.Promote(interactionPosition);
+            waitingForBoardFlip = true;
+            Promotion.Promote(interactionPosition);
 			return;
 		}
 		if (Position.colorToMove == '\0')
@@ -57,8 +59,8 @@ public partial class Interaction : Chessboard
 		if (canSwitchSelectedTile)
 		{
 			Colors.SetTileColors(targetedPiece);
-            Cursor.MoveCursor(targetedPiece, 0);
-            return;
+			Cursor.MoveCursor(targetedPiece, 0);
+			return;
 		}
 		if (selectedTile == null)
 			return;

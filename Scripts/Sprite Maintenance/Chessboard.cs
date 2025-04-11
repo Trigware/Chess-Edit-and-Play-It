@@ -6,7 +6,7 @@ using System.Linq;
 public partial class Chessboard : Node
 {
 	private const int tileSize = 45;
-	private const float maxOccupiedSpace = 0.85f, boardFlipTimer = 0.2f;
+	private const float maxOccupiedSpace = 0.85f;
 	public static Vector2I tileCount = new(8, 8);
 	public static Dictionary<TilesElement, Sprite2D> tiles = new();
 	protected static Vector2 gameviewSize = new(), oldviewSize = new(), vectorCenter = new();
@@ -33,7 +33,7 @@ public partial class Chessboard : Node
 	public enum Layer { Tile, Piece, Promotion, Cursor }
 	public override void _Ready()
 	{
-		Position.Load(Position.FEN.CastlingTest);
+		Position.Load(Position.FEN.Default);
 		Tags.GetRoyalsPerColor();
 	}
 	public override void _Process(double delta)
@@ -63,7 +63,8 @@ public partial class Chessboard : Node
 	private static void Create(Node parentNode)
 	{
 		gameviewSize = DisplayServer.WindowGetSize();
-		for (int x = 0; x < tileCount.X; x++)
+        isFlipped = Position.colorToMove == Position.oppositeStartColorToMove;
+        for (int x = 0; x < tileCount.X; x++)
 		{
 			for (int y = 0; y < tileCount.Y; y++)
 			{
@@ -71,7 +72,8 @@ public partial class Chessboard : Node
 				DrawTilesElement(x, y, Layer.Piece, parentNode);
 			}
 		}
-		Vector2I cursorLocation = Cursor.actualLocation;
+		Cursor.actualLocation = Cursor.Location[Position.colorToMove];
+        Vector2I cursorLocation = Cursor.actualLocation;
 		DrawTilesElement("cursor", cursorLocation.X, cursorLocation.Y, Layer.Cursor, parentNode, gridScale, 0);
 		Cursor.GetCursor();
 		LegalMoves.GetLegalMoves();
@@ -166,6 +168,10 @@ public partial class Chessboard : Node
 		if (Position.GameEndState != Position.EndState.Ongoing) return;
 		bool wasPreviouslyFlipped = isFlipped;
 		isFlipped = Position.colorToMove == Position.oppositeStartColorToMove;
-		if (wasPreviouslyFlipped != isFlipped) History.TimerCountdown(boardFlipTimer, History.TimerType.BoardFlip);
-	}
+		if (wasPreviouslyFlipped != isFlipped)
+		{
+			float timerDuration = Animations.animationSpeed * (LegalMoves.CheckResponseZones.Count >= 1 && History.RedoMoves.Count == 0 ? 1.35f : 0.75f);
+            History.TimerCountdown(timerDuration, History.TimerType.BoardFlip);
+        }
+    }
 }

@@ -26,10 +26,6 @@ public partial class Audio : AudioStreamPlayer
 	}
 	public static void PlaySettings(Enum name, float pitchShift = 0, float volumeShift = 0, float pitch = 0, float volume = 0)
 	{
-		if (playedCheck || silenceAudio)
-			return;
-		if (name == Enum.Check)
-			playedCheck = true;
 		float minPitch = 1 - pitchShift, maxPitch = 1 + pitchShift;
 		float minVolume = 1 - volumeShift, maxVolume = 1 + volumeShift;
 		if (LoadAudio.audioDict.TryGetValue(name, out AudioStream sound))
@@ -45,7 +41,10 @@ public partial class Audio : AudioStreamPlayer
 
 	public static void Play(Enum name)
 	{
-		PlaySettings(name, 0.1f);
+        if (playedCheck || silenceAudio)
+            return;
+        if (name == Enum.Check) playedCheck = true;
+        PlaySettings(name, 0.1f);
 	}
 	public static void PlayShiftless(Enum name)
 	{

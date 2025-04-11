@@ -1,5 +1,6 @@
 using Godot;
 using System.Collections.Generic;
+using System.Drawing;
 
 public partial class Tags
 {
@@ -110,12 +111,20 @@ public partial class Tags
 				char pieceColor = LegalMoves.GetPieceColor(tagPosition);
 				if (pieceColor == '\0')
 					continue;
-				if (pieceColor == Position.colorToMove) { Cursor.actualLocation = tagPosition; Cursor.locationInitialized = true; }
+				Cursor.Location.TryAdd(pieceColor, tagPosition);
+				History.initialCursorLocation.TryAdd(pieceColor, tagPosition);
 				Position.RoyalPiecesColor.Add(tagPosition, pieceColor);
 				Position.RoyalsPerColor[pieceColor]++;
 			}
 		}
-		if (!Cursor.locationInitialized) Cursor.actualLocation = PickRandomPieceOfColor();
+		foreach (char color in Position.playerColors)
+		{
+			if (!History.initialCursorLocation.ContainsKey(color)) continue;
+			Vector2I randomChosenPiece = PickRandomPieceOfColor(color);
+			History.initialCursorLocation.TryAdd(color, randomChosenPiece);
+			Cursor.Location.TryAdd(color, randomChosenPiece);
+		}
+		History.LatestReverseCursorLocation = Cursor.Location[LegalMoves.ReverseColorReturn(Position.colorToMove)];
 	}
 	public static void GetCastlingRightsHash()
 	{
@@ -176,15 +185,14 @@ public partial class Tags
 		tagsAtPosition = activeTags[tagIndex];
 		return tagsAtPosition.Contains(Tag.Castlee) || tagsAtPosition.Contains(Tag.Castler);
 	}
-	private static Vector2I PickRandomPieceOfColor()
+	private static Vector2I PickRandomPieceOfColor(char color)
 	{
 		List<Vector2I> pieceLocationsOfStartColor = new();
 		foreach (KeyValuePair<Vector2I, char> piece in Position.pieces)
 		{
-			if (LegalMoves.GetPieceColor(piece.Value) != Position.colorToMove) continue;
+			if (LegalMoves.GetPieceColor(piece.Value) != color) continue;
 			pieceLocationsOfStartColor.Add(piece.Key);
 		}
-		Cursor.locationInitialized = true;
 		return pieceLocationsOfStartColor[new RandomNumberGenerator().RandiRange(0, pieceLocationsOfStartColor.Count - 1)];
 	}
 }

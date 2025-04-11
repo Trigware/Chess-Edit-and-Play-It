@@ -4,7 +4,9 @@ using Godot;
 public partial class History
 {
 	public static Stack<Move> UndoMoves = new(), RedoMoves = new();
-	public static bool cooldownOngoing = false, undoPending = false;
+	public static Vector2I LatestReverseCursorLocation = new();
+	public static Dictionary<char, Vector2I> initialCursorLocation = new();
+	public static bool cooldownOngoing = false;
 	private static float MoveReplayAnimationSpeedMultiplier = 0.75f;
 	public static int movesReplayedInThisSession = 0, activeMoveSuccessionTimers = 0;
 	private static ReplayType lastReplay = ReplayType.None;
@@ -74,8 +76,7 @@ public partial class History
 	}
 	private static void Undo()
 	{
-		if (Chessboard.waitingForBoardFlip) { undoPending = true; return; }
-		undoPending = false;
+		if (Chessboard.waitingForBoardFlip) return;
         lastReplay = ReplayType.Undo;
 		UpdateTileColorsAndUndoTimer();
 		MoveReplay(UndoMoves.Pop(), true);
@@ -88,19 +89,20 @@ public partial class History
 	}
 	public static void KeyPressDetection()
 	{
-		bool replayDisabled = Promotion.MoveHistoryDisable || Animations.ActiveTweens.Count > 0 || cooldownOngoing;
+		bool replayDisabled = Promotion.MoveHistoryDisable || Animations.ActiveTweens.Count > 0 || cooldownOngoing || (Animations.ActiveCheckAnimation && Position.GameEndState != Position.EndState.Ongoing);
 		bool pressedZ = Input.IsKeyPressed(Key.Z), pressedY = Input.IsKeyPressed(Key.Y);
 		if (pressedZ && pressedY)
 		{
 			movesReplayedInThisSession = 0;
 			return;
 		}
-		if ((pressedZ && !replayDisabled) || undoPending)
+        if (Chessboard.waitingForBoardFlip) return;
+        if (pressedZ && !replayDisabled)
 		{
 			if (UndoMoves.Count == 0 || lastReplay == ReplayType.Redo) movesReplayedInThisSession = 0;
 			if (UndoMoves.Count > 0) { Undo(); return; }
 		}
-		if (pressedY && !replayDisabled && RedoMoves.Count > 0)
+		if (pressedY && !replayDisabled)
 		{
 			if (RedoMoves.Count == 0 || lastReplay == ReplayType.Undo) movesReplayedInThisSession = 0;
 			if (RedoMoves.Count > 0) { Redo(); return; }
@@ -124,20 +126,25 @@ public partial class History
 	private static void MoveReplay(Move replayedMove, bool isUndo)
 	{
 		Stack<Move> movePushedTo = isUndo ? RedoMoves : UndoMoves;
-		Animations.CheckAnimationCancelEarly(replayedMove.End);
+        Animations.CheckAnimationCancelEarly(replayedMove.End);
 		Position.EnPassantInfo = isUndo ? replayedMove.EnPassantInfo : replayedMove.LeapMoveInfo;
-		Interaction.Deselect((Interaction.selectedTile ?? default).Location);
+        Interaction.Deselect((Interaction.selectedTile ?? default).Location);
 		if (Position.pieces.ContainsKey(replayedMove.Start))
 			replayedMove.SwapLocations();
+
 		Tags.ModifyRoyalPieceList(replayedMove.End, replayedMove.Start);
-		movePushedTo.Push(replayedMove);
-		ModifyLastMoveInfo();
+        movePushedTo.Push(replayedMove);
+        ModifyLastMoveInfo(isUndo);
 		MoveReplayGetBack(replayedMove, isUndo);
+
 		UpdatePosition.DiscoveredCheckAnimation(null, true, MoveReplayAnimationSpeedMultiplier);
-		TimerCountdown(Animations.animationSpeed * MoveReplayAnimationSpeedMultiplier * 2, TimerType.ReplaySuccession);
-	}
-	public enum TimerType { Replay, Cursor, FirstCursorMove, BoardFlip, ReplaySuccession }
-	public static void TimerCountdown(float waitTime, TimerType timerType)
+		TimerCountdown(Animations.animationSpeed * MoveReplayAnimationSpeedMultiplier * 2, TimerType.ReplaySuccession, true, isUndo, replayedMove);
+        Vector2I cursorLocationMove = isUndo ? replayedMove.Start : LatestReverseCursorLocation;
+        Cursor.Location[Position.colorToMove] = cursorLocationMove;
+        Cursor.MoveCursor(cursorLocationMove, 0);
+    }
+    public enum TimerType { Replay, Cursor, FirstCursorMove, BoardFlip, ReplaySuccession }
+	public static void TimerCountdown(float waitTime, TimerType timerType, bool replay = false, bool isUndo = false, Move replayedMove = null)
 	{
 		Timer cooldown = new() { WaitTime = waitTime, OneShot = true };
 		ChangeFieldAfterTimeout(timerType, true);
@@ -156,11 +163,19 @@ public partial class History
 			case TimerType.Replay: cooldownOngoing = timerStart; break;
 			case TimerType.Cursor: Cursor.cooldownOngoing = timerStart; break;
 			case TimerType.FirstCursorMove: Cursor.FirstMovedTimerActive = timerStart; break;
-			case TimerType.BoardFlip: Chessboard.waitingForBoardFlip = timerStart; if (!timerStart) Chessboard.Update(); break;
-			case TimerType.ReplaySuccession: activeMoveSuccessionTimers += timerStart ? 1 : -1; if (activeMoveSuccessionTimers == 0) Chessboard.FlipBoard(); break;
+			case TimerType.BoardFlip: Chessboard.waitingForBoardFlip = timerStart;
+				if (!timerStart)
+				{
+					Chessboard.Update();
+					Cursor.MoveCursor(Cursor.Location[Position.colorToMove], 0);
+				} break;
+			case TimerType.ReplaySuccession: 
+				activeMoveSuccessionTimers += timerStart ? 1 : -1;
+				if (activeMoveSuccessionTimers == 0) Chessboard.FlipBoard();
+                break;
 		}
 	}
-	private static void ModifyLastMoveInfo()
+	private static void ModifyLastMoveInfo(bool isUndo)
 	{
 		Interaction.PreviousMoveTiles(Colors.Enum.Default);
 		if (UndoMoves.Count == 0)
@@ -168,8 +183,14 @@ public partial class History
 			Position.LastMoveInfo = null;
 			return;
 		}
-		Position.LastMoveInfo = UndoMoves.Peek().GetTuple();
-		Interaction.PreviousMoveTiles(Colors.Enum.PreviousMove);
+		if (!isUndo)
+		{
+            if (Position.LastMoveInfo == null) LatestReverseCursorLocation = initialCursorLocation[LegalMoves.ReverseColorReturn(Position.colorToMove)];
+            else LatestReverseCursorLocation = (Position.LastMoveInfo ?? default).start;
+        }
+        (Vector2I start, Vector2I end) LastMoveInfo = UndoMoves.Peek().GetTuple();
+        Position.LastMoveInfo = LastMoveInfo;
+        Interaction.PreviousMoveTiles(Colors.Enum.PreviousMove);
 		if (Interaction.selectedTile != null)
 			Interaction.Deselect((Interaction.selectedTile ?? default).Location);
 	}
