@@ -10,7 +10,7 @@ public partial class Chessboard : Node
 	public static Vector2I tileCount = new(8, 8);
 	public static Dictionary<TilesElement, Sprite2D> tiles = new();
 	protected static Vector2 gameviewSize = new(), oldviewSize = new(), vectorCenter = new();
-	public static float gridScale = 1, svgScale = 5;
+	public static float gridScale = 1, svgScale = 5, xBoardCenter;
 	public static float actualTileSize = 45;
 	public static bool isFlipped = false, waitingForBoardFlip = false;
 	public static Vector2? leftUpCorner = null;
@@ -33,7 +33,8 @@ public partial class Chessboard : Node
 	public enum Layer { Tile, Piece, Promotion, Cursor }
 	public override void _Ready()
 	{
-		Position.Load(Position.FEN.Default);
+		Position.Load(Position.FEN.KnightTest);
+		xBoardCenter = ((float)tileCount.X - 1)/2;
 		Tags.GetRoyalsPerColor();
 	}
 	public override void _Process(double delta)

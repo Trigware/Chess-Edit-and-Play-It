@@ -11,7 +11,7 @@ public partial class Promotion
 	public static readonly char[] CanBePromotedTo = new char[] { 'Q', 'R', 'B', 'N' };
 	private const float PromotionOptionTransparency = 0.6f;
 	private static char promotionColor;
-	private static Vector2I originalPromotionPosition;
+	public static Vector2I originalPromotionPosition;
 	public static Vector2I? promotionPending = null;
 	public static bool MoveHistoryDisable = false;
 	public static void AvailablePromotions(Vector2I promotionPosition, char colorToMove)

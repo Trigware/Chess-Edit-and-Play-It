@@ -85,6 +85,8 @@ public partial class Colors : Interaction
 	}
 	public static void SetTileColors(Vector2I flatMousePosition)
 	{
+		Cursor.LegalSelectedDirections = new();
+		LegalSelectedMoves = new();
         Animations.CheckAnimationCancelEarly(flatMousePosition);
         Sprite2D currentSprite = tiles[new(flatMousePosition, Layer.Tile)];
 		if (selectedTile != null)
@@ -102,6 +104,7 @@ public partial class Colors : Interaction
 			if (startEndTiles.start != flatMousePosition)
 				continue;
 			Enum color = Enum.Legal;
+			LegalSelectedMoves.Add(startEndTiles.end);
 			if (Position.EnPassantInfo != null && enPassantTarget == startEndTiles.end && piece.ToString().ToUpper() == "P")
 				color = Enum.EnPassant;
 			if (LegalMoves.PromotionMoves.Contains(i))

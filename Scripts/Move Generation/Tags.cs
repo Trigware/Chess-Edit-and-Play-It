@@ -119,12 +119,12 @@ public partial class Tags
 		}
 		foreach (char color in Position.playerColors)
 		{
-			if (!History.initialCursorLocation.ContainsKey(color)) continue;
+			if (History.initialCursorLocation.ContainsKey(color)) continue;
 			Vector2I randomChosenPiece = PickRandomPieceOfColor(color);
 			History.initialCursorLocation.TryAdd(color, randomChosenPiece);
 			Cursor.Location.TryAdd(color, randomChosenPiece);
 		}
-		History.LatestReverseCursorLocation = Cursor.Location[LegalMoves.ReverseColorReturn(Position.colorToMove)];
+		History.LatestReverseCursorLocation = History.initialCursorLocation[LegalMoves.ReverseColorReturn(Position.colorToMove)];
 	}
 	public static void GetCastlingRightsHash()
 	{

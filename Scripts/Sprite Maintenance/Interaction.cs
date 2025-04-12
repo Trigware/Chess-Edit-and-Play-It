@@ -1,9 +1,11 @@
 using Godot;
 using System;
+using System.Collections.Generic;
 
 public partial class Interaction : Chessboard
 {
 	public static TilesElement? selectedTile = null;
+	public static List<Vector2I> LegalSelectedMoves = new();
 	public static bool escapePressed, lastEscapeSelection = false;
 	private bool interactionButtonPressed = false, leftMouseOld = false;
 	public override void _Process(double delta)
@@ -38,6 +40,7 @@ public partial class Interaction : Chessboard
 		if (interactionButtonPressed && Promotion.PromotionOptionsPositions.Contains(interactionPosition))
 		{
             waitingForBoardFlip = true;
+			Cursor.MoveCursor(Promotion.originalPromotionPosition, 0);
             Promotion.Promote(interactionPosition);
 			return;
 		}
@@ -53,22 +56,19 @@ public partial class Interaction : Chessboard
 		if (interactionButtonPressed)
 			InteractWithPiece(interactionPosition);
 	}
-	private static void InteractWithPiece(Vector2I targetedPiece)
+	private static void InteractWithPiece(Vector2I targetedLocation)
 	{
-		bool canSwitchSelectedTile = PieceMoves.GetPieceColor(targetedPiece) == Position.colorToMove;
-		if (canSwitchSelectedTile)
-		{
-			Colors.SetTileColors(targetedPiece);
-			Cursor.MoveCursor(targetedPiece, 0);
-			return;
-		}
-		if (selectedTile == null)
+		bool canSwitchSelectedTile = PieceMoves.GetPieceColor(targetedLocation) == Position.colorToMove;
+        if (canSwitchSelectedTile) Colors.SetTileColors(targetedLocation);
+        if (canSwitchSelectedTile || LegalSelectedMoves.Contains(targetedLocation)) Cursor.MoveCursor(targetedLocation, 0);
+        if (selectedTile == null)
 			return;
 		Vector2I selectedTileFlat = (selectedTile ?? default).Location;
-		UpdatePosition.MovePiece(selectedTileFlat, targetedPiece);
+		UpdatePosition.MovePiece(selectedTileFlat, targetedLocation);
 	}
 	public static void Deselect(Vector2I start)
 	{
+		LegalSelectedMoves = new();
 		PreviousMoveTiles(Colors.Enum.Default);
 		Colors.Set(GetTile(start), Colors.Enum.Default, start.X, start.Y);
 		foreach ((Vector2I start, Vector2I end) startEndTiles in LegalMoves.legalMoves)
