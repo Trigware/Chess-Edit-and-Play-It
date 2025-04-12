@@ -10,9 +10,9 @@ public partial class Cursor
 	private const float cursorMoveCooldown = 0.115f, FirstMoveInRowCooldown = 0.06f;
 	private static bool CursorShown = false;
 	public static Vector2I actualLocation, cursorDirectionField = new();
-	private static Vector2I? previousDirection = null;
+	private static Vector2I? previousDirection = null, previousInputDirection = null;
 	private static Sprite2D cursor;
-	private static readonly List<(int eval, Vector2I dir)> direcionPriority = new() { (4, new(0, -1)), (2, new(-1, 0)), (2, new(1, 0)), (1, new(0, 1)) };
+	private static readonly List<(int eval, Vector2I dir)> directionPriority = new() { (4, new(0, -1)), (2, new(-1, 0)), (2, new(1, 0)), (1, new(0, 1)) };
 	public static void KeyPressDetection()
 	{
 		if (cooldownOngoing || Chessboard.waitingForBoardFlip || Position.GameEndState != Position.EndState.Ongoing) return;
@@ -25,7 +25,7 @@ public partial class Cursor
 		if (Input.IsKeyPressed(Key.Right)) { cursorDirectionField.X = cursorDirectionField.X == -1 ? 0 : 1; }
 		if (Input.IsKeyPressed(Key.Up)) { cursorDirectionField.Y = -1; }
 		if (Input.IsKeyPressed(Key.Down)) { cursorDirectionField.Y = cursorDirectionField.Y == -1 ? 0 : 1; }
-		if (cursorDirectionField != Vector2I.Zero) CursorInput(cursorDirectionField); else { CursorMovedInRow = false; previousDirection = null; }
+		if (cursorDirectionField != Vector2I.Zero) CursorInput(cursorDirectionField); else { CursorMovedInRow = false; previousDirection = null; previousInputDirection = null; }
 	}
 	public static void ShowHideCursor(bool show)
 	{
@@ -57,22 +57,33 @@ public partial class Cursor
 	public static void MoveCursor(Vector2I position, float duration, bool outOfBoundsX = false, bool outOfBoundsY = false, Vector2I direction = default, bool moveSnapping = false)
 	{
 		Vector2I actualDirection = moveSnapping ? SnapCursorToAvailableMove(position, direction) : direction;
-		if (moveSnapping) previousDirection = actualDirection == Vector2I.Zero ? null : actualDirection;
+		if (moveSnapping && actualDirection != Vector2I.Zero) previousDirection = actualDirection;
 		position += actualDirection;
 		if (outOfBoundsX) position.X = actualLocation.X;
 		if (outOfBoundsY) position.Y = actualLocation.Y;
 		if (position == actualLocation) return;
+		previousInputDirection = direction;
 		Animations.Tween(cursor, duration, actualLocation, actualLocation = position, null, null, false, false, false, -1, -1, false, Tween.TransitionType.Linear, null);
 	}
 	private static Vector2I SnapCursorToAvailableMove(Vector2I position, Vector2I direction)
 	{
 		UpdateLegalSelectedMoves(position);
-        if (previousDirection != null && LegalSelectedDirections.Contains(previousDirection ?? default)) return previousDirection ?? default;
+		if (previousDirection != null && direction == previousInputDirection)
+		{
+			if (LegalSelectedDirections.Contains(previousDirection ?? default)) return previousDirection ?? default;
+			return Vector2I.Zero;
+        }
+		if (LegalSelectedDirections.Count == 1)
+		{
+			Interaction.Deselect((Interaction.selectedTile ?? default).Location);
+			Interaction.PreviousMoveTiles(Colors.Enum.PreviousMove);
+            return direction;
+        }
         List<Vector2I> availableMovesInDirection = new();
 		foreach (Vector2I selectedDirection in LegalSelectedDirections)
 		{
 			bool sameXDir = IsSameSign(direction.X, selectedDirection.X) || direction.X == 0, sameYDir = IsSameSign(direction.Y, selectedDirection.Y) || direction.Y == 0;
-			if (sameXDir && sameYDir) availableMovesInDirection.Add(selectedDirection);
+            if (sameXDir && sameYDir) availableMovesInDirection.Add(selectedDirection);
 		}
 		if (availableMovesInDirection.Count == 0) return Vector2I.Zero;
 		availableMovesInDirection = CalculateClosestMove(availableMovesInDirection, direction);
@@ -123,7 +134,7 @@ public partial class Cursor
 	{
 		int optionEval = 0;
 		bool isCloserToCenter = IsCloserToCenter(position.X, direction.X);
-		foreach ((int eval, Vector2I dir) dirEval in direcionPriority)
+		foreach ((int eval, Vector2I dir) dirEval in directionPriority)
 		{
 			Vector2I prioritizedDirection = dirEval.dir;
 			if (Chessboard.isFlipped) prioritizedDirection.Y *= -1;
@@ -133,7 +144,7 @@ public partial class Cursor
 		return optionEval;
 	}
 	private static bool IsSameSign(int a, int b) => a * b > 0;
-	private static bool IsCloserToCenter(int axisPosition, int axisDirection) => Mathf.Abs(Chessboard.xBoardCenter - axisPosition - axisDirection) < Mathf.Abs(Chessboard.xBoardCenter - axisPosition);
+	private static bool IsCloserToCenter(int axisPosition, int axisDirection) => Mathf.Abs(Chessboard.boardCenter.X - axisPosition - axisDirection) < Mathf.Abs(Chessboard.boardCenter.X - axisPosition);
 	public static void GetCursor()
 	{
 		cursor = Chessboard.tiles[new(0, 0, Chessboard.Layer.Cursor)];

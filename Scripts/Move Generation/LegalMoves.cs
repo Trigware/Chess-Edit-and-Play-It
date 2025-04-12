@@ -9,7 +9,7 @@ public partial class LegalMoves
 	public static List<(Vector2I target, Vector2I deletion)> PawnLeapMovesInfo = new();
 	public static List<int> PawnLeapMoves = new(), EnPassantMoves = new(), PromotionMoves = new(), CastlingMoves = new();
 	public static List<(Vector2I start, Vector2I end)> CastleeMoves = new();
-	public static List<Vector2I> OpponentMoves = new(), ProtectedPieces, CheckedRoyals = new(), RoyalAttackers;
+	public static List<Vector2I> OpponentMoves = new(), ProtectedPieces, CheckedRoyals = new(), RoyalAttackers, LegalMovesRanges;
 	public static List<List<Vector2I>> CheckResponseZones, PinnedPieceZones;
 	public static bool EnPassantBlocked, IsGettingLegalMovesOnLoad;
 	public static int maxResponseRange, CheckRoyalsCount;
@@ -28,9 +28,9 @@ public partial class LegalMoves
 		List<(Vector2I, Vector2I)> legalMovesLocal = new();
 		if (!opponent)
 		{
-            CheckResponseZones = new(); CheckedRoyals = new(); PinnedPieceZones = new(); ProtectedPieces = new(); RoyalAttackers = new(); EnPassantBlocked = false; maxResponseRange = 0; CheckRoyalsCount = 0;
+			CheckResponseZones = new(); CheckedRoyals = new(); PinnedPieceZones = new(); ProtectedPieces = new(); RoyalAttackers = new(); EnPassantBlocked = false; maxResponseRange = 0; CheckRoyalsCount = 0; LegalMovesRanges = new();
 		}
-        OpponentMoves = opponent ? GetOnlyTargets(legalMoves) : GetOpponentMoves();
+		OpponentMoves = opponent ? GetOnlyTargets(legalMoves) : GetOpponentMoves();
 		if (!opponent)
 		{
 			PawnLeapMovesInfo = new(); PawnLeapMoves = new(); EnPassantMoves = new(); PromotionMoves = new(); CastlingMoves = new(); CastleeMoves = new();
@@ -48,10 +48,10 @@ public partial class LegalMoves
 		}
 		if (!opponent)
 		{
-            legalMoves = legalMovesLocal;
-            PostMoveGeneration(undo);
-        }
-        return legalMovesLocal;
+			legalMoves = legalMovesLocal;
+			PostMoveGeneration(undo);
+		}
+		return legalMovesLocal;
 	}
 	private static List<Vector2I> GetOpponentMoves()
 	{
@@ -66,33 +66,33 @@ public partial class LegalMoves
 		{
 			if (Position.GameEndState == Position.EndState.Checkmate) return;
 			Audio.Play(Position.GameEndState == Position.EndState.Stalemate ? Audio.Enum.Stalemate : Audio.Enum.GameEnd);
-            return;
-        }
+			return;
+		}
 
-        Position.EndState[] NotDefaultGameEndSound = new Position.EndState[] { Position.EndState.Ongoing, Position.EndState.Checkmate, Position.EndState.Stalemate };
+		Position.EndState[] NotDefaultGameEndSound = new Position.EndState[] { Position.EndState.Ongoing, Position.EndState.Checkmate, Position.EndState.Stalemate };
 		Position.EndState[] WinLoss = new Position.EndState[] { Position.EndState.Checkmate, Position.EndState.Timeout, Position.EndState.Resignation };
 
-        Position.InCheck = CheckResponseZones.Count >= 1;
-        if (legalMoves.Count == 0)
-            Position.GameEndState = Position.InCheck ? Position.EndState.Checkmate : Position.EndState.Stalemate;
-        if (Position.HalfmoveClock >= 100)
-            Position.GameEndState = Position.EndState.FiftyMoveRule;
-        if (Position.GameEndState == Position.EndState.Ongoing && InsufficientMaterial.Check())
-            Position.GameEndState = Position.EndState.InsufficientMaterial;
+		Position.InCheck = CheckResponseZones.Count >= 1;
+		if (legalMoves.Count == 0)
+			Position.GameEndState = Position.InCheck ? Position.EndState.Checkmate : Position.EndState.Stalemate;
+		if (Position.HalfmoveClock >= 100)
+			Position.GameEndState = Position.EndState.FiftyMoveRule;
+		if (Position.GameEndState == Position.EndState.Ongoing && InsufficientMaterial.Check())
+			Position.GameEndState = Position.EndState.InsufficientMaterial;
 		if (IsGettingLegalMovesOnLoad)
-            Tags.GetCastlingRightsHash();
-        if (Zobrist.TriggersRepetitionRule(Zobrist.Hash(undo), undo))
+			Tags.GetCastlingRightsHash();
+		if (Zobrist.TriggersRepetitionRule(Zobrist.Hash(undo), undo))
 			Position.GameEndState = Position.EndState.ThreefoldRepetition;
 
 		Animations.CancelCheckEarly = false;
 		Animations.PreviousCheckTiles = new();
-        if (Position.InCheck)
-            Colors.ResetAllColors();
+		if (Position.InCheck)
+			Colors.ResetAllColors();
 		if (IsGettingLegalMovesOnLoad) Animations.ActiveAllCheckAnimationZones();
 
 		if (Position.GameEndState == Position.EndState.Stalemate)
 			Audio.Play(Audio.Enum.Stalemate);
-        if (!NotDefaultGameEndSound.Contains(Position.GameEndState))
+		if (!NotDefaultGameEndSound.Contains(Position.GameEndState))
 			Audio.Play(Audio.Enum.GameEnd);
 
 		if (Position.GameEndState != Position.EndState.Ongoing)
@@ -100,40 +100,40 @@ public partial class LegalMoves
 			Colors.PreviousMoveTiles(Colors.Enum.Default);
 			Position.WinningPlayer = WinLoss.Contains(Position.GameEndState) ? ReverseColorReturn(Position.colorToMove) : 'd';
 			Chessboard.waitingForBoardFlip = false;
-            Cursor.ShowHideCursor(false);
-        }
+			Cursor.ShowHideCursor(false);
+		}
 		IsGettingLegalMovesOnLoad = false;
-    }
+	}
 	protected static List<Vector2I> GetOnlyTargets(List<(Vector2I start, Vector2I end)> moves)
 	{
-        List<Vector2I> onlyTargets = new();
+		List<Vector2I> onlyTargets = new();
 		foreach ((Vector2I start, Vector2I end) move in moves)
 			onlyTargets.Add(move.end);
 		return onlyTargets;
 	}
-    public static char GetPieceColor(Vector2I location)
-    {
-        if (Position.pieces.TryGetValue(location, out char piece))
-            return GetPieceColor(piece);
-        return '\0';
-    }
-    public static char GetPieceColor(char piece)
-    {
-        if (!pieceDefinitons.ContainsKey(Convert.ToChar(piece.ToString().ToUpper())))
-            return '\0';
-        return (piece.ToString() == piece.ToString().ToUpper()) ? 'w' : 'b';
-    }
-    public static bool IsWithinGrid(Vector2I position)
-    {
-        return position.X >= 0 && position.Y >= 0 && position.X < Chessboard.tileCount.X && position.Y < Chessboard.tileCount.Y;
-    }
-    public static void ReverseColor(char originalColor)
-    {
-        Position.colorToMove = ReverseColorReturn(originalColor);
-    }
-    public static char ReverseColorReturn(char originalColor)
-    {
-        int currentColorIndex = Position.playerColors.IndexOf(originalColor);
-        return Position.playerColors[(currentColorIndex + 1) % 2];
-    }
+	public static char GetPieceColor(Vector2I location)
+	{
+		if (Position.pieces.TryGetValue(location, out char piece))
+			return GetPieceColor(piece);
+		return '\0';
+	}
+	public static char GetPieceColor(char piece)
+	{
+		if (!pieceDefinitons.ContainsKey(Convert.ToChar(piece.ToString().ToUpper())))
+			return '\0';
+		return (piece.ToString() == piece.ToString().ToUpper()) ? 'w' : 'b';
+	}
+	public static bool IsWithinGrid(Vector2I position)
+	{
+		return position.X >= 0 && position.Y >= 0 && position.X < Chessboard.tileCount.X && position.Y < Chessboard.tileCount.Y;
+	}
+	public static void ReverseColor(char originalColor)
+	{
+		Position.colorToMove = ReverseColorReturn(originalColor);
+	}
+	public static char ReverseColorReturn(char originalColor)
+	{
+		int currentColorIndex = Position.playerColors.IndexOf(originalColor);
+		return Position.playerColors[(currentColorIndex + 1) % 2];
+	}
 }

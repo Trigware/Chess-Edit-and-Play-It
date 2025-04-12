@@ -57,12 +57,12 @@ public partial class PieceMoves : LegalMoves
 			bool isTargetRoyal = IsRoyal(addedFlatPosition);
 			if (DetectRoyalAttack(isTargetRoyal, opponent, pinnedPieceMoveAnalyse, beyondRoyalAnalyse, rangeMoves, piece.Key, addedFlatPosition))
 			{
-				rangeMoves.Add((piece.Key, addedFlatPosition));
+                rangeMoves.Add((piece.Key, addedFlatPosition));
 				continue;
 			}
 			if (!pinnedPieceMoveAnalyse)
-				rangeMoves.Add((piece.Key, addedFlatPosition));
-			else if (opponent)
+                rangeMoves.Add((piece.Key, addedFlatPosition));
+            else if (opponent)
 				PinnedPieceZones.Last().Add(addedFlatPosition);
 			pinnedPieceMoveAnalyse = OnNormalCapture(pinnedPieceMoveAnalyse, targetColor, isTargetRoyal, opponent, addedFlatPosition, dir, pieceRange - range, rangeMoves, piece.Key, out bool broken);
 			if (broken)

@@ -160,7 +160,7 @@ public partial class History
 	{
 		switch (timerType)
 		{
-			case TimerType.Replay: cooldownOngoing = timerStart; break;
+			case TimerType.Replay:cooldownOngoing = timerStart; break;
 			case TimerType.Cursor: Cursor.cooldownOngoing = timerStart; break;
 			case TimerType.FirstCursorMove: Cursor.FirstMovedTimerActive = timerStart; break;
 			case TimerType.BoardFlip: Chessboard.waitingForBoardFlip = timerStart;

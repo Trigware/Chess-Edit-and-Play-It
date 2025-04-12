@@ -23,11 +23,6 @@ public partial class Interaction : Chessboard
 	}
 	private Vector2I GetPositionOnBoard()
 	{
-		if (leftUpCorner == null)
-		{
-			GD.PrintErr("The chessboard is not loaded!");
-			return new();
-		}
 		Vector2 leftUpNotNull = (Vector2)leftUpCorner;
 		Vector2 mousePosition = GetViewport().GetMousePosition();
 		Vector2 tileSelectionPosition = ((mousePosition - leftUpNotNull) / actualTileSize).Floor().Abs();
@@ -39,9 +34,9 @@ public partial class Interaction : Chessboard
 		Vector2I interactionPosition = leftMousePressStartNow ? GetPositionOnBoard() : Cursor.actualLocation;
 		if (interactionButtonPressed && Promotion.PromotionOptionsPositions.Contains(interactionPosition))
 		{
-            waitingForBoardFlip = true;
+			waitingForBoardFlip = true;
 			Cursor.MoveCursor(Promotion.originalPromotionPosition, 0);
-            Promotion.Promote(interactionPosition);
+			Promotion.Promote(interactionPosition);
 			return;
 		}
 		if (Position.colorToMove == '\0')
@@ -59,12 +54,13 @@ public partial class Interaction : Chessboard
 	private static void InteractWithPiece(Vector2I targetedLocation)
 	{
 		bool canSwitchSelectedTile = PieceMoves.GetPieceColor(targetedLocation) == Position.colorToMove;
-        if (canSwitchSelectedTile) Colors.SetTileColors(targetedLocation);
-        if (canSwitchSelectedTile || LegalSelectedMoves.Contains(targetedLocation)) Cursor.MoveCursor(targetedLocation, 0);
-        if (selectedTile == null)
-			return;
+		if (canSwitchSelectedTile) Colors.SetTileColors(targetedLocation);
+		if (canSwitchSelectedTile || LegalSelectedMoves.Contains(targetedLocation)) Cursor.MoveCursor(targetedLocation, 0);
 		Vector2I selectedTileFlat = (selectedTile ?? default).Location;
-		UpdatePosition.MovePiece(selectedTileFlat, targetedLocation);
+		if (LegalMoves.legalMoves.Contains((selectedTileFlat, targetedLocation)))
+			UpdatePosition.MovePiece(selectedTileFlat, targetedLocation);
+		else if (LegalSelectedMoves.Count == 1)
+			Cursor.MoveCursor(LegalSelectedMoves[0], 0);
 	}
 	public static void Deselect(Vector2I start)
 	{
@@ -89,6 +85,6 @@ public partial class Interaction : Chessboard
 	}
 	public static Sprite2D GetTile(Vector2I location)
 	{
-		return tiles[new(location.X, location.Y, 0)];
+		return tiles[new(location.X, location.Y, Layer.Tile)];
 	}
 }

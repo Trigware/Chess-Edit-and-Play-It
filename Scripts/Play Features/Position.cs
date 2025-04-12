@@ -48,7 +48,7 @@ public partial class Position
 			FEN.TagRemovalTest => "r3k2r/8/R/8/8/r/8/R3K2R w KQkq - 0 1",
 			FEN.UndoCheckAnimationByCapturedAttacker => "4k3/8/8/8/8/2R5/2n5/4K3 w - - 0 1",
 			FEN.KingVsQueenQueen => "4K3/1qq5/8/8/8/8/8/8 w - - 0 1",
-			FEN.KnightTest => "8/8/5b2/8/8/2B5/8/8 w - - 0 1",
+			FEN.CursorSnapTest => "8/5r/5n2/4b/4B/2N5/R/5Q w - - 0 1",
             _ => ""
         };
         Load(fenCall);
@@ -83,7 +83,7 @@ public partial class Position
 		TagRemovalTest,
 		UndoCheckAnimationByCapturedAttacker,
 		KingVsQueenQueen,
-		KnightTest,
+		CursorSnapTest,
         Empty
     }
     public enum EndState

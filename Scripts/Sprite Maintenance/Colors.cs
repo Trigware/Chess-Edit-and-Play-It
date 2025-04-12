@@ -1,22 +1,23 @@
 using Godot;
-using Godot.Collections;
-using System;
 using System.Collections.Generic;
 public partial class Colors : Interaction
 {
 	private const float darkEffect = 0.6f;
-	public static System.Collections.Generic.Dictionary<Enum, Color> Dict = new()
+	public static Dictionary<Enum, Color> Dict = new()
 	{
-		{ Enum.DefaultLight, RGB(0xB6, 0x9D, 0x96) },
-		{ Enum.DefaultDark, RGB(0x6A, 0x51, 0x4A) },
-		{ Enum.Legal, RGB(0xA9, 0xB6, 0x96) },
-		{ Enum.Selected, RGB(0x96, 0x9C, 0xB6) },
-		{ Enum.PreviousMove, RGB(0x8D, 0xBB, 0xC6) },
-		{ Enum.EnPassant, RGB(0x89, 0xB5, 0x48) },
-		{ Enum.Promotion, RGB(0x8D, 0x80, 0xE5) },
-		{ Enum.Castling, RGB(0xE8, 0xA7, 0x4D) },
-		{ Enum.Check, RGB(0x55, 0x55, 0x55) },
-		{ Enum.Checkmate,  HSV(0, 80, 80) }
+		{ Enum.DefaultLight, RGB(0xB69D96) },
+		{ Enum.DefaultDark, RGB(0x6A514A) },
+		{ Enum.Legal, RGB(0xA9B696) },
+		{ Enum.Selected, RGB(0x969CB6) },
+		{ Enum.PreviousMove, RGB(0x8DBBC6) },
+		{ Enum.EnPassant, RGB(0x89B548) },
+		{ Enum.Promotion, RGB(0x8D80E5) },
+		{ Enum.Castling, RGB(0xE8A74D) },
+		{ Enum.Check, RGB(0x555555) },
+		{ Enum.Checkmate, HSV(0, 80, 80) },
+		{ Enum.WhiteColorToMove, RGB(0xD9D9D9) },
+		{ Enum.BlackColorToMove, RGB(0x434343) },
+		{ Enum.Background, RGB(0x4D6D91) }
 	};
 	public enum Enum
 	{
@@ -30,11 +31,15 @@ public partial class Colors : Interaction
 		Promotion,
 		Castling,
 		Check,
-		Checkmate
+		Checkmate,
+		WhiteColorToMove,
+		BlackColorToMove,
+		Background
 	}
-	private static Color RGB(byte r, byte g, byte b)
+	private static Color RGB(int color, byte a = 0xFF)
 	{
-		return new(r / 255f, g / 255f, b / 255f);
+		byte r = (byte)((color >> 16) & 0xFF), g = (byte)((color >> 8) & 0xFF), b = (byte)(color & 0xFF);
+		return new(r / 255f, g / 255f, b / 255f, a / 255f);
 	}
 	private static Color HSV(float h, float s, float v)
 	{
@@ -77,6 +82,8 @@ public partial class Colors : Interaction
 			Enum.Castling => Dict[Enum.Castling],
 			Enum.Check => Dict[Enum.Check],
 			Enum.Checkmate => Dict[Enum.Checkmate],
+			Enum.WhiteColorToMove => Dict[Enum.WhiteColorToMove],
+			Enum.BlackColorToMove => Dict[Enum.BlackColorToMove],
 			_ => new()
 		};
 		if (color != Enum.Default && x % 2 != y % 2)
