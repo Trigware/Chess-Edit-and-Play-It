@@ -120,7 +120,7 @@ public partial class UpdatePosition
 		Tags.ModifyTags(start, end, handledPiece, updateCastlingRightsHash, castling);
 		Position.pieces.Remove(start);
 		Chessboard.tiles.Remove(new(start, Chessboard.Layer.Piece));
-		Chessboard.TilesElement endPiece = new(end, Chessboard.Layer.Piece);
+		Chessboard.Element endPiece = new(end, Chessboard.Layer.Piece);
 		bool capture = Chessboard.tiles.ContainsKey(endPiece);
 		if (!capture)
 		{

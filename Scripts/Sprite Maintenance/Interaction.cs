@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public partial class Interaction : Chessboard
 {
-	public static TilesElement? selectedTile = null;
+	public static Element? selectedTile = null;
 	public static List<Vector2I> LegalSelectedMoves = new();
 	public static bool escapePressed, lastEscapeSelection = false;
 	private bool interactionButtonPressed = false, leftMouseOld = false;
@@ -41,7 +41,7 @@ public partial class Interaction : Chessboard
 		}
 		if (Position.colorToMove == '\0')
 			return;
-		TilesElement mousePositionBoard = new(interactionPosition, Layer.Tile);
+		Element mousePositionBoard = new(interactionPosition, Layer.Tile);
 		if (selectedTile != null && (Input.IsKeyPressed(Key.Escape) || (interactionButtonPressed && (selectedTile ?? default).Location == mousePositionBoard.Location)))
 		{
 			Deselect((selectedTile ?? default).Location);

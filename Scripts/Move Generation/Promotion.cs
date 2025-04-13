@@ -27,7 +27,7 @@ public partial class Promotion
 			if (colorToMove == 'b')
 				promotable = Convert.ToChar(promotable.ToString().ToLower());
 			Vector2I optionPosition = new(promotionPosition.X, promotionPosition.Y - optionDirection * i);
-			Chessboard.TilesElement pieceBelowOption = new(optionPosition, Chessboard.Layer.Piece);
+			Chessboard.Element pieceBelowOption = new(optionPosition, Chessboard.Layer.Piece);
 			if (Chessboard.tiles.ContainsKey(pieceBelowOption))
 				Animations.Tween(Chessboard.tiles[pieceBelowOption], Animations.animationSpeed * 2, optionPosition, null, null, 0, false);
 			PromotionOptionsPieces.Add(promotable); PromotionOptionsPositions.Add(optionPosition);
@@ -65,7 +65,7 @@ public partial class Promotion
 	public static void OptionChosen(char chosenPiece, Vector2I promotionLocation, Vector2I animationStartPosition, float endTransparency, Chessboard.Layer tileLayer, float durationMultiplier = 2)
 	{
 		Sprite2D sprite = CreateOptionPiece(chosenPiece, animationStartPosition);
-		Chessboard.TilesElement tilePositionInDict = new(promotionLocation, tileLayer);
+		Chessboard.Element tilePositionInDict = new(promotionLocation, tileLayer);
 		if (Chessboard.tiles.ContainsKey(tilePositionInDict))
 			Chessboard.tiles[tilePositionInDict] = sprite;
 		else
@@ -118,7 +118,7 @@ public partial class Promotion
 	{
 		foreach (Vector2I location in PromotionOptionsPositions)
 		{
-			Chessboard.TilesElement locationKey = new(location, Chessboard.Layer.Piece);
+			Chessboard.Element locationKey = new(location, Chessboard.Layer.Piece);
 			if (Chessboard.tiles.ContainsKey(locationKey))
 				Animations.Tween(Chessboard.tiles[locationKey], Animations.animationSpeed, location, null, null, 1, false);
 		}
