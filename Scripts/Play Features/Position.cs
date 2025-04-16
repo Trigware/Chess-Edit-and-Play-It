@@ -24,7 +24,7 @@ public partial class Position
             FEN.NoRange => "8/1n6/6k1/8/3N4/8/5K2/8 w - - 0 1",
             FEN.Range => "8/8/3q1b2/8/3R1r2/8/3Q1B2/8 w - - 0 1",
             FEN.PawnTest => "8/pppppppp/8/8/8/8/PPPPPPPP/8 w - - 0 1",
-            FEN.PromotionTest => "8/PPPPPPPP/Q/8/8/q/pppppppp/8 w - - 0 1",
+            FEN.PromotionTest => "8/PPPPPPPP/Q3K/8/8/q/pppppppp/8 w - - 0 1",
             FEN.TagTest => "4k3/4K///r w - - 0 1",
             FEN.CheckTest => "4k//1R/////4k",
             FEN.DoubleCheck => "q3K//R//4q///4k",

@@ -5,37 +5,37 @@ using System.Linq;
 
 public partial class Animations : Chessboard
 {
-	public const float animationSpeed = 0.35f;
+	public const float animationSpeed = 0.3f;
 	public static bool promotionUnsafe = false, CancelCheckEarly = false, CancelCastlingEarly = false, ActiveCheckAnimation = false;
 	public static List<Vector2I> PreviousCheckTiles = new(), CheckAnimationsStarted = new();
 	public static Dictionary<Tween, (Sprite2D spr, bool deleteOnFinish, float? transparency)> ActiveTweens = new();
 	public static int firstCheckZone = 0;
 	public const float lowAnimationDurationBoundary = 0.3f;
 	public static void CursorTween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endTransparency) => Tween(spr, duration, startPosition, endPosition, null, endTransparency, false, false, true, -1, -1, false, Godot.Tween.TransitionType.Linear, null, Layer.Cursor);
-	private static void TagComponentTween(Sprite2D component, float duration, Vector2I startPosition, Vector2 endPosition, Layer layer, int tagIndex) => Tween(component, duration, startPosition, endPosition, null, null, false, false, true, -1, -1, false, Godot.Tween.TransitionType.Sine, Godot.Tween.EaseType.InOut, layer, tagIndex);
-	private static void TagTween(Vector2I startPosition, Vector2 endPosition, float duration, int chainIterator, int castlingAnimation)
+	private static void TagComponentTween(Sprite2D component, float duration, Vector2I startPosition, Vector2? endPosition, float? endTransparency, Layer layer, int tagIndex) => Tween(component, duration, startPosition, endPosition, null, endTransparency, false, false, true, -1, -1, false, Godot.Tween.TransitionType.Sine, Godot.Tween.EaseType.InOut, layer, tagIndex);
+	private static void TagTween(Vector2I startPosition, Vector2? endPosition, float? endTransparency, float duration, int chainIterator, int castlingAnimation, bool promotionForTags = false)
 	{
-        if (!Tags.visibleTags.ContainsKey(startPosition)) return;
+		if (!Tags.visibleTags.ContainsKey(startPosition) || promotionForTags) return;
 		int tagIndex = -1;
 		foreach (Tags.VisibleTag visibleTag in Tags.visibleTags[startPosition])
 		{
-			TagComponentTween(visibleTag.TagVisualizer, duration, startPosition, endPosition, Layer.TagVisualizer, tagIndex);
-			TagComponentTween(visibleTag.TagEmblem, duration, startPosition, endPosition, Layer.TagEmblem, tagIndex);
+			TagComponentTween(visibleTag.TagVisualizer, duration, startPosition, endPosition, endTransparency, Layer.TagVisualizer, tagIndex);
+			TagComponentTween(visibleTag.TagEmblem, duration, startPosition, endPosition, endTransparency, Layer.TagEmblem, tagIndex);
 			tagIndex = tagIndex == -1 ? 1 : 0;
 		}
-		if (chainIterator > 1) return;
+		if (chainIterator > 1 || endPosition == null) return;
 		List<Tags.VisibleTag> visibleTagElement = Tags.visibleTags[startPosition];
 		Tags.visibleTags.Remove(startPosition);
 		Tags.visibleTags.Add(castlingAnimation == -1 ? (Vector2I)endPosition : new(Castling.endXPositions[castlingAnimation], startPosition.Y), visibleTagElement);
-    }
-    public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale, float? endTransparency, bool deleteOnFinished, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = -1, int castlingAnimation = -1, bool promotionConfirmation = false, Tween.TransitionType transition = Godot.Tween.TransitionType.Sine, Tween.EaseType? easeType = Godot.Tween.EaseType.InOut, Layer layer = Layer.Piece, int tagIndex = 0)
+	}
+	public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale, float? endTransparency, bool deleteOnFinished, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = -1, int castlingAnimation = -1, bool promotionConfirmation = false, Tween.TransitionType transition = Godot.Tween.TransitionType.Sine, Tween.EaseType? easeType = Godot.Tween.EaseType.InOut, Layer layer = Layer.Piece, int tagIndex = 0, bool promotionForTags = false)
 	{
 		Tween tween = spr.CreateTween();
 		ActiveTweens.Add(tween, (spr, deleteOnFinished, endTransparency));
 		if (endPosition != null && layer != Layer.Cursor)
 			spr.ZIndex = (int)Layer.Promotion;
-		if (endPosition != null && layer == Layer.Piece)
-			TagTween(startPosition, endPosition ?? default, duration, chainIterator, castlingAnimation);
+		if (layer == Layer.Piece)
+			TagTween(startPosition, endPosition, endTransparency, duration, chainIterator, castlingAnimation, promotionForTags);
 		if (endPosition != null)
 		{
 			Vector2 usedEndPos = (Vector2)endPosition;
@@ -80,18 +80,18 @@ public partial class Animations : Chessboard
 			{
 				castlingAnimation = castlingAnimation == Castling.endXPositions.Count ? castlingAnimation - 1 : castlingAnimation;
 				Vector2 updatedElipsePointPosition = Castling.CalculatePointOnElipse(chainIterator + 1, startPosition, Castling.endXPositions[castlingAnimation], Castling.elipsePathUp[castlingAnimation]);
-				TagTween(new(Castling.endXPositions[castlingAnimation], startPosition.Y), updatedElipsePointPosition, duration, chainIterator, castlingAnimation);
+				TagTween(new(Castling.endXPositions[castlingAnimation], startPosition.Y), updatedElipsePointPosition, null, duration, chainIterator, castlingAnimation);
 				Tween(spr, animationSpeed / Castling.elipseQuality, startPosition, updatedElipsePointPosition, null, null, false, false, false, chainIterator + 1, castlingAnimation);
 				ActiveTweens.Remove(tween);
 				return;
 			}
 			promotionUnsafe = false;
-            if (castlingAnimation >= 0)
-            {
-                Castling.endXPositions.RemoveAt(0);
-                Castling.elipsePathUp.RemoveAt(0);
-            }
-            AnimationEnd(tween, deleteOnFinished, spr, endPosition, layer);
+			if (castlingAnimation >= 0)
+			{
+				Castling.endXPositions.RemoveAt(0);
+				Castling.elipsePathUp.RemoveAt(0);
+			}
+			AnimationEnd(tween, deleteOnFinished, spr, endPosition, layer);
 			if (Promotion.promotionPending != null)
 				Promotion.Promote((Vector2I)Promotion.promotionPending);
 			if (promotionConfirmation)
@@ -105,13 +105,13 @@ public partial class Animations : Chessboard
 		if (deleteOnFinished)
 			spr.QueueFree();
 		spr.ZIndex = (int)layer;
-        firstCheckZone = 0;
+		firstCheckZone = 0;
 		if (Position.GameEndState != Position.EndState.Ongoing && Position.GameEndState != Position.EndState.Checkmate) return;
 		if (ActiveTweens.Count == 0 && Promotion.PromotionOptionsPieces.Count == 0 && History.activeMoveSuccessionTimers == 0)
 			FlipBoard();
-        if (endPosition == null)
-            return;
-        Vector2I endNotNull = (Vector2I)endPosition;
+		if (endPosition == null)
+			return;
+		Vector2I endNotNull = (Vector2I)endPosition;
 		for (int i = 0; i < LegalMoves.RoyalAttackers.Count; i++)
 		{
 			if (LegalMoves.RoyalAttackers[i] == endNotNull)
@@ -133,11 +133,11 @@ public partial class Animations : Chessboard
 		List<Vector2I> zone = LegalMoves.CheckResponseZones[j];
 		if (CancelCheckEarly || zone.Count < i)
 			return;
-        if (i == 1 && !CheckAnimationsStarted.Contains(LegalMoves.RoyalAttackers[j])) CheckAnimationsStarted.Add(LegalMoves.RoyalAttackers[j]);
+		if (i == 1 && !CheckAnimationsStarted.Contains(LegalMoves.RoyalAttackers[j])) CheckAnimationsStarted.Add(LegalMoves.RoyalAttackers[j]);
 		else if (i == 1) return;
-        if (i == 1) ActiveCheckAnimation = true;
+		if (i == 1) ActiveCheckAnimation = true;
 
-        List<Color> previousColors = new();
+		List<Color> previousColors = new();
 		if (j == firstCheckZone)
 			Colors.ChangeTileColorBack();
 		if (i >= zone.Count)
@@ -186,7 +186,6 @@ public partial class Animations : Chessboard
 				handledSprite.Modulate = new(handledSprite.Modulate.R, handledSprite.Modulate.G, handledSprite.Modulate.B, (float)tweenValue.transparency);
 			ActiveTweens.Remove(ActiveTweens.Keys.Last());
 		}
-		GD.Print(ActiveTweens.Count);
 	}
 	public static void ActiveAllCheckAnimationZones()
 	{
@@ -197,7 +196,7 @@ public partial class Animations : Chessboard
 	{
 		if (LegalMoves.CheckedRoyals.Contains(flatMousePosition) && !CancelCheckEarly && !Audio.playedCheck)
 		{
-            ActiveCheckAnimation = false;
+			ActiveCheckAnimation = false;
 			Colors.ChangeTileColorBack();
 			CancelCheckEarly = true;
 			Audio.Play(Audio.Enum.Check);

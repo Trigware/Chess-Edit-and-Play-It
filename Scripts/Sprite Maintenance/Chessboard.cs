@@ -20,7 +20,7 @@ public partial class Chessboard : Node
 	public const int PositionRepetitionCount = 3;
     public override void _Ready()
     {
-        Position.Load(Position.FEN.CastlingTest);
+        Position.Load(Position.FEN.PromotionTest);
         boardCenter = new(((float)tileCount.X - 1) / 2, ((float)tileCount.Y - 1) / 2);
         Tags.GetRoyalsPerColor();
     }

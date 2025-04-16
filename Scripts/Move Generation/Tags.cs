@@ -3,8 +3,8 @@ using System.Collections.Generic;
 
 public partial class Tags
 {
-	public static List<Vector2I> tagPositions = new() { new(4, 0), new(4, 7) };
-	public static List<HashSet<Tag>> activeTags = new() { new() { Tag.Royal, Tag.Castler }, new() { Tag.Royal, Tag.Castler, Tag.Castlee } };
+	public static List<Vector2I> tagPositions = new() { new(4, 2) };
+	public static List<HashSet<Tag>> activeTags = new() { new() { Tag.Royal, Tag.Castlee } };
 	public static Dictionary<Vector2I, HashSet<Tag>> lastDeletedTags;
 	public static List<Vector2I> CastlingRights = new();
     public static Dictionary<Vector2I, List<VisibleTag>> visibleTags = new();

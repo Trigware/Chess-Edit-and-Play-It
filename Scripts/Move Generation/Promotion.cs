@@ -71,7 +71,7 @@ public partial class Promotion
 		else
             Chessboard.tiles.Add(tilePositionInDict, sprite);
         LoadGraphics.I.AddChild(sprite);
-		Animations.Tween(sprite, Animations.animationSpeed * durationMultiplier, animationStartPosition, promotionLocation, null, endTransparency, false, false);
+		Animations.Tween(sprite, Animations.animationSpeed * durationMultiplier, animationStartPosition, promotionLocation, null, endTransparency, false, promotionForTags: true);
 	}
 	private static Sprite2D CreateOptionPiece(char piece, Vector2I position)
 	{
@@ -96,7 +96,7 @@ public partial class Promotion
 			Sprite2D handledSprite = Chessboard.tiles[new(location, Chessboard.Layer.Promotion)];
 			if (location == promotionPosition)
 			{
-				Animations.Tween(handledSprite, Animations.animationSpeed, location, originalPromotionPosition, null, 1, false, false, true, -1, -1, true);
+				Animations.Tween(handledSprite, Animations.animationSpeed, location, originalPromotionPosition, null, 1, false, false, true, -1, -1, true, promotionForTags: true);
 				selectedPromotionSprite = handledSprite;
 				selectedIndex = i;
 			}
