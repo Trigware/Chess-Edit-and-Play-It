@@ -56,6 +56,7 @@ public partial class Interaction : Chessboard
 		bool canSwitchSelectedTile = PieceMoves.GetPieceColor(targetedLocation) == Position.colorToMove;
 		if (canSwitchSelectedTile) Colors.SetTileColors(targetedLocation);
 		if (canSwitchSelectedTile || LegalSelectedMoves.Contains(targetedLocation)) Cursor.MoveCursor(targetedLocation, 0);
+		if (selectedTile == null) return;
 		Vector2I selectedTileFlat = (selectedTile ?? default).Location;
 		if (LegalMoves.legalMoves.Contains((selectedTileFlat, targetedLocation)))
 			UpdatePosition.MovePiece(selectedTileFlat, targetedLocation);

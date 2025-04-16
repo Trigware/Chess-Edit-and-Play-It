@@ -5,23 +5,41 @@ using System.Linq;
 
 public partial class Animations : Chessboard
 {
-	public const float animationSpeed = 0.3f;
+	public const float animationSpeed = 0.35f;
 	public static bool promotionUnsafe = false, CancelCheckEarly = false, CancelCastlingEarly = false, ActiveCheckAnimation = false;
 	public static List<Vector2I> PreviousCheckTiles = new(), CheckAnimationsStarted = new();
 	public static Dictionary<Tween, (Sprite2D spr, bool deleteOnFinish, float? transparency)> ActiveTweens = new();
 	public static int firstCheckZone = 0;
 	public const float lowAnimationDurationBoundary = 0.3f;
 	public static void CursorTween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endTransparency) => Tween(spr, duration, startPosition, endPosition, null, endTransparency, false, false, true, -1, -1, false, Godot.Tween.TransitionType.Linear, null, Layer.Cursor);
-	public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale, float? endTransparency, bool deleteOnFinished, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = -1, int castlingAnimation = -1, bool promotionConfirmation = false, Tween.TransitionType transition = Godot.Tween.TransitionType.Sine, Tween.EaseType? easeType = Godot.Tween.EaseType.InOut, Layer layer = Layer.Piece)
+	private static void TagComponentTween(Sprite2D component, float duration, Vector2I startPosition, Vector2 endPosition, Layer layer, int tagIndex) => Tween(component, duration, startPosition, endPosition, null, null, false, false, true, -1, -1, false, Godot.Tween.TransitionType.Sine, Godot.Tween.EaseType.InOut, layer, tagIndex);
+	private static void TagTween(Vector2I startPosition, Vector2 endPosition, float duration, int chainIterator, int castlingAnimation)
+	{
+        if (!Tags.visibleTags.ContainsKey(startPosition)) return;
+		int tagIndex = -1;
+		foreach (Tags.VisibleTag visibleTag in Tags.visibleTags[startPosition])
+		{
+			TagComponentTween(visibleTag.TagVisualizer, duration, startPosition, endPosition, Layer.TagVisualizer, tagIndex);
+			TagComponentTween(visibleTag.TagEmblem, duration, startPosition, endPosition, Layer.TagEmblem, tagIndex);
+			tagIndex = tagIndex == -1 ? 1 : 0;
+		}
+		if (chainIterator > 1) return;
+		List<Tags.VisibleTag> visibleTagElement = Tags.visibleTags[startPosition];
+		Tags.visibleTags.Remove(startPosition);
+		Tags.visibleTags.Add(castlingAnimation == -1 ? (Vector2I)endPosition : new(Castling.endXPositions[castlingAnimation], startPosition.Y), visibleTagElement);
+    }
+    public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale, float? endTransparency, bool deleteOnFinished, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = -1, int castlingAnimation = -1, bool promotionConfirmation = false, Tween.TransitionType transition = Godot.Tween.TransitionType.Sine, Tween.EaseType? easeType = Godot.Tween.EaseType.InOut, Layer layer = Layer.Piece, int tagIndex = 0)
 	{
 		Tween tween = spr.CreateTween();
 		ActiveTweens.Add(tween, (spr, deleteOnFinished, endTransparency));
 		if (endPosition != null && layer != Layer.Cursor)
 			spr.ZIndex = (int)Layer.Promotion;
+		if (endPosition != null && layer == Layer.Piece)
+			TagTween(startPosition, endPosition ?? default, duration, chainIterator, castlingAnimation);
 		if (endPosition != null)
 		{
 			Vector2 usedEndPos = (Vector2)endPosition;
-			TweenSetup(spr, tween, "position", CalculateTilePosition(usedEndPos), duration, transition, easeType);
+			TweenSetup(spr, tween, "position", CalculateTilePosition(usedEndPos, layer, tagIndex), duration, transition, easeType);
 		}
 		if (endScale != null)
 		{
@@ -60,15 +78,17 @@ public partial class Animations : Chessboard
 			timer.QueueFree();
 			if (chainIterator != -1 && chainIterator < Castling.elipseQuality && !CancelCastlingEarly)
 			{
-				castlingAnimation = castlingAnimation == Castling.endXpositions.Count ? castlingAnimation - 1 : castlingAnimation;
-				Tween(spr, animationSpeed / Castling.elipseQuality, startPosition, Castling.CalculatePointOnElipse(chainIterator + 1, startPosition, Castling.endXpositions[castlingAnimation], Castling.elipsePathUp[castlingAnimation]), null, null, false, false, false, chainIterator + 1, castlingAnimation);
+				castlingAnimation = castlingAnimation == Castling.endXPositions.Count ? castlingAnimation - 1 : castlingAnimation;
+				Vector2 updatedElipsePointPosition = Castling.CalculatePointOnElipse(chainIterator + 1, startPosition, Castling.endXPositions[castlingAnimation], Castling.elipsePathUp[castlingAnimation]);
+				TagTween(new(Castling.endXPositions[castlingAnimation], startPosition.Y), updatedElipsePointPosition, duration, chainIterator, castlingAnimation);
+				Tween(spr, animationSpeed / Castling.elipseQuality, startPosition, updatedElipsePointPosition, null, null, false, false, false, chainIterator + 1, castlingAnimation);
 				ActiveTweens.Remove(tween);
 				return;
 			}
 			promotionUnsafe = false;
             if (castlingAnimation >= 0)
             {
-                Castling.endXpositions.RemoveAt(0);
+                Castling.endXPositions.RemoveAt(0);
                 Castling.elipsePathUp.RemoveAt(0);
             }
             AnimationEnd(tween, deleteOnFinished, spr, endPosition, layer);
@@ -166,6 +186,7 @@ public partial class Animations : Chessboard
 				handledSprite.Modulate = new(handledSprite.Modulate.R, handledSprite.Modulate.G, handledSprite.Modulate.B, (float)tweenValue.transparency);
 			ActiveTweens.Remove(ActiveTweens.Keys.Last());
 		}
+		GD.Print(ActiveTweens.Count);
 	}
 	public static void ActiveAllCheckAnimationZones()
 	{

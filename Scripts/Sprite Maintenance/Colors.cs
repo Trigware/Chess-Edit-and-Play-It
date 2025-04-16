@@ -3,11 +3,6 @@ using System.Collections.Generic;
 public partial class Colors : Interaction
 {
 	private const float darkEffect = 0.6f;
-	public static Dictionary<Tags.Tag, Color> visibleTags = new()
-	{
-		{ Tags.Tag.Royal, RGB(0xE4E4D0) },
-		{ Tags.Tag.Castlee, RGB(0xD1D1ED) }
-	};
 	public static Dictionary<Enum, Color> Dict = new()
 	{
 		{ Enum.DefaultLight, RGB(0xB69D96) },
@@ -41,12 +36,12 @@ public partial class Colors : Interaction
 		BlackColorToMove,
 		Background,
 	}
-	private static Color RGB(int color, byte a = 0xFF)
+	public static Color RGB(int color, byte a = 0xFF)
 	{
 		byte r = (byte)((color >> 16) & 0xFF), g = (byte)((color >> 8) & 0xFF), b = (byte)(color & 0xFF);
 		return new(r / 255f, g / 255f, b / 255f, a / 255f);
 	}
-	private static Color HSV(float h, float s, float v)
+	public static Color HSV(float h, float s, float v)
 	{
 		return Color.FromHsv(h / 360f, s / 100f, v / 100f);
 	}
