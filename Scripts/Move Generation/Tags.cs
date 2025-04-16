@@ -8,6 +8,11 @@ public partial class Tags
 	public static List<HashSet<Tag>> activeTags = new() { new() { Tag.Royal, Tag.Castler }, new() { Tag.Royal, Tag.Castler } };
 	public static Dictionary<Vector2I, HashSet<Tag>> lastDeletedTags;
 	public static List<Vector2I> CastlingRights = new();
+	public static Dictionary<Tag, string> TagEmblemName = new()
+	{
+		{ Tag.Royal, "royal" },
+		{ Tag.Castlee, "castlee" }
+	};
 	public enum Tag
 	{
 		Royal,

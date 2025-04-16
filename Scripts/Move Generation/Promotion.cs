@@ -78,7 +78,7 @@ public partial class Promotion
 		return new()
 		{
 			Texture = LoadGraphics.textureDict[piece.ToString()],
-			Position = Chessboard.CalculateTilePosition(position.X, position.Y),
+			Position = Chessboard.CalculateTilePosition(position),
 			Modulate = new Color(1, 1, 1, 0),
 			Scale = new Vector2(Chessboard.gridScale, Chessboard.gridScale) / Chessboard.svgScale
 		};

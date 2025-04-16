@@ -14,7 +14,7 @@ public partial class LegalMoves
 	public static bool EnPassantBlocked, IsGettingLegalMovesOnLoad;
 	public static int maxResponseRange, CheckRoyalsCount;
 
-	public static readonly Dictionary<char, (Vector2I[] direction, int range)> pieceDefinitons = new()
+	public static readonly Dictionary<char, (Vector2I[] direction, int range)> pieceDefinitions = new()
 	{
 		{ 'P', ( new Vector2I[] {new(0, -1), new(-1, -1), new(1, -1)}, 1 ) },
 		{ 'N', ( new Vector2I[] {new(-2, 1), new(-1, 2), new(1, 2), new(2, 1), new(-2, -1), new(-1, -2), new(1, -2), new(2, -1)}, 1 ) },
@@ -119,7 +119,7 @@ public partial class LegalMoves
 	}
 	public static char GetPieceColor(char piece)
 	{
-		if (!pieceDefinitons.ContainsKey(Convert.ToChar(piece.ToString().ToUpper())))
+		if (!pieceDefinitions.ContainsKey(Convert.ToChar(piece.ToString().ToUpper())))
 			return '\0';
 		return (piece.ToString() == piece.ToString().ToUpper()) ? 'w' : 'b';
 	}

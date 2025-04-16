@@ -166,7 +166,8 @@ public partial class History
 			case TimerType.BoardFlip: Chessboard.waitingForBoardFlip = timerStart;
 				if (!timerStart)
 				{
-					Chessboard.Update();
+					Chessboard.isFlipped = Position.colorToMove == Position.oppositeStartColorToMove;
+                    Chessboard.Update();
 					Cursor.MoveCursor(Cursor.Location[Position.colorToMove], 0);
 				} break;
 			case TimerType.ReplaySuccession: 

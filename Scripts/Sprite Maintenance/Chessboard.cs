@@ -1,4 +1,5 @@
 using Godot;
+using Microsoft.VisualBasic;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -6,9 +7,10 @@ using System.Linq;
 public partial class Chessboard : Node
 {
 	private const int tileSize = 45;
-	private const float maxOccupiedSpace = 0.9f, boardFlipCheckTimerMultiplier = 1.35f, boardFlipDefaultTimerMultiplier = 0.75f;
+	private const float maxOccupiedSpace = 0.9f, boardFlipCheckTimerMultiplier = 1.35f, boardFlipDefaultTimerMultiplier = 0.75f, tagRescaler = 2.5f, tagOffset = 0.285f;
 	public static Vector2I tileCount = new(8, 8);
 	public static Dictionary<Element, Sprite2D> tiles = new(), guiElements = new();
+	private static Dictionary<Vector2I, List<VisibleTag>> visibleTags = new();
 	protected static Vector2 gameviewSize = new(), oldviewSize = new(), vectorCenter = new();
 	public static Vector2 boardCenter;
 	public static float gridScale = 1, svgScale = 5;
@@ -16,6 +18,17 @@ public partial class Chessboard : Node
 	public static bool isFlipped = false, waitingForBoardFlip = false, ySizeBigger = false;
 	public static Vector2 leftUpCorner = default;
 	public const int PositionRepetitionCount = 3;
+	private struct VisibleTag
+	{
+		public Tags.Tag Tag;
+		public Sprite2D TagVisualizer, TagEmblem;
+		public VisibleTag(Tags.Tag tag, Sprite2D tagVisualizer, Sprite2D tagEmblem)
+		{
+			Tag = tag;
+			TagVisualizer = tagVisualizer;
+			TagEmblem = tagEmblem;
+		}
+	}
 	public struct Element
 	{
 		public Vector2I Location;
@@ -31,7 +44,7 @@ public partial class Chessboard : Node
 			Layer = layer;
 		}
 	}
-	public enum Layer { Background, Tile, Piece, Promotion, Cursor, ColorIndicator }
+	public enum Layer { Background, Tile, Piece, ColorIndicator, Promotion, TagVisualizer, TagEmblem, Cursor }
 	public override void _Ready()
 	{
 		Position.Load(Position.FEN.Default);
@@ -50,7 +63,6 @@ public partial class Chessboard : Node
 	}
 	public static void Draw()
 	{
-		waitingForBoardFlip = false;
 		Vector2 gridSize = (Vector2)tileCount * tileSize;
 		bool valueSmallX = false;
 		ySizeBigger = gameviewSize.Y > gameviewSize.X;
@@ -59,10 +71,7 @@ public partial class Chessboard : Node
 		gridScale = Mathf.Min(gameviewSize.X, gameviewSize.Y) / ((valueSmallX ? gridSize.X : gridSize.Y) / maxOccupiedSpace);
 		actualTileSize = tileSize * gridScale;
 		vectorCenter = new Vector2(actualTileSize / 2, actualTileSize / 2) + (gameviewSize - gridSize * gridScale) / 2;
-		if (tiles.Count == 0)
-			Create(LoadGraphics.I);
-		else
-			Update();
+		if (tiles.Count == 0) Create(LoadGraphics.I); else Update();
 	}
 	private static void Create(Node parentNode)
 	{
@@ -74,29 +83,53 @@ public partial class Chessboard : Node
 			for (int y = 0; y < tileCount.Y; y++)
 			{
 				DrawTilesElement("tile", x, y, Layer.Tile, parentNode, gridScale);
-				DrawTilesElement(x, y, Layer.Piece, parentNode);
+				DrawPiece(x, y, parentNode);
 			}
 		}
-		Cursor.actualLocation = Cursor.Location[Position.colorToMove];
-		Vector2I cursorLocation = Cursor.actualLocation;
-		DrawTilesElement("cursor", cursorLocation.X, cursorLocation.Y, Layer.Cursor, parentNode, gridScale, 0);
 		for (int colorIndicator = -1; true; colorIndicator = tileCount.Y)
 		{
 			CreateGUIElement("tile", Layer.ColorIndicator, parentNode, 1, colorIndicator, colorIndicator);
 			if (colorIndicator == tileCount.Y)
 				break;
 		}
+		for (int i = 0; i < Tags.tagPositions.Count; i++)
+		{
+			Vector2I position = Tags.tagPositions[i];
+			int tagIndex = -1, j = 0;
+			foreach (Tags.Tag tag in Tags.activeTags[i])
+			{
+				if (j == 3) break;
+				if (!Colors.visibleTags.ContainsKey(tag)) continue;
+				DrawTagElement(position, tag, parentNode, tagIndex);
+				tagIndex = tagIndex == -1 ? 1 : 0;
+				j++;
+			}
+		}
+		Cursor.actualLocation = Cursor.Location[Position.colorToMove];
+		Vector2I cursorLocation = Cursor.actualLocation;
+		DrawTilesElement("cursor", cursorLocation.X, cursorLocation.Y, Layer.Cursor, parentNode, gridScale, 0);
 		Cursor.GetCursor();
 		LegalMoves.GetLegalMoves();
 	}
-	private static void DrawTilesElement(int x, int y, Layer layer, Node parentNode, float transparency = 1)
+	private static void DrawPiece(int x, int y, Node parentNode, float transparency = 1)
 	{
+		Layer layer = Layer.Piece;
 		if (Position.pieces.ContainsKey(new(x, y)))
 			DrawTilesElement(Position.pieces[new(x, y)].ToString(), x, y, layer, parentNode, gridScale, transparency);
 	}
-	public static void CreateGUIElement(string name, Layer layer, Node parentNode, float transparency = 1, int x = 0, int y = 0) => DrawTilesElement(name, x, y, layer, parentNode, gridScale, 1, false, true);
+	private static void DrawTagElement(Vector2I position, Tags.Tag tag, Node parentNode, int tagIndex, VisibleTag visibleTag = default, bool update = false)
+	{
+		Sprite2D tagVisualizer = DrawTilesElement("tag", position.X, position.Y, Layer.TagVisualizer, parentNode, gridScale, 1, update, false, tag, visibleTag.TagVisualizer, tagIndex);
+		Sprite2D tagEmblem = null;
+		if (Tags.TagEmblemName.ContainsKey(tag))
+			tagEmblem = DrawTilesElement(Tags.TagEmblemName[tag], position.X, position.Y, Layer.TagEmblem, parentNode, gridScale, 1, update, false, tag, visibleTag.TagEmblem, tagIndex);
+		if (update) return;
+		if (visibleTags.ContainsKey(position)) visibleTags[position].Add(new(tag, tagVisualizer, tagEmblem));
+		else visibleTags.Add(position, new() { new(tag, tagVisualizer, tagEmblem) });
+	} 
+	private static void CreateGUIElement(string name, Layer layer, Node parentNode, float transparency = 1, int x = 0, int y = 0) => DrawTilesElement(name, x, y, layer, parentNode, gridScale, 1, false, true);
 	public static void UpdateGUIElement(Layer layer, Vector2I location = default) => DrawTilesElement("", location.X, location.Y, layer, null, gridScale, 1, true, true);
-	public static Sprite2D DrawTilesElement(string name, int x, int y, Layer layer, Node parentNode, float gridScale, float transparency = 1, bool update = false, bool isGUI = false)
+	public static Sprite2D DrawTilesElement(string name, int x, int y, Layer layer, Node parentNode, float gridScale, float transparency = 1, bool update = false, bool isGUI = false, Tags.Tag? tag = null, Sprite2D sprite = null, int tagIndex = 0)
 	{
 		if (!LoadGraphics.textureDict.ContainsKey(name) && !update)
 		{
@@ -109,8 +142,12 @@ public partial class Chessboard : Node
 		Sprite2D spriteElement;
 		if (update)
 		{
-			if (layer == Layer.Cursor) spriteElement = tiles[new(default, Layer.Cursor)];
-			else spriteElement = isGUI ? guiElements[new(x, y, layer)] : tiles[new(x, y, layer)];
+			if (sprite != null) spriteElement = sprite;
+			else
+			{
+				if (layer == Layer.Cursor) spriteElement = tiles[new(default, Layer.Cursor)];
+				else spriteElement = isGUI ? guiElements[new(x, y, layer)] : tiles[new(x, y, layer)];
+			}
 		}
 		else spriteElement = tileClone as Sprite2D;
 		bool tileAvailable = spriteElement != null || update && tiles.ContainsKey(new(x, y, layer));
@@ -122,9 +159,10 @@ public partial class Chessboard : Node
 		if (!update)
 		{
 			spriteElement.Texture = texture;
-			spriteElement.Modulate = new(spriteElement.Modulate.R, spriteElement.Modulate.G, spriteElement.Modulate.B, transparency);
+			if (tag != null) spriteElement.Modulate = Colors.visibleTags[tag ?? default];
+			else spriteElement.Modulate = new(spriteElement.Modulate.R, spriteElement.Modulate.G, spriteElement.Modulate.B, transparency);
 		}
-		Vector2 position = CalculateTilePosition(x, y, layer);
+		Vector2 position = CalculateTilePosition(x, y, layer, tagIndex);
 		spriteElement.Scale = new Vector2(gridScale, gridScale);
 		spriteElement.ZIndex = (int)layer;
 		spriteElement.Position = layer == Layer.Background ? new(actualTileSize / 2, actualTileSize / 2) : position;
@@ -137,21 +175,25 @@ public partial class Chessboard : Node
 			case Layer.Tile:
 				if (x == 0 && y == 0) leftUpCorner = position - new Vector2(actualTileSize / 2, actualTileSize / 2);
 				if (!update) Colors.Set(spriteElement, Colors.Enum.Default, x, y); break;
-			case Layer.Piece:
-			case Layer.Promotion:
-				spriteElement.Scale /= svgScale; break;
-			case Layer.Cursor:
-				spriteElement.TextureFilter = CanvasItem.TextureFilterEnum.Nearest; break;
+			case Layer.Piece: goto case Layer.Promotion;
 			case Layer.ColorIndicator:
-				spriteElement.Modulate = Colors.Dict[Position.colorToMove == 'w' ? Colors.Enum.WhiteColorToMove : Colors.Enum.BlackColorToMove];
+				spriteElement.Modulate = Colors.Dict[isFlipped ? Colors.Enum.BlackColorToMove : Colors.Enum.WhiteColorToMove];
 				spriteElement.Scale = new(tileCount.X * gridScale, gridScale);
 				spriteElement.RotationDegrees = ySizeBigger ? 90 : 0; break;
+			case Layer.Promotion:
+				spriteElement.Scale /= svgScale; break;
+			case Layer.TagVisualizer:
+			case Layer.TagEmblem:
+				Vector2 idealTextureSize = layer == Layer.TagVisualizer ? new(221, 221) : new(180, 180);
+				spriteElement.Scale /= svgScale * tagRescaler * (spriteElement.Texture.GetSize() / idealTextureSize); break;
+			case Layer.Cursor:
+				spriteElement.TextureFilter = CanvasItem.TextureFilterEnum.Nearest; break;
 		}
 		if (!update)
 		{
 			Vector2I tileElementLocation = layer == Layer.Cursor ? default : new(x, y);
 			if (isGUI) guiElements.Add(new(x, y, layer), spriteElement);
-			else tiles.Add(new(tileElementLocation, layer), spriteElement);
+			else if (tag == null) tiles.Add(new(tileElementLocation, layer), spriteElement);
 			parentNode.AddChild(spriteElement);
 		}
 		return spriteElement;
@@ -160,12 +202,19 @@ public partial class Chessboard : Node
 	{
 		return tiles[new(location, Layer.Piece)];
 	}
-	public static Vector2 CalculateTilePosition(float x, float y, Layer layer = Layer.Tile)
+	public static Vector2 CalculateTilePosition(Vector2 position, Layer layer = Layer.Tile) => CalculateTilePosition(position.X, position.Y, layer);
+	public static Vector2 CalculateTilePosition(float x, float y, Layer layer = Layer.Tile, int tagIndex = 0)
 	{
-		if (layer == Layer.ColorIndicator)
+		switch (layer)
 		{
-			if (ySizeBigger) y = boardCenter.Y;
-			else x = boardCenter.X;
+			case Layer.ColorIndicator:
+				if (ySizeBigger) y = boardCenter.Y;
+				else x = boardCenter.X; break;
+			case Layer.TagEmblem:
+			case Layer.TagVisualizer:
+				float usedTagOffset = tagOffset * (isFlipped ? -1 : 1);
+				Vector2 tagPosition = new Vector2(x + usedTagOffset * tagIndex, y + usedTagOffset);
+				x = tagPosition.X; y = tagPosition.Y; break;
 		}
 		if (isFlipped)
 		{
@@ -189,22 +238,32 @@ public partial class Chessboard : Node
 			DrawTilesElement(textureName, tilesElementLocation.X, tilesElementLocation.Y, keyValue.Key.Layer, LoadGraphics.I, gridScale, 1, true);
 		}
 		foreach (Element guiElement in guiElements.Keys)
-		{
 			UpdateGUIElement(guiElement.Layer, guiElement.Location);
+		foreach (KeyValuePair<Vector2I, List<VisibleTag>> tagsAtPos in visibleTags)
+		{
+			int tagIndex = -1;
+			foreach (VisibleTag tagAtPosition in tagsAtPos.Value)
+			{
+				DrawTagElement(tagsAtPos.Key, tagAtPosition.Tag, LoadGraphics.I, tagIndex, tagAtPosition, true);
+				tagIndex = tagIndex == -1 ? 1 : 0;
+			}
 		}
 	}
 	public static void Delete()
 	{
 		foreach (Sprite2D sprite in tiles.Values)
 			sprite.QueueFree();
+		foreach (Sprite2D sprite in guiElements.Values)
+			sprite.QueueFree();
 		tiles = new();
+		guiElements = new();
+		visibleTags = new();
 	}
 	public static void FlipBoard()
 	{
 		if (Position.GameEndState != Position.EndState.Ongoing) return;
 		bool wasPreviouslyFlipped = isFlipped;
-		isFlipped = Position.colorToMove == Position.oppositeStartColorToMove;
-		if (wasPreviouslyFlipped != isFlipped)
+		if (isFlipped != (Position.colorToMove == Position.oppositeStartColorToMove))
 		{
 			float timerDuration = Animations.animationSpeed * (LegalMoves.CheckResponseZones.Count >= 1 && History.RedoMoves.Count == 0 ? boardFlipCheckTimerMultiplier : boardFlipDefaultTimerMultiplier);
 			History.TimerCountdown(timerDuration, History.TimerType.BoardFlip);

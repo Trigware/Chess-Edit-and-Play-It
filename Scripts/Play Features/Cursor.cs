@@ -11,7 +11,7 @@ public partial class Cursor
 	private static bool CursorShown = false;
 	public static Vector2I actualLocation, cursorDirectionField = new();
 	private static Vector2I? previousDirection = null, previousInputDirection = null;
-	private static Sprite2D cursor;
+	public static Sprite2D cursor;
 	private static readonly List<(int eval, Vector2I dir)> directionPriority = new() { (4, new(0, -1)), (2, new(-1, 0)), (2, new(1, 0)), (1, new(0, 1)) };
 	public static void KeyPressDetection()
 	{
@@ -30,7 +30,7 @@ public partial class Cursor
 	public static void ShowHideCursor(bool show)
 	{
 		CursorShown = show;
-		Animations.Tween(cursor, Animations.animationSpeed, actualLocation, null, null, show ? 1 : 0, false);
+		Animations.CursorTween(cursor, Animations.animationSpeed, actualLocation, null, show ? 1 : 0);
 	}
 	private static void CursorInput(Vector2I cursorDirection)
 	{
@@ -63,7 +63,7 @@ public partial class Cursor
 		if (outOfBoundsY) position.Y = actualLocation.Y;
 		if (position == actualLocation) return;
 		previousInputDirection = direction;
-		Animations.Tween(cursor, duration, actualLocation, actualLocation = position, null, null, false, false, false, -1, -1, false, Tween.TransitionType.Linear, null);
+		Animations.CursorTween(cursor, duration, actualLocation, actualLocation = position, null);
 	}
 	private static Vector2I SnapCursorToAvailableMove(Vector2I position, Vector2I direction)
 	{
@@ -148,5 +148,5 @@ public partial class Cursor
 	public static void GetCursor()
 	{
 		cursor = Chessboard.tiles[new(0, 0, Chessboard.Layer.Cursor)];
-	}
+    }
 }

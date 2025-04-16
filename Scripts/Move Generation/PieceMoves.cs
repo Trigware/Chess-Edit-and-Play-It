@@ -10,7 +10,7 @@ public partial class PieceMoves : LegalMoves
 	public static List<(Vector2I, Vector2I)> GetMoves(KeyValuePair<Vector2I, char> piece, int legalCount, bool opponent)
 	{
 		List<(Vector2I start, Vector2I dest)> pieceMoves = new();
-		(Vector2I[] direction, int range) defintion = pieceDefinitons[Convert.ToChar(piece.Value.ToString().ToUpper())];
+		(Vector2I[] direction, int range) defintion = pieceDefinitions[Convert.ToChar(piece.Value.ToString().ToUpper())];
 		bool isPawn = piece.Value.ToString().ToUpper() == "P";
 		char pieceColor = GetPieceColor(piece.Value);
 		int pieceRange = defintion.range;

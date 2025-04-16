@@ -3,6 +3,11 @@ using System.Collections.Generic;
 public partial class Colors : Interaction
 {
 	private const float darkEffect = 0.6f;
+	public static Dictionary<Tags.Tag, Color> visibleTags = new()
+	{
+		{ Tags.Tag.Royal, RGB(0xE4E4D0) },
+		{ Tags.Tag.Castlee, RGB(0xD1D1ED) }
+	};
 	public static Dictionary<Enum, Color> Dict = new()
 	{
 		{ Enum.DefaultLight, RGB(0xB69D96) },
@@ -17,7 +22,7 @@ public partial class Colors : Interaction
 		{ Enum.Checkmate, HSV(0, 80, 80) },
 		{ Enum.WhiteColorToMove, RGB(0xD9D9D9) },
 		{ Enum.BlackColorToMove, RGB(0x434343) },
-		{ Enum.Background, RGB(0x4D6D91) }
+		{ Enum.Background, RGB(0x4D6D91) },
 	};
 	public enum Enum
 	{
@@ -34,7 +39,7 @@ public partial class Colors : Interaction
 		Checkmate,
 		WhiteColorToMove,
 		BlackColorToMove,
-		Background
+		Background,
 	}
 	private static Color RGB(int color, byte a = 0xFF)
 	{
