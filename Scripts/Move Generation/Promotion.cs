@@ -14,6 +14,13 @@ public partial class Promotion
 	public static Vector2I originalPromotionPosition;
 	public static Vector2I? promotionPending = null;
 	public static bool MoveHistoryDisable = false;
+	public enum TagAnimation
+	{
+		None,
+		ShowingChoices,
+		ChoicePicked,
+		Replay
+	}
 	public static void AvailablePromotions(Vector2I promotionPosition, char colorToMove)
 	{
 		originalPromotionPosition = promotionPosition;
@@ -29,7 +36,7 @@ public partial class Promotion
 			Vector2I optionPosition = new(promotionPosition.X, promotionPosition.Y - optionDirection * i);
 			Chessboard.Element pieceBelowOption = new(optionPosition, Chessboard.Layer.Piece);
 			if (Chessboard.tiles.ContainsKey(pieceBelowOption))
-				Animations.Tween(Chessboard.tiles[pieceBelowOption], Animations.animationSpeed * 2, optionPosition, null, null, 0, false);
+				Animations.Tween(Chessboard.tiles[pieceBelowOption], Animations.animationSpeed * 2, optionPosition, null, null, 0, false, promotionForTags: TagAnimation.ShowingChoices);
 			PromotionOptionsPieces.Add(promotable); PromotionOptionsPositions.Add(optionPosition);
 		}
 		Chessboard.waitingForBoardFlip = false;
@@ -71,7 +78,7 @@ public partial class Promotion
 		else
             Chessboard.tiles.Add(tilePositionInDict, sprite);
         LoadGraphics.I.AddChild(sprite);
-		Animations.Tween(sprite, Animations.animationSpeed * durationMultiplier, animationStartPosition, promotionLocation, null, endTransparency, false, promotionForTags: true);
+		Animations.Tween(sprite, Animations.animationSpeed * durationMultiplier, animationStartPosition, promotionLocation, null, endTransparency, false, promotionForTags: TagAnimation.Replay);
 	}
 	private static Sprite2D CreateOptionPiece(char piece, Vector2I position)
 	{
@@ -96,12 +103,12 @@ public partial class Promotion
 			Sprite2D handledSprite = Chessboard.tiles[new(location, Chessboard.Layer.Promotion)];
 			if (location == promotionPosition)
 			{
-				Animations.Tween(handledSprite, Animations.animationSpeed, location, originalPromotionPosition, null, 1, false, false, true, -1, -1, true, promotionForTags: true);
+				Animations.Tween(handledSprite, Animations.animationSpeed, location, originalPromotionPosition, null, 1, false, false, true, -1, -1, true, promotionForTags: TagAnimation.ChoicePicked);
 				selectedPromotionSprite = handledSprite;
 				selectedIndex = i;
 			}
 			else
-				Animations.Tween(handledSprite, Animations.animationSpeed, location, null, null, 0, true, false, false);
+				Animations.Tween(handledSprite, Animations.animationSpeed, location, null, null, 0, true, false, false, promotionForTags: TagAnimation.ChoicePicked);
 			Chessboard.tiles.Remove(new(location, Chessboard.Layer.Promotion));
 		}
 		Chessboard.tiles.Add(new(originalPromotionPosition, Chessboard.Layer.Piece), selectedPromotionSprite);

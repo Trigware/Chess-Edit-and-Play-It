@@ -12,27 +12,28 @@ public partial class Animations : Chessboard
 	public const float lowAnimationDurationBoundary = 0.3f;
 	public static void CursorTween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endTransparency) => Tween(spr, duration, startPosition, endPosition, null, endTransparency, false, false, true, -1, -1, false, Godot.Tween.TransitionType.Linear, null, Layer.Cursor);
 	private static void TagComponentTween(Sprite2D component, float duration, Vector2I startPosition, Vector2? endPosition, float? endTransparency, Layer layer, int tagIndex) => Tween(component, duration, startPosition, endPosition, null, endTransparency, false, layer: layer, tagIndex: tagIndex);
-	public static void TagTween(Vector2I startPosition, Vector2? endPosition, float duration, int chainIterator = -1, int castlingAnimation = -1, bool promotionForTags = false)
-	{
-		if (!Tags.visibleTags.ContainsKey(startPosition) || promotionForTags) return;
+	public static void TagTween(Vector2I startPosition, Vector2? endPosition, float duration, int chainIterator = -1, int castlingAnimation = -1, Promotion.TagAnimation promotionForTags = Promotion.TagAnimation.None, bool deleting = true)
+    {
+        if (promotionForTags == Promotion.TagAnimation.Replay || !Tags.visibleTags.ContainsKey(startPosition)) return;
 		int tagIndex = -1;
 		List<Tags.VisibleTag> visibleTagsAtPosition = new();
+		bool promotionShowingChoices = promotionForTags == Promotion.TagAnimation.ShowingChoices;
 		foreach (Tags.VisibleTag visibleTag in Tags.visibleTags[startPosition])
 		{
-			float usedTransparency = 1;
-			if (Tags.lastHandledTags.ContainsKey(startPosition) && Tags.lastHandledTags[startPosition].Contains(visibleTag.Tag))
-				usedTransparency = 0;
+			float usedTransparency = deleting ? 1 : 0;
+			if (Tags.lastHandledTags.ContainsKey(startPosition) && Tags.lastHandledTags[startPosition].Contains(visibleTag.Tag) || promotionShowingChoices)
+				usedTransparency = deleting || promotionShowingChoices ? 0 : 1;
 			else visibleTagsAtPosition.Add(visibleTag);
 			TagComponentTween(visibleTag.TagVisualizer, duration, startPosition, endPosition, usedTransparency, Layer.TagVisualizer, tagIndex);
 			TagComponentTween(visibleTag.TagEmblem, duration, startPosition, endPosition, usedTransparency, Layer.TagEmblem, tagIndex);
 			tagIndex = tagIndex == -1 ? 1 : 0;
 		}
-		if (chainIterator > 1 || endPosition == null) return;
-		Tags.visibleTags.Remove(startPosition);
+		if (chainIterator > 1 || endPosition == null || promotionForTags != Promotion.TagAnimation.None) return;
+        Tags.visibleTags.Remove(startPosition);
 		if (visibleTagsAtPosition.Count > 0)
-			Tags.visibleTags.Add(castlingAnimation == -1 ? (Vector2I)endPosition : new(Castling.endXPositions[castlingAnimation], startPosition.Y), visibleTagsAtPosition);
-	}
-	public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale, float? endTransparency, bool deleteOnFinished, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = -1, int castlingAnimation = -1, bool promotionConfirmation = false, Tween.TransitionType transition = Godot.Tween.TransitionType.Sine, Tween.EaseType? easeType = Godot.Tween.EaseType.InOut, Layer layer = Layer.Piece, int tagIndex = 0, bool promotionForTags = false)
+            Tags.visibleTags.Add(castlingAnimation == -1 ? (Vector2I)endPosition : new(Castling.endXPositions[castlingAnimation], startPosition.Y), visibleTagsAtPosition);
+    }
+	public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale, float? endTransparency, bool deleteOnFinished, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = -1, int castlingAnimation = -1, bool promotionConfirmation = false, Tween.TransitionType transition = Godot.Tween.TransitionType.Sine, Tween.EaseType? easeType = Godot.Tween.EaseType.InOut, Layer layer = Layer.Piece, int tagIndex = 0, Promotion.TagAnimation promotionForTags = Promotion.TagAnimation.None)
 	{
 		Tween tween = spr.CreateTween();
 		ActiveTweens.Add(tween, (spr, deleteOnFinished, endTransparency));

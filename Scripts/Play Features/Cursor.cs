@@ -15,10 +15,10 @@ public partial class Cursor
 	private static readonly List<(int eval, Vector2I dir)> directionPriority = new() { (4, new(0, -1)), (2, new(-1, 0)), (2, new(1, 0)), (1, new(0, 1)) };
 	public static void KeyPressDetection()
 	{
-		if (cooldownOngoing || Chessboard.waitingForBoardFlip || Position.GameEndState != Position.EndState.Ongoing) return;
+        bool enterPressed = Input.IsKeyPressed(Key.Enter);
+        enterPressedNow = !wasEnterPressed && enterPressed && CursorShown;
+        if (cooldownOngoing || Chessboard.waitingForBoardFlip || Position.GameEndState != Position.EndState.Ongoing) return;
 		if (CursorShown && Interaction.escapePressed && !Interaction.lastEscapeSelection) { ShowHideCursor(false); return; }
-		bool enterPressed = Input.IsKeyPressed(Key.Enter);
-		enterPressedNow = !wasEnterPressed && enterPressed && CursorShown;
 		wasEnterPressed = enterPressed;
 		if (enterPressed && !CursorShown) ShowHideCursor(true);
 		if (Input.IsKeyPressed(Key.Left)) { cursorDirectionField.X = -1; }
