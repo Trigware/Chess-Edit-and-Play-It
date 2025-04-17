@@ -17,7 +17,7 @@ public partial class Colors : Interaction
 		{ Enum.Checkmate, HSV(0, 80, 80) },
 		{ Enum.WhiteColorToMove, RGB(0xD9D9D9) },
 		{ Enum.BlackColorToMove, RGB(0x434343) },
-		{ Enum.Background, RGB(0x4D6D91) },
+		{ Enum.Background, RGB(0x4D6D91) }
 	};
 	public enum Enum
 	{
@@ -34,14 +34,14 @@ public partial class Colors : Interaction
 		Checkmate,
 		WhiteColorToMove,
 		BlackColorToMove,
-		Background,
+		Background
 	}
-	public static Color RGB(int color, byte a = 0xFF)
+	private static Color RGB(int color, byte a = 0xFF)
 	{
 		byte r = (byte)((color >> 16) & 0xFF), g = (byte)((color >> 8) & 0xFF), b = (byte)(color & 0xFF);
 		return new(r / 255f, g / 255f, b / 255f, a / 255f);
 	}
-	public static Color HSV(float h, float s, float v)
+	private static Color HSV(float h, float s, float v)
 	{
 		return Color.FromHsv(h / 360f, s / 100f, v / 100f);
 	}

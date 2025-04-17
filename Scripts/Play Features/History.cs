@@ -16,7 +16,7 @@ public partial class History
 		public Vector2I Start, End;
 		public char CapturedPiece, PiecePromotedFrom, PiecePromotedTo = '\0', EnPassantCapture;
 		public (Vector2I target, Vector2I delete)? EnPassantInfo, LeapMoveInfo;
-		public Dictionary<Vector2I, HashSet<Tags.Tag>> HandledTags;
+		public Dictionary<Vector2I, HashSet<Tags.Tag>> RemovedTags;
 		public (Vector2I start, Vector2I end)? CastleeInfo;
 		public int HalfmoveClock;
 		public Move(Vector2I start, Vector2I end, char capturedPiece, char piecePromotedFrom, (Vector2I target, Vector2I delete)? enPassantInfo, (Vector2I target, Vector2I delete)? leapMoveInfo, char enPassantCapture, int halfmoveClock,
@@ -25,7 +25,7 @@ public partial class History
 			Start = start; End = end;
 			CapturedPiece = capturedPiece; PiecePromotedFrom = piecePromotedFrom;
 			EnPassantInfo = enPassantInfo; LeapMoveInfo = leapMoveInfo; EnPassantCapture = enPassantCapture;
-			HandledTags = removedTags;
+			RemovedTags = removedTags;
 			CastleeInfo = castleeInfo;
 			HalfmoveClock = halfmoveClock;
 		}
@@ -48,7 +48,7 @@ public partial class History
 		{
 			string removedTagsString = "";
 			int i = 0;
-			foreach (KeyValuePair<Vector2I, HashSet<Tags.Tag>> tagRemovalPair in HandledTags)
+			foreach (KeyValuePair<Vector2I, HashSet<Tags.Tag>> tagRemovalPair in RemovedTags)
 			{
 				i++;
 				removedTagsString += tagRemovalPair.Key + " [";
@@ -58,13 +58,13 @@ public partial class History
 					j++;
 					removedTagsString += tag.ToString() + (j == tagRemovalPair.Value.Count ? "]" : ", ");
 				}
-				if (i != HandledTags.Count)
+				if (i != RemovedTags.Count)
 					removedTagsString += ", ";
 			}
 			return $"Start: {Start.ToString()}; End: {End.ToString()}\n" +
 				   $"Captured Piece: {(CapturedPiece == '\0' ? "none" : CapturedPiece)}; Piece Promoted From: {(PiecePromotedFrom == '\0' ? "none" : PiecePromotedFrom)}; Piece Promoted To: {(PiecePromotedTo == '\0' ? "none" : PiecePromotedTo)}\n" +
 				   $"EnPassantInfo: {(EnPassantInfo == null ? "none" : EnPassantInfo)}; LeapMoveInfo: {(LeapMoveInfo == null ? "none" : LeapMoveInfo)}, EnPassantCapture: {(EnPassantCapture == '\0' ? "none" : EnPassantCapture)}\n" +
-				   $"Handled Tags: {(removedTagsString == "" ? "none" : removedTagsString)}\n" +
+				   $"Removed Tags: {(removedTagsString == "" ? "none" : removedTagsString)}\n" +
 				   $"CastleeInfo: {(CastleeInfo == null ? "none" : CastleeInfo)}; Halfmove Clock: {HalfmoveClock}\n";
 		}
 	}
@@ -73,7 +73,6 @@ public partial class History
 	{
 		RedoMoves = new();
 		UndoMoves.Push(latestMove);
-		Tags.HandleVisibleTags(latestMove.HandledTags, true);
 	}
 	private static void Undo()
 	{
@@ -126,8 +125,7 @@ public partial class History
 	}
 	private static void MoveReplay(Move replayedMove, bool isUndo)
 	{
-		Tags.HandleVisibleTags(replayedMove.HandledTags, false);
-        Stack<Move> movePushedTo = isUndo ? RedoMoves : UndoMoves;
+		Stack<Move> movePushedTo = isUndo ? RedoMoves : UndoMoves;
         Animations.CheckAnimationCancelEarly(replayedMove.End);
 		Position.EnPassantInfo = isUndo ? replayedMove.EnPassantInfo : replayedMove.LeapMoveInfo;
         Interaction.Deselect((Interaction.selectedTile ?? default).Location);
@@ -168,8 +166,7 @@ public partial class History
 			case TimerType.BoardFlip: Chessboard.waitingForBoardFlip = timerStart;
 				if (!timerStart)
 				{
-					Chessboard.isFlipped = Position.colorToMove == Position.oppositeStartColorToMove;
-                    Chessboard.Update();
+					Chessboard.Update();
 					Cursor.MoveCursor(Cursor.Location[Position.colorToMove], 0);
 				} break;
 			case TimerType.ReplaySuccession: 
@@ -243,9 +240,9 @@ public partial class History
 	}
 	private static void ReplayTags(Move replayedMove, bool isUndo)
 	{
-		if (replayedMove.HandledTags.Count == 0)
+		if (replayedMove.RemovedTags.Count == 0)
 			return;
-		foreach (KeyValuePair<Vector2I, HashSet<Tags.Tag>> tagRemovalPair in replayedMove.HandledTags)
+		foreach (KeyValuePair<Vector2I, HashSet<Tags.Tag>> tagRemovalPair in replayedMove.RemovedTags)
 		{
 			foreach (Tags.Tag tag in tagRemovalPair.Value)
 			{

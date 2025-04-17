@@ -12,7 +12,10 @@ public partial class LoadGraphics : Node
 	}
 	private static Texture2D LoadTexture(string name)
 	{
-		string fileLocation = $"res://Graphics/{name}";
+		string extension = "svg";
+		if (name.Length != 2)
+			extension = "png";
+		string fileLocation = $"res://Graphics/{name}.{extension}";
 		Texture2D texture = GD.Load<Texture2D>(fileLocation);
 		if (texture == null)
 		{
@@ -23,19 +26,13 @@ public partial class LoadGraphics : Node
 	}
 	private static void LoadAllTextures()
 	{
-		string[] pieceTextures = new string[] { "wP", "wN", "wB", "wR", "wQ", "wK", "bP", "bN", "bB", "bR", "bQ", "bK" },
-                 miscellaneousTextures = new string[] { "tile.png", "cursor.png", "tag.svg", "royal.png", "castlee.png" };
-		foreach (string texture in pieceTextures)
+		string[] textureArray = new string[] { "tile", "cursor", "wP", "wN", "wB", "wR", "wQ", "wK", "bP", "bN", "bB", "bR", "bQ", "bK" };
+		foreach (string texture in textureArray)
 		{
-			string textureNameUsedElsewhere = texture;
-			if (texture[0] == 'w' || texture[0] == 'b')
-				textureNameUsedElsewhere = (texture[0] == 'w') ? texture[1].ToString().ToUpper() : texture[1].ToString().ToLower();
-			textureDict.Add(textureNameUsedElsewhere, LoadTexture(texture + ".svg"));
+			string spriteName = texture;
+			if (texture.Length == 2 && (texture[0] == 'w' || texture[0] == 'b'))
+				spriteName = (texture[0] == 'w') ? texture[1].ToString().ToUpper() : texture[1].ToString().ToLower();
+			textureDict.Add(spriteName, LoadTexture(texture));
 		}
-		foreach (string texture in miscellaneousTextures)
-		{
-			string textureNameUsedElsewhere = texture.Split('.')[0];
-            textureDict.Add(textureNameUsedElsewhere, LoadTexture(texture));
-        }
-    }
+	}
 }

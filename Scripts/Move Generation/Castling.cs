@@ -6,7 +6,7 @@ public partial class Castling : Node
 {
 	private const int elipseQualityConst = 65;
 	public static int elipseQuality;
-	public static List<int> endXPositions = new();
+	public static List<int> endXpositions = new();
 	public static List<bool> elipsePathUp = new();
 	public static List<(Vector2I, Vector2I)> IsLegal(Vector2I castlerPosition, char color, List<Vector2I> opponentMoves, int moveCount)
 	{
@@ -51,10 +51,10 @@ public partial class Castling : Node
 		}
 		bool elipseUp = Position.colorToMove == (isRedo ? 'b' : 'w');
         Animations.CancelCastlingEarly = false;
-		endXPositions.Add(endXLocal);
+		endXpositions.Add(endXLocal);
 		elipsePathUp.Add(elipseUp);
 		elipseQuality = Convert.ToInt32(elipseQualityConst * Animations.animationSpeed);
-		Animations.Tween(spr, duration / elipseQuality, startPosition, CalculatePointOnElipse(1, startPosition, endXLocal, elipseUp), null, null, false, false, true, 1, endXPositions.Count-1);
+		Animations.Tween(spr, duration / elipseQuality, startPosition, CalculatePointOnElipse(1, startPosition, endXLocal, elipseUp), null, null, false, false, true, 1, endXpositions.Count-1);
 	}
 	private static bool CanDoElipseAnimation(Vector2I startPosition, int endXLocal, float duration, bool isRedo)
 	{

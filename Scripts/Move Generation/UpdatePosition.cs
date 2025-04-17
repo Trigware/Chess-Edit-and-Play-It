@@ -13,7 +13,7 @@ public partial class UpdatePosition
 	{
 		bool enPassant = Position.EnPassantInfo != null && enPassantIndex > -1;
 		char capturedPiece = Position.pieces.TryGetValue(end, out char val) ? val : '\0', pieceMoved = Position.pieces[start];
-		Tags.lastHandledTags = new();
+		Tags.lastDeletedTags = new();
 		Chessboard.waitingForBoardFlip = true;
 		Cursor.Location[Position.colorToMove] = end;
 		HandleEnPassantAndClocks(enPassant, leapMoveIndex, start, end, pieceMoved);
@@ -61,7 +61,7 @@ public partial class UpdatePosition
 		Position.LastMoveInfo = (start, end);
 		if (!isPromoting || Promotion.PromotionOptionsPieces.Count == 0)
 			Interaction.PreviousMoveTiles(Colors.Enum.PreviousMove);
-		LatestMove = new(start, end, capturedPiece, isPromoting ? pieceMoved : '\0', previousEnPassantInfo, Position.EnPassantInfo, enPassantDelete, previousHalfmoveClock, castlingIndex == -1 ? null : LegalMoves.CastleeMoves[castlingIndex], Tags.lastHandledTags);
+		LatestMove = new(start, end, capturedPiece, isPromoting ? pieceMoved : '\0', previousEnPassantInfo, Position.EnPassantInfo, enPassantDelete, previousHalfmoveClock, castlingIndex == -1 ? null : LegalMoves.CastleeMoves[castlingIndex], Tags.lastDeletedTags);
 		if (!isPromoting || Promotion.CanBePromotedTo.Count() <= 1)
 			History.Play(LatestMove);
 	}

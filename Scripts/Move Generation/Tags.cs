@@ -1,41 +1,20 @@
 using Godot;
 using System.Collections.Generic;
+using System.Drawing;
 
 public partial class Tags
 {
-	public static List<Vector2I> tagPositions = new() { new(4, 2) };
-	public static List<HashSet<Tag>> activeTags = new() { new() { Tag.Royal, Tag.Castler } };
-	public static Dictionary<Vector2I, HashSet<Tag>> lastHandledTags;
+	public static List<Vector2I> tagPositions = new() { new(4, 0), new(4, 7) };
+	public static List<HashSet<Tag>> activeTags = new() { new() { Tag.Royal, Tag.Castler }, new() { Tag.Royal, Tag.Castler } };
+	public static Dictionary<Vector2I, HashSet<Tag>> lastDeletedTags;
 	public static List<Vector2I> CastlingRights = new();
-    public static Dictionary<Vector2I, List<VisibleTag>> visibleTags = new();
-    public static Dictionary<Tag, Color> visualizerColors = new()
-    {
-        { Tag.Royal, Colors.RGB(0xE4E4D0) },
-        { Tag.Castlee, Colors.RGB(0xD1D1ED) }
-    };
-    public static Dictionary<Tag, string> TagEmblemName = new()
-	{
-		{ Tag.Royal, "royal" },
-		{ Tag.Castlee, "castlee" }
-	};
 	public enum Tag
 	{
 		Royal,
 		Castler,
 		Castlee
 	}
-    public struct VisibleTag
-    {
-        public Tag Tag;
-        public Sprite2D TagVisualizer, TagEmblem;
-        public VisibleTag(Tag tag, Sprite2D tagVisualizer, Sprite2D tagEmblem)
-        {
-            Tag = tag;
-            TagVisualizer = tagVisualizer;
-            TagEmblem = tagEmblem;
-        }
-    }
-    public static void Add(Vector2I location, Tag tag)
+	public static void Add(Vector2I location, Tag tag)
 	{
 		int tagIndex = tagPositions.IndexOf(location);
 		if (tagIndex == -1)
@@ -176,10 +155,10 @@ public partial class Tags
 	}
 	private static void UpdateLastDeletedTags(Vector2I location, Tag tag)
 	{
-		if (lastHandledTags.ContainsKey(location))
-			lastHandledTags[location].Add(tag);
+		if (lastDeletedTags.ContainsKey(location))
+			lastDeletedTags[location].Add(tag);
 		else
-			lastHandledTags.Add(location, new() { tag });
+			lastDeletedTags.Add(location, new() { tag });
 	}
 	private static bool UpdateCastlingRightsForLastDeletedTags(Vector2I start, Vector2I end, bool updateLastDeletedTags, out int endIndex)
 	{
@@ -215,12 +194,5 @@ public partial class Tags
 			pieceLocationsOfStartColor.Add(piece.Key);
 		}
 		return pieceLocationsOfStartColor[new RandomNumberGenerator().RandiRange(0, pieceLocationsOfStartColor.Count - 1)];
-	}
-	public static void HandleVisibleTags(Dictionary<Vector2I, HashSet<Tag>> handledTags, bool deleting)
-	{
-		foreach (Vector2I handledTagPosition in handledTags.Keys)
-		{
-			Animations.TagTween(handledTagPosition, null, Animations.animationSpeed, deleting: deleting);
-        }
 	}
 }
