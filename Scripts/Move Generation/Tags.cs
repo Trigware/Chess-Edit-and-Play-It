@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 public partial class Tags
 {
-	public static List<Vector2I> tagPositions = new() { new(4, 2) };
-	public static List<HashSet<Tag>> activeTags = new() { new() { Tag.Royal, Tag.Castlee } };
-	public static Dictionary<Vector2I, HashSet<Tag>> lastDeletedTags;
+	public static List<Vector2I> tagPositions = new() { new(4, 0), new(4, 7) };
+	public static List<HashSet<Tag>> activeTags = new() { new() { Tag.Royal, Tag.Castler }, new() { Tag.Royal, Tag.Castler } };
+	public static Dictionary<Vector2I, HashSet<Tag>> lastHandledTags;
 	public static List<Vector2I> CastlingRights = new();
     public static Dictionary<Vector2I, List<VisibleTag>> visibleTags = new();
     public static Dictionary<Tag, Color> visualizerColors = new()
@@ -176,10 +176,10 @@ public partial class Tags
 	}
 	private static void UpdateLastDeletedTags(Vector2I location, Tag tag)
 	{
-		if (lastDeletedTags.ContainsKey(location))
-			lastDeletedTags[location].Add(tag);
+		if (lastHandledTags.ContainsKey(location))
+			lastHandledTags[location].Add(tag);
 		else
-			lastDeletedTags.Add(location, new() { tag });
+			lastHandledTags.Add(location, new() { tag });
 	}
 	private static bool UpdateCastlingRightsForLastDeletedTags(Vector2I start, Vector2I end, bool updateLastDeletedTags, out int endIndex)
 	{
@@ -215,5 +215,15 @@ public partial class Tags
 			pieceLocationsOfStartColor.Add(piece.Key);
 		}
 		return pieceLocationsOfStartColor[new RandomNumberGenerator().RandiRange(0, pieceLocationsOfStartColor.Count - 1)];
+	}
+	public static void HandleVisibleTags(Dictionary<Vector2I, HashSet<Tag>> handledTags, bool deleting)
+	{
+		foreach (KeyValuePair<Vector2I, HashSet<Tag>> handledTag in handledTags)
+		{
+			foreach (Tag tag in handledTag.Value)
+			{
+                Animations.TagTween(handledTag.Key, null, Animations.animationSpeed);
+            }
+        }
 	}
 }

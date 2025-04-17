@@ -20,7 +20,7 @@ public partial class Chessboard : Node
 	public const int PositionRepetitionCount = 3;
     public override void _Ready()
     {
-        Position.Load(Position.FEN.PromotionTest);
+        Position.Load(Position.FEN.CastlingTest);
         boardCenter = new(((float)tileCount.X - 1) / 2, ((float)tileCount.Y - 1) / 2);
         Tags.GetRoyalsPerColor();
     }
@@ -170,7 +170,7 @@ public partial class Chessboard : Node
         switch (layer)
         {
             case Layer.Background:
-                spriteElement.Scale = new(gridScale * (gameviewSize.X / actualTileSize) * 2, gridScale * (gameviewSize.Y / actualTileSize) * 2);
+                spriteElement.Scale = new Vector2(gridScale, gridScale) * (gameviewSize.X / actualTileSize) * 2;
                 spriteElement.Modulate = Colors.Dict[Colors.Enum.Background];
                 break;
             case Layer.Tile:
