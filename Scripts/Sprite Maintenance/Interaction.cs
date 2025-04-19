@@ -23,9 +23,10 @@ public partial class Interaction : Chessboard
 	}
 	private Vector2I GetPositionOnBoard()
 	{
-		Vector2 leftUpNotNull = (Vector2)leftUpCorner;
+		Vector2 leftUpNotNull = leftUpCorner;
 		Vector2 mousePosition = GetViewport().GetMousePosition();
 		Vector2 tileSelectionPosition = ((mousePosition - leftUpNotNull) / actualTileSize).Floor().Abs();
+		GD.Print(tileSelectionPosition);
 		return (Vector2I)tileSelectionPosition;
 	}
 	private void Select(bool leftMousePressStartNow)
