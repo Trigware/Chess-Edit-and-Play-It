@@ -69,7 +69,7 @@ public partial class Colors : Interaction
 			return GetColorFromEnum(Enum.Default, x, y);
 		}
 	}
-	private static Color GetColorFromEnum(Enum color, int x, int y)
+	public static Color GetColorFromEnum(Enum color, int x, int y)
 	{
 		Color enumAsColor = color switch
 		{

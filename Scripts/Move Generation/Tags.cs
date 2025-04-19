@@ -193,6 +193,7 @@ public partial class Tags
 			if (LegalMoves.GetPieceColor(piece.Value) != color) continue;
 			pieceLocationsOfStartColor.Add(piece.Key);
 		}
+		if (pieceLocationsOfStartColor.Count == 0) return default;
 		return pieceLocationsOfStartColor[new RandomNumberGenerator().RandiRange(0, pieceLocationsOfStartColor.Count - 1)];
 	}
 }
