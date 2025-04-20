@@ -43,7 +43,8 @@ public partial class PieceMoves : LegalMoves
 					continue;
 			}
 			bool promotion = false;
-			if (isPawn && AnalysePawnMove(dirIter, range, addedFlatPosition, pieceColor, legalCount + rangeMoves.Count, opponent, piece, out promotion)) break;
+			if (isPawn && AnalysePawnMove(dirIter, range, addedFlatPosition, pieceColor, legalCount + rangeMoves.Count, opponent,
+										  piece, out promotion)) break;
 			if (ReachedSameColor(targetColor, opponent, addedFlatPosition, pinnedPieceMoveAnalyse, dir, pieceRange - range))
 			{
                 RemovePromotionAttribute(promotion);
@@ -64,7 +65,9 @@ public partial class PieceMoves : LegalMoves
                 rangeMoves.Add((piece.Key, addedFlatPosition));
             else if (opponent)
 				PinnedPieceZones.Last().Add(addedFlatPosition);
-			pinnedPieceMoveAnalyse = OnNormalCapture(pinnedPieceMoveAnalyse, targetColor, isTargetRoyal, opponent, addedFlatPosition, dir, pieceRange - range, rangeMoves, piece.Key, out bool broken);
+			pinnedPieceMoveAnalyse = OnNormalCapture(pinnedPieceMoveAnalyse, targetColor, isTargetRoyal,
+									 opponent, addedFlatPosition, dir, pieceRange - range,
+									 rangeMoves, piece.Key, out bool broken);
 			if (broken)
 				break;
 		}
