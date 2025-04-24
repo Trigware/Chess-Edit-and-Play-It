@@ -69,9 +69,6 @@ public partial class LegalMoves
 			return;
 		}
 
-		Position.EndState[] NotDefaultGameEndSound = new Position.EndState[] { Position.EndState.Ongoing, Position.EndState.Checkmate, Position.EndState.Stalemate };
-		Position.EndState[] WinLoss = new Position.EndState[] { Position.EndState.Checkmate, Position.EndState.Timeout, Position.EndState.Resignation };
-
 		Position.InCheck = CheckResponseZones.Count >= 1;
 		if (legalMoves.Count == 0)
 			Position.GameEndState = Position.InCheck ? Position.EndState.Checkmate : Position.EndState.Stalemate;
@@ -84,6 +81,7 @@ public partial class LegalMoves
 		if (Zobrist.TriggersRepetitionRule(Zobrist.Hash(undo), undo))
 			Position.GameEndState = Position.EndState.ThreefoldRepetition;
 
+		bool isGameStateOngoing = Position.GameEndState == Position.EndState.Ongoing;
 		Animations.CancelCheckEarly = false;
 		Animations.PreviousCheckTiles = new();
 		if (Position.InCheck)
@@ -92,19 +90,23 @@ public partial class LegalMoves
 
 		if (Position.GameEndState == Position.EndState.Stalemate)
 			Audio.Play(Audio.Enum.Stalemate);
-		if (!NotDefaultGameEndSound.Contains(Position.GameEndState))
-			Audio.Play(Audio.Enum.GameEnd);
 
-		if (Position.GameEndState != Position.EndState.Ongoing)
+		if (!isGameStateOngoing)
 		{
-			Colors.PreviousMoveTiles(Colors.Enum.Default);
-			Position.WinningPlayer = WinLoss.Contains(Position.GameEndState) ? ReverseColorReturn(Position.colorToMove) : 'd';
+			if (!Position.UniqueGameEndAudio.Contains(Position.GameEndState))
+				Audio.Play(Audio.Enum.GameEnd);
+			Position.WinningPlayer = Position.WinLossEndStates.Contains(Position.GameEndState) ? ReverseColorReturn(Position.colorToMove) : 'd';
 			Chessboard.waitingForBoardFlip = false;
-			Cursor.ShowHideCursor(false);
+			EndGame();
 		}
 		IsGettingLegalMovesOnLoad = false;
 	}
-	protected static List<Vector2I> GetOnlyTargets(List<(Vector2I start, Vector2I end)> moves)
+	public static void EndGame()
+	{
+        Interaction.PreviousMoveTiles(Colors.Enum.Default);
+        Cursor.ShowHideCursor(false);
+    }
+    protected static List<Vector2I> GetOnlyTargets(List<(Vector2I start, Vector2I end)> moves)
 	{
 		List<Vector2I> onlyTargets = new();
 		foreach ((Vector2I start, Vector2I end) move in moves)
@@ -123,14 +125,8 @@ public partial class LegalMoves
 			return '\0';
 		return (piece.ToString() == piece.ToString().ToUpper()) ? 'w' : 'b';
 	}
-	public static bool IsWithinGrid(Vector2I position)
-	{
-		return position.X >= 0 && position.Y >= 0 && position.X < Chessboard.tileCount.X && position.Y < Chessboard.tileCount.Y;
-	}
-	public static void ReverseColor(char originalColor)
-	{
-		Position.colorToMove = ReverseColorReturn(originalColor);
-	}
+	public static bool IsWithinGrid(Vector2I position) => position.X >= 0 && position.Y >= 0 && position.X < Chessboard.tileCount.X && position.Y < Chessboard.tileCount.Y;
+	public static void ReverseColor(char originalColor) => Position.colorToMove = ReverseColorReturn(originalColor);
 	public static char ReverseColorReturn(char originalColor)
 	{
 		int currentColorIndex = Position.playerColors.IndexOf(originalColor);

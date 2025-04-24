@@ -9,8 +9,9 @@ public partial class LoadGraphics : Node
 	{
 		I = this;
         LoadAllTextures();
-	}
-	private static Texture2D LoadTexture(string name)
+        TimeControl.SetupTimers();
+    }
+    private static Texture2D LoadTexture(string name)
 	{
 		string fileLocation = $"res://Graphics/{name}";
 		Texture2D texture = GD.Load<Texture2D>(fileLocation);

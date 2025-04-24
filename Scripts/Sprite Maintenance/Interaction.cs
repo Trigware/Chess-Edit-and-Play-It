@@ -25,8 +25,9 @@ public partial class Interaction : Chessboard
 	{
 		Vector2 leftUpNotNull = leftUpCorner;
 		Vector2 mousePosition = GetViewport().GetMousePosition();
-		Vector2 tileSelectionPosition = ((mousePosition - leftUpNotNull) / actualTileSize).Floor().Abs();
-		GD.Print(tileSelectionPosition);
+		Vector2 tileSelectionPosition = ((mousePosition - leftUpNotNull) / actualTileSize).Floor();
+		if (isFlipped)
+			tileSelectionPosition *= -1;
 		return (Vector2I)tileSelectionPosition;
 	}
 	private void Select(bool leftMousePressStartNow)
@@ -42,6 +43,7 @@ public partial class Interaction : Chessboard
 		}
 		if (Position.colorToMove == '\0')
 			return;
+		TimeControl.HandleTimerPauseProperty(Position.colorToMove);
 		Element mousePositionBoard = new(interactionPosition, Layer.Tile);
 		if (selectedTile != null && (Input.IsKeyPressed(Key.Escape) || (interactionButtonPressed && (selectedTile ?? default).Location == mousePositionBoard.Location)))
 		{

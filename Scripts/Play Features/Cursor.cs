@@ -30,7 +30,7 @@ public partial class Cursor
 	public static void ShowHideCursor(bool show)
 	{
 		CursorShown = show;
-		Animations.Tween(cursor, Animations.animationSpeed, actualLocation, null, null, show ? 1 : 0, false);
+		Animations.Tween(cursor, Animations.animationSpeed, actualLocation, null, null, show ? 1 : 0, false, layer: Chessboard.Layer.Cursor);
 	}
 	private static void CursorInput(Vector2I cursorDirection)
 	{
@@ -63,7 +63,7 @@ public partial class Cursor
 		if (outOfBoundsY) position.Y = actualLocation.Y;
 		if (position == actualLocation) return;
 		previousInputDirection = direction;
-		Animations.Tween(cursor, duration, actualLocation, actualLocation = position, null, null, false, false, false, -1, -1, false, Tween.TransitionType.Linear, null);
+		Animations.Tween(cursor, duration, actualLocation, actualLocation = position, null, null, false, transition: Tween.TransitionType.Linear, easeType: null, layer: Chessboard.Layer.Cursor);
 	}
 	private static Vector2I SnapCursorToAvailableMove(Vector2I position, Vector2I direction)
 	{
@@ -145,8 +145,5 @@ public partial class Cursor
 	}
 	private static bool IsSameSign(int a, int b) => a * b > 0;
 	private static bool IsCloserToCenter(int axisPosition, int axisDirection) => Mathf.Abs(Chessboard.boardCenter.X - axisPosition - axisDirection) < Mathf.Abs(Chessboard.boardCenter.X - axisPosition);
-	public static void GetCursor()
-	{
-		cursor = Chessboard.tiles[new(0, 0, Chessboard.Layer.Cursor)];
-	}
+	public static void SetCursor() => cursor = Chessboard.tiles[new(0, 0, Chessboard.Layer.Cursor)];
 }

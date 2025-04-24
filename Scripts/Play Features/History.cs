@@ -19,8 +19,9 @@ public partial class History
 		public Dictionary<Vector2I, HashSet<Tags.Tag>> RemovedTags;
 		public (Vector2I start, Vector2I end)? CastleeInfo;
 		public int HalfmoveClock;
+		public Dictionary<char, double> TimeLeft;
 		public Move(Vector2I start, Vector2I end, char capturedPiece, char piecePromotedFrom, (Vector2I target, Vector2I delete)? enPassantInfo, (Vector2I target, Vector2I delete)? leapMoveInfo, char enPassantCapture, int halfmoveClock,
-				   (Vector2I start, Vector2I end)? castleeInfo, Dictionary<Vector2I, HashSet<Tags.Tag>> removedTags)
+				   (Vector2I start, Vector2I end)? castleeInfo, Dictionary<Vector2I, HashSet<Tags.Tag>> removedTags, Dictionary<char, double> timeLeft)
 		{
 			Start = start; End = end;
 			CapturedPiece = capturedPiece; PiecePromotedFrom = piecePromotedFrom;
@@ -28,6 +29,7 @@ public partial class History
 			RemovedTags = removedTags;
 			CastleeInfo = castleeInfo;
 			HalfmoveClock = halfmoveClock;
+			TimeLeft = timeLeft;
 		}
 		public (Vector2I, Vector2I) GetTuple()
 		{
@@ -65,7 +67,7 @@ public partial class History
 				   $"Captured Piece: {(CapturedPiece == '\0' ? "none" : CapturedPiece)}; Piece Promoted From: {(PiecePromotedFrom == '\0' ? "none" : PiecePromotedFrom)}; Piece Promoted To: {(PiecePromotedTo == '\0' ? "none" : PiecePromotedTo)}\n" +
 				   $"EnPassantInfo: {(EnPassantInfo == null ? "none" : EnPassantInfo)}; LeapMoveInfo: {(LeapMoveInfo == null ? "none" : LeapMoveInfo)}, EnPassantCapture: {(EnPassantCapture == '\0' ? "none" : EnPassantCapture)}\n" +
 				   $"Removed Tags: {(removedTagsString == "" ? "none" : removedTagsString)}\n" +
-				   $"CastleeInfo: {(CastleeInfo == null ? "none" : CastleeInfo)}; Halfmove Clock: {HalfmoveClock}\n";
+				   $"CastleeInfo: {(CastleeInfo == null ? "none" : CastleeInfo)}; Halfmove Clock: {HalfmoveClock}; Time Left at the start of Turn: {TimeLeft}";
 		}
 	}
 	public enum ReplayType { None, Undo, Redo }
@@ -77,7 +79,7 @@ public partial class History
 	private static void Undo()
 	{
 		if (Chessboard.waitingForBoardFlip) return;
-        lastReplay = ReplayType.Undo;
+		lastReplay = ReplayType.Undo;
 		UpdateTileColorsAndUndoTimer();
 		MoveReplay(UndoMoves.Pop(), true);
 	}
@@ -96,8 +98,8 @@ public partial class History
 			movesReplayedInThisSession = 0;
 			return;
 		}
-        if (Chessboard.waitingForBoardFlip) return;
-        if (pressedZ && !replayDisabled)
+		if (Chessboard.waitingForBoardFlip) return;
+		if (pressedZ && !replayDisabled)
 		{
 			if (UndoMoves.Count == 0 || lastReplay == ReplayType.Redo) movesReplayedInThisSession = 0;
 			if (UndoMoves.Count > 0) { Undo(); return; }
@@ -126,24 +128,30 @@ public partial class History
 	private static void MoveReplay(Move replayedMove, bool isUndo)
 	{
 		Stack<Move> movePushedTo = isUndo ? RedoMoves : UndoMoves;
-        Animations.CheckAnimationCancelEarly(replayedMove.End);
+		Animations.CheckAnimationCancelEarly(replayedMove.End);
 		Position.EnPassantInfo = isUndo ? replayedMove.EnPassantInfo : replayedMove.LeapMoveInfo;
-        Interaction.Deselect((Interaction.selectedTile ?? default).Location);
+		Interaction.Deselect((Interaction.selectedTile ?? default).Location);
 		if (Position.pieces.ContainsKey(replayedMove.Start))
 			replayedMove.SwapLocations();
 
 		Tags.ModifyRoyalPieceList(replayedMove.End, replayedMove.Start);
-        movePushedTo.Push(replayedMove);
-        ModifyLastMoveInfo(isUndo);
+		movePushedTo.Push(replayedMove);
+		ModifyLastMoveInfo(isUndo);
 		MoveReplayGetBack(replayedMove, isUndo);
 
 		UpdatePosition.DiscoveredCheckAnimation(null, true, MoveReplayAnimationSpeedMultiplier);
 		TimerCountdown(Animations.animationSpeed * MoveReplayAnimationSpeedMultiplier * 2, TimerType.ReplaySuccession, true, isUndo, replayedMove);
-        Vector2I cursorLocationMove = isUndo ? replayedMove.Start : LatestReverseCursorLocation;
-        Cursor.Location[Position.colorToMove] = cursorLocationMove;
-        Cursor.MoveCursor(cursorLocationMove, 0);
-    }
-    public enum TimerType { Replay, Cursor, FirstCursorMove, BoardFlip, ReplaySuccession }
+		Vector2I cursorLocationMove = isUndo ? replayedMove.Start : LatestReverseCursorLocation;
+		Cursor.Location[Position.colorToMove] = cursorLocationMove;
+		Cursor.MoveCursor(cursorLocationMove, 0);
+		foreach (KeyValuePair<char, double> playerTimers in replayedMove.TimeLeft)
+		{
+			GD.Print(playerTimers.Value);
+			TimeControl.ModifyTimeLeft(playerTimers.Key, playerTimers.Value);
+		}
+		TimeControl.HandleTimerPauseProperty(LegalMoves.ReverseColorReturn(Position.colorToMove), true);
+	}
+	public enum TimerType { Replay, Cursor, FirstCursorMove, BoardFlip, ReplaySuccession }
 	public static void TimerCountdown(float waitTime, TimerType timerType, bool replay = false, bool isUndo = false, Move replayedMove = null)
 	{
 		Timer cooldown = new() { WaitTime = waitTime, OneShot = true };
@@ -172,7 +180,7 @@ public partial class History
 			case TimerType.ReplaySuccession: 
 				activeMoveSuccessionTimers += timerStart ? 1 : -1;
 				if (activeMoveSuccessionTimers == 0) Chessboard.FlipBoard();
-                break;
+				break;
 		}
 	}
 	private static void ModifyLastMoveInfo(bool isUndo)
@@ -185,12 +193,12 @@ public partial class History
 		}
 		if (!isUndo)
 		{
-            if (Position.LastMoveInfo == null) LatestReverseCursorLocation = initialCursorLocation[LegalMoves.ReverseColorReturn(Position.colorToMove)];
-            else LatestReverseCursorLocation = (Position.LastMoveInfo ?? default).start;
-        }
-        (Vector2I start, Vector2I end) LastMoveInfo = UndoMoves.Peek().GetTuple();
-        Position.LastMoveInfo = LastMoveInfo;
-        Interaction.PreviousMoveTiles(Colors.Enum.PreviousMove);
+			if (Position.LastMoveInfo == null) LatestReverseCursorLocation = initialCursorLocation[LegalMoves.ReverseColorReturn(Position.colorToMove)];
+			else LatestReverseCursorLocation = (Position.LastMoveInfo ?? default).start;
+		}
+		(Vector2I start, Vector2I end) LastMoveInfo = UndoMoves.Peek().GetTuple();
+		Position.LastMoveInfo = LastMoveInfo;
+		Interaction.PreviousMoveTiles(Colors.Enum.PreviousMove);
 		if (Interaction.selectedTile != null)
 			Interaction.Deselect((Interaction.selectedTile ?? default).Location);
 	}

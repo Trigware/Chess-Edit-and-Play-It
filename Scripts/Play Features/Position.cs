@@ -37,7 +37,7 @@ public partial class Position
             FEN.CastlingTest => "r3k2r/8/8/8/8/8/PPPP4/R3K2R w KQkq - 0 1",
             FEN.Checkmate => "3qKq",
             FEN.KingVsKing => "K//k",
-            FEN.KingVsKingKnightKnight => "KNN//nn",
+            FEN.KingVsKingKnightKnight => "K//knn",
             FEN.TwoRoyalsUnderAttack => "4K///4q////4K",
             FEN.MoveFlagFilterBug => "/q1P1K//////4k",
 			FEN.PerpetualCheck => "4k////Q///4K b",
@@ -49,6 +49,7 @@ public partial class Position
 			FEN.UndoCheckAnimationByCapturedAttacker => "4k3/8/8/8/8/2R5/2n5/4K3 w - - 0 1",
 			FEN.KingVsQueenQueen => "4K3/1qq5/8/8/8/8/8/8 w - - 0 1",
 			FEN.CursorSnapTest => "8/5r/5n2/4b/4B/2N5/R/5Q w - - 0 1",
+			FEN.OnePlayerInsufficient => "8/4k3/8/8/8/8/3RKR2/8 w - - 0 1",
             _ => ""
         };
         Load(fenCall);
@@ -84,6 +85,7 @@ public partial class Position
 		UndoCheckAnimationByCapturedAttacker,
 		KingVsQueenQueen,
 		CursorSnapTest,
+		OnePlayerInsufficient,
         Empty
     }
     public enum EndState
@@ -99,6 +101,8 @@ public partial class Position
         Resignation,
         DrawAgreement
     }
+	public static readonly EndState[] WinLossEndStates = new EndState[] { EndState.Checkmate, EndState.Timeout, EndState.Resignation };
+	public static readonly EndState[] UniqueGameEndAudio = new EndState[] { EndState.Checkmate, EndState.Stalemate };
     public static void Load(string fen)
 	{
 		if (startPositionLoaded)
@@ -110,6 +114,7 @@ public partial class Position
 		GameEndState = EndState.Ongoing;
 		HalfmoveClock = 0; FullmoveNumber = 1;
 		WinningPlayer = '\0';
+		InsufficientMaterial.ResetMaterialInsufficiency();
 		string[] fenSplit = fen.Split(' ');
 		LoadPosition(fenSplit[0]);
         startPositionLoaded = true;

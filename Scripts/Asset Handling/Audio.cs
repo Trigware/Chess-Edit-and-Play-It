@@ -41,8 +41,7 @@ public partial class Audio : AudioStreamPlayer
 
 	public static void Play(Enum name)
 	{
-        if (playedCheck || silenceAudio)
-            return;
+        if ((playedCheck && (name == Enum.Check || name == Enum.Checkmate)) || silenceAudio) return;
         if (name == Enum.Check) playedCheck = true;
         PlaySettings(name, 0.1f);
 	}

@@ -16,11 +16,14 @@ public partial class Animations : Chessboard
 		Tween tween = spr.CreateTween();
 		ActiveTweens.Add(tween, (spr, deleteOnFinished, endTransparency));
 		if (endPosition != null)
-			spr.ZIndex = (int)layer+1;
-		if (endPosition != null)
 		{
 			Vector2 usedEndPos = (Vector2)endPosition;
 			TweenSetup(spr, tween, "position", CalculateTilePosition(usedEndPos.X, usedEndPos.Y), duration, transition, easeType);
+			if (layer != Layer.Cursor)
+			{
+				spr.ZIndex = (int)layer + 1;
+				TimeControl.HandleTimerPauseProperty(Position.colorToMove, true);
+			}
 		}
 		if (endScale != null)
 		{
@@ -65,12 +68,12 @@ public partial class Animations : Chessboard
 				return;
 			}
 			promotionUnsafe = false;
-            if (castlingAnimation >= 0)
-            {
-                Castling.endXpositions.RemoveAt(0);
-                Castling.elipsePathUp.RemoveAt(0);
-            }
-            AnimationEnd(tween, deleteOnFinished, spr, endPosition);
+			if (castlingAnimation >= 0)
+			{
+				Castling.endXpositions.RemoveAt(0);
+				Castling.elipsePathUp.RemoveAt(0);
+			}
+			AnimationEnd(tween, deleteOnFinished, spr, endPosition);
 			if (Promotion.promotionPending != null)
 				Promotion.Promote((Vector2I)Promotion.promotionPending);
 			if (promotionConfirmation)
@@ -88,9 +91,9 @@ public partial class Animations : Chessboard
 		if (Position.GameEndState != Position.EndState.Ongoing && Position.GameEndState != Position.EndState.Checkmate) return;
 		if (ActiveTweens.Count == 0 && Promotion.PromotionOptionsPieces.Count == 0 && History.activeMoveSuccessionTimers == 0)
 			FlipBoard();
-        if (endPosition == null)
-            return;
-        Vector2I endNotNull = (Vector2I)endPosition;
+		if (endPosition == null)
+			return;
+		Vector2I endNotNull = (Vector2I)endPosition;
 		for (int i = 0; i < LegalMoves.RoyalAttackers.Count; i++)
 		{
 			if (LegalMoves.RoyalAttackers[i] == endNotNull)
@@ -112,11 +115,11 @@ public partial class Animations : Chessboard
 		List<Vector2I> zone = LegalMoves.CheckResponseZones[j];
 		if (CancelCheckEarly || zone.Count < i)
 			return;
-        if (i == 1 && !CheckAnimationsStarted.Contains(LegalMoves.RoyalAttackers[j])) CheckAnimationsStarted.Add(LegalMoves.RoyalAttackers[j]);
+		if (i == 1 && !CheckAnimationsStarted.Contains(LegalMoves.RoyalAttackers[j])) CheckAnimationsStarted.Add(LegalMoves.RoyalAttackers[j]);
 		else if (i == 1) return;
-        if (i == 1) ActiveCheckAnimation = true;
+		if (i == 1) ActiveCheckAnimation = true;
 
-        List<Color> previousColors = new();
+		List<Color> previousColors = new();
 		if (j == firstCheckZone)
 			Colors.ChangeTileColorBack();
 		if (i >= zone.Count)
@@ -175,7 +178,7 @@ public partial class Animations : Chessboard
 	{
 		if (LegalMoves.CheckedRoyals.Contains(flatMousePosition) && !CancelCheckEarly && !Audio.playedCheck)
 		{
-            ActiveCheckAnimation = false;
+			ActiveCheckAnimation = false;
 			Colors.ChangeTileColorBack();
 			CancelCheckEarly = true;
 			Audio.Play(Audio.Enum.Check);
