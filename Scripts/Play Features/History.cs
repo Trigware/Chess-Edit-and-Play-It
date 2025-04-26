@@ -10,7 +10,6 @@ public partial class History
 	private static float MoveReplayAnimationSpeedMultiplier = 0.75f;
 	public static int movesReplayedInThisSession = 0, activeMoveSuccessionTimers = 0;
 	private static ReplayType lastReplay = ReplayType.None;
-
 	public class Move
 	{
 		public Vector2I Start, End;
@@ -19,9 +18,9 @@ public partial class History
 		public Dictionary<Vector2I, HashSet<Tags.Tag>> RemovedTags;
 		public (Vector2I start, Vector2I end)? CastleeInfo;
 		public int HalfmoveClock;
-		public Dictionary<char, double> TimeLeft;
+		public Dictionary<char, double> TimeLeftStart, TimeLeftEnd;
 		public Move(Vector2I start, Vector2I end, char capturedPiece, char piecePromotedFrom, (Vector2I target, Vector2I delete)? enPassantInfo, (Vector2I target, Vector2I delete)? leapMoveInfo, char enPassantCapture, int halfmoveClock,
-				   (Vector2I start, Vector2I end)? castleeInfo, Dictionary<Vector2I, HashSet<Tags.Tag>> removedTags, Dictionary<char, double> timeLeft)
+				   (Vector2I start, Vector2I end)? castleeInfo, Dictionary<Vector2I, HashSet<Tags.Tag>> removedTags, Dictionary<char, double> timeLeftStart, Dictionary<char, double> timeLeftEnd)
 		{
 			Start = start; End = end;
 			CapturedPiece = capturedPiece; PiecePromotedFrom = piecePromotedFrom;
@@ -29,7 +28,8 @@ public partial class History
 			RemovedTags = removedTags;
 			CastleeInfo = castleeInfo;
 			HalfmoveClock = halfmoveClock;
-			TimeLeft = timeLeft;
+			TimeLeftStart = timeLeftStart;
+			TimeLeftEnd = timeLeftEnd;
 		}
 		public (Vector2I, Vector2I) GetTuple()
 		{
@@ -67,7 +67,7 @@ public partial class History
 				   $"Captured Piece: {(CapturedPiece == '\0' ? "none" : CapturedPiece)}; Piece Promoted From: {(PiecePromotedFrom == '\0' ? "none" : PiecePromotedFrom)}; Piece Promoted To: {(PiecePromotedTo == '\0' ? "none" : PiecePromotedTo)}\n" +
 				   $"EnPassantInfo: {(EnPassantInfo == null ? "none" : EnPassantInfo)}; LeapMoveInfo: {(LeapMoveInfo == null ? "none" : LeapMoveInfo)}, EnPassantCapture: {(EnPassantCapture == '\0' ? "none" : EnPassantCapture)}\n" +
 				   $"Removed Tags: {(removedTagsString == "" ? "none" : removedTagsString)}\n" +
-				   $"CastleeInfo: {(CastleeInfo == null ? "none" : CastleeInfo)}; Halfmove Clock: {HalfmoveClock}; Time Left at the start of Turn: {TimeLeft}";
+				   $"CastleeInfo: {(CastleeInfo == null ? "none" : CastleeInfo)}; Halfmove Clock: {HalfmoveClock}; Time Left at the start of Turn: {TimeLeftStart}";
 		}
 	}
 	public enum ReplayType { None, Undo, Redo }
@@ -81,13 +81,15 @@ public partial class History
 		if (Chessboard.waitingForBoardFlip) return;
 		lastReplay = ReplayType.Undo;
 		UpdateTileColorsAndUndoTimer();
-		MoveReplay(UndoMoves.Pop(), true);
+		Move undoneMove = UndoMoves.Pop();
+        MoveReplay(undoneMove, true);
 	}
 	private static void Redo()
 	{
 		lastReplay = ReplayType.Redo;
 		UpdateTileColorsAndUndoTimer();
-		MoveReplay(RedoMoves.Pop(), false);
+		Move redoneMove = RedoMoves.Pop();
+        MoveReplay(redoneMove, false);
 	}
 	public static void KeyPressDetection()
 	{
@@ -144,12 +146,11 @@ public partial class History
 		Vector2I cursorLocationMove = isUndo ? replayedMove.Start : LatestReverseCursorLocation;
 		Cursor.Location[Position.colorToMove] = cursorLocationMove;
 		Cursor.MoveCursor(cursorLocationMove, 0);
-		foreach (KeyValuePair<char, double> playerTimers in replayedMove.TimeLeft)
-		{
-			GD.Print(playerTimers.Value);
-			TimeControl.ModifyTimeLeft(playerTimers.Key, playerTimers.Value);
-		}
-		TimeControl.HandleTimerPauseProperty(LegalMoves.ReverseColorReturn(Position.colorToMove), true);
+
+		Dictionary<char, double> PlayerTimersTimeLeft = isUndo ? replayedMove.TimeLeftStart : replayedMove.TimeLeftEnd;
+		foreach (KeyValuePair<char, double> playerTimers in PlayerTimersTimeLeft)
+            TimeControl.ModifyTimeLeft(playerTimers.Key, playerTimers.Value);
+        TimeControl.HandleTimerPauseProperty(LegalMoves.ReverseColorReturn(Position.colorToMove), true);
 	}
 	public enum TimerType { Replay, Cursor, FirstCursorMove, BoardFlip, ReplaySuccession }
 	public static void TimerCountdown(float waitTime, TimerType timerType, bool replay = false, bool isUndo = false, Move replayedMove = null)
@@ -176,11 +177,16 @@ public partial class History
 				{
 					Chessboard.Update();
 					Cursor.MoveCursor(Cursor.Location[Position.colorToMove], 0);
-				} break;
+                    TimeControl.HandleTimerPauseProperty(Position.colorToMove);
+                } break;
 			case TimerType.ReplaySuccession: 
 				activeMoveSuccessionTimers += timerStart ? 1 : -1;
-				if (activeMoveSuccessionTimers == 0) Chessboard.FlipBoard();
-				break;
+				if (activeMoveSuccessionTimers == 0)
+				{
+					if (Position.GameEndState == Position.EndState.Ongoing) TimeControl.HandleTimerPauseProperty(Position.colorToMove);
+                    Chessboard.FlipBoard(true);
+                }
+                break;
 		}
 	}
 	private static void ModifyLastMoveInfo(bool isUndo)

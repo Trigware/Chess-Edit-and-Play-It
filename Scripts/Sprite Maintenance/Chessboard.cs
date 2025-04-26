@@ -1,8 +1,5 @@
 using Godot;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
 
 public partial class Chessboard : Node
 {
@@ -33,7 +30,7 @@ public partial class Chessboard : Node
 			Layer = layer;
 		}
 	}
-	public enum Layer { Background, Tile, Text, Piece, ColorIndicator, Promotion, Cursor }
+	public enum Layer { Background, Tile, Helper, Piece, ColorIndicator, Promotion, Cursor, Timers }
 	public override void _Ready()
 	{
 		InitiateSceneFields();
@@ -50,8 +47,7 @@ public partial class Chessboard : Node
 			Animations.CancelEarly();
 		}
 		oldviewSize = gameviewSize;
-		/*foreach (KeyValuePair<char, TimeControl.PlayerTimer> timeControlPair in TimeControl.PlayerTimerInfo)
-			GD.PrintS(timeControlPair.Key, timeControlPair.Value.GetTimeLeft());*/
+		Text.ShowTimers();
 	}
 	private static void InitiateSceneFields()
 	{
@@ -76,7 +72,8 @@ public partial class Chessboard : Node
 	}
 	private static void Create(Node parentNode)
 	{
-		gameviewSize = DisplayServer.WindowGetSize();
+        TimeControl.SetupTimers();
+        gameviewSize = DisplayServer.WindowGetSize();
 		isFlipped = Position.colorToMove == Position.oppositeStartColorToMove;
 		CreateGUIElement("tile", Layer.Background, parentNode);
 		for (int x = 0; x < tileCount.X; x++)
@@ -99,7 +96,7 @@ public partial class Chessboard : Node
 		}
 		Cursor.SetCursor();
 		LegalMoves.GetLegalMoves();
-		TimeControl.RefreshCurrentPlayerTimerTracker();
+		TimeControl.TimeLeftAtLastPlyStart = TimeControl.GetPlayerTimersTimeLeft();
 	}
 	private static void DrawTilesElement(int x, int y, Layer layer, Node parentNode, float transparency = 1)
 	{
@@ -217,20 +214,18 @@ public partial class Chessboard : Node
 			sprite.QueueFree();
 		tiles = new();
 	}
-	public static void FlipBoard()
+	public static void FlipBoard(bool replay = false)
 	{
 		if (Position.GameEndState != Position.EndState.Ongoing) return;
 		bool wasPreviouslyFlipped = isFlipped;
 		isFlipped = Position.colorToMove == Position.oppositeStartColorToMove;
 		if (wasPreviouslyFlipped != isFlipped)
 		{
-			float timerDuration = Animations.animationSpeed * (LegalMoves.CheckResponseZones.Count >= 1 && History.RedoMoves.Count == 0 ? boardFlipCheckTimerMultiplier : boardFlipDefaultTimerMultiplier);
+            float timerDuration = Animations.animationSpeed * (LegalMoves.CheckResponseZones.Count >= 1 && History.RedoMoves.Count == 0 ? boardFlipCheckTimerMultiplier : boardFlipDefaultTimerMultiplier);
 			History.TimerCountdown(timerDuration, History.TimerType.BoardFlip);
 			char oppositeColor = LegalMoves.ReverseColorReturn(Position.colorToMove);
-			TimeControl.ModifyTimeLeft(oppositeColor);
-			TimeControl.RefreshCurrentPlayerTimerTracker();
-			if (TimeControl.HasPlayerTimerStarted(Position.colorToMove))
-				TimeControl.HandleTimerPauseProperty(Position.colorToMove);
+			if (!replay) TimeControl.ModifyTimeLeft(oppositeColor);
+			TimeControl.TimeLeftAtLastPlyStart = TimeControl.GetPlayerTimersTimeLeft();
 		}
 	}
 }

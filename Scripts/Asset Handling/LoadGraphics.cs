@@ -9,7 +9,6 @@ public partial class LoadGraphics : Node
 	{
 		I = this;
         LoadAllTextures();
-        TimeControl.SetupTimers();
     }
     private static Texture2D LoadTexture(string name)
 	{

@@ -61,7 +61,9 @@ public partial class UpdatePosition
 		Position.LastMoveInfo = (start, end);
 		if (!isPromoting || Promotion.PromotionOptionsPieces.Count == 0)
 			Interaction.PreviousMoveTiles(Colors.Enum.PreviousMove);
-		LatestMove = new(start, end, capturedPiece, isPromoting ? pieceMoved : '\0', previousEnPassantInfo, Position.EnPassantInfo, enPassantDelete, previousHalfmoveClock, castlingIndex == -1 ? null : LegalMoves.CastleeMoves[castlingIndex], Tags.lastDeletedTags, TimeControl.TimeLeftAtLastPlyStart);
+		LatestMove = new(start, end, capturedPiece, isPromoting ? pieceMoved : '\0', previousEnPassantInfo, Position.EnPassantInfo, enPassantDelete,
+			previousHalfmoveClock, castlingIndex == -1 ? null : LegalMoves.CastleeMoves[castlingIndex],
+			Tags.lastDeletedTags, TimeControl.TimeLeftAtLastPlyStart, TimeControl.GetPlayerTimersTimeLeft());
 		if (!isPromoting || Promotion.CanBePromotedTo.Count() <= 1)
 			History.Play(LatestMove);
 	}

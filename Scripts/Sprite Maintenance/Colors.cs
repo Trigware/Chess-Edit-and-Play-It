@@ -69,6 +69,7 @@ public partial class Colors : Interaction
 			return GetColorFromEnum(Enum.Default, x, y);
 		}
 	}
+	public static Color GetOppositeDefault(Vector2I location) => GetColorFromEnum(Enum.Default, location.X+1, location.Y);
 	public static Color GetColorFromEnum(Enum color, int x, int y)
 	{
 		Color enumAsColor = color switch
