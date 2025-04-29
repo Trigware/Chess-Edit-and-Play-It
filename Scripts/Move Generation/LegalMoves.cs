@@ -109,7 +109,7 @@ public partial class LegalMoves
         Interaction.PreviousMoveTiles(Colors.Enum.Default);
         Cursor.ShowHideCursor(false);
         if (!Position.InCheck && Position.GameEndState != Position.EndState.Ongoing)
-            History.TimerCountdown(PauseMenu.pauseDuration, History.TimerType.GameEndScreen);
+            History.TimerCountdown(PauseMenu.PauseScreenAfterGameEndDuration, History.TimerType.GameEndScreen);
     }
     protected static List<Vector2I> GetOnlyTargets(List<(Vector2I start, Vector2I end)> moves)
 	{

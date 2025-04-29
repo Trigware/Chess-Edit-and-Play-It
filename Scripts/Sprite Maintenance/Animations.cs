@@ -141,10 +141,11 @@ public partial class Animations : Chessboard
 
 		if (i >= checkmateAnimationRange)
 		{
-			Audio.Play(isCheckmate ? Audio.Enum.Checkmate : Audio.Enum.Check);
+            History.TimerCountdown(PauseMenu.PauseScreenAfterGameEndDuration, History.TimerType.GameEndScreen);
+            Audio.Play(isCheckmate ? Audio.Enum.Checkmate : Audio.Enum.Check);
 			if (isCheckmate)
 				CheckmateColors();
-			ActiveCheckAnimation = false;
+            ActiveCheckAnimation = false;
 			return;
 		}
 		Timer timer = new() { WaitTime = animationSpeed/checkmateAnimationRange*durationMultiplier, OneShot = true };

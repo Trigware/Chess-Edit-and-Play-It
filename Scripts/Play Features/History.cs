@@ -93,7 +93,7 @@ public partial class History
 	}
 	public static void KeyPressDetection()
 	{
-		if (PauseMenu.IsPaused)
+		if (PauseMenu.IsPaused || PauseMenu.WaitingForPauseAfterGameEnd)
 		{
 			movesReplayedInThisSession = 0;
             return;
@@ -193,7 +193,12 @@ public partial class History
                 }
                 break;
 			case TimerType.GameEndScreen:
-				if (!timerStart) PauseMenu.IsPaused = !PauseMenu.IsPaused;
+				PauseMenu.WaitingForPauseAfterGameEnd = timerStart;
+				if (!timerStart && !PauseMenu.GameEndedInThisSession)
+                {
+                    PauseMenu.IsPaused = !PauseMenu.IsPaused;
+                    PauseMenu.GameEndedInThisSession = true;
+                }
                 break;
 		}
 	}
