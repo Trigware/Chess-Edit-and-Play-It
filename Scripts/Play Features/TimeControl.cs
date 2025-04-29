@@ -5,26 +5,28 @@ public partial class TimeControl : Node
 {
 	public static Dictionary<char, PlayerTimer> PlayerTimerInfo;
 	public static Dictionary<char, double> TimeLeftAtLastPlyStart;
+	private const float LowTimeDivisor = 10;
 	public static void SetupTimers()
 	{
 		PlayerTimerInfo = new()
 		{
-			{ 'w', new(3, 0) },
-			{ 'b', new(3, 0) }
+			{ 'w', new(600, 0) },
+			{ 'b', new(600, 0) }
 		};
 	}
 	public class PlayerTimer
 	{
-		public double InitialTime, PlyIncrement;
-		public bool PlayerTimeout = false;
-		public Timer actualTimer;
+		public double InitialTime, PlyIncrement, LowTime;
+		public bool PlayerTimeout = false, LowTimeReached = false, HasStarted = false;
+		public Timer ActualTimer;
 		public PlayerTimer(double initialTime, double plyIncrement)
 		{
 			InitialTime = initialTime;
 			PlyIncrement = plyIncrement;
-			actualTimer = new() { Autostart = true, Paused = true, OneShot = true, WaitTime = initialTime };
-			LoadGraphics.I.AddChild(actualTimer);
-			actualTimer.Timeout += () =>
+			LowTime = initialTime / LowTimeDivisor;
+			ActualTimer = new() { Autostart = true, Paused = true, OneShot = true, WaitTime = initialTime };
+			LoadGraphics.I.AddChild(ActualTimer);
+			ActualTimer.Timeout += () =>
 			{
 				PlayerTimeout = true;
 				PlayerTimeout(LegalMoves.ReverseColorReturn(Position.colorToMove));
@@ -32,25 +34,29 @@ public partial class TimeControl : Node
 		}
 		public string GetTimeLeft()
 		{
-			double timeLeft = actualTimer.TimeLeft;
+			double timeLeft = ActualTimer.TimeLeft;
 			if (PlayerTimeout && History.RedoMoves.Count == 0) timeLeft = 0;
 			return ConvertToNormalFormat(timeLeft);
 		}
 	}
 	public static PlayerTimer GetWantedTimer(char color) => PlayerTimerInfo[color];
-	public static double GetTimerTimeLeft(char color) => GetWantedTimer(color).actualTimer.TimeLeft;
+	public static double GetTimerTimeLeft(char color) => GetWantedTimer(color).ActualTimer.TimeLeft;
 	public static void HandleTimerPauseProperty(char color, bool pause = false)
 	{
-		Timer usedTimer = GetWantedTimer(color).actualTimer;
+		PlayerTimer playerTimer = GetWantedTimer(color);
+        Timer usedTimer = playerTimer.ActualTimer;
 		usedTimer.Paused = pause;
+		playerTimer.HasStarted = true;
 	}
 	public static void ModifyTimeLeft(char color, double? modifyTo = null)
 	{
 		PlayerTimer playerTimer = GetWantedTimer(color);
-		Timer usedTimer = playerTimer.actualTimer;
+		Timer usedTimer = playerTimer.ActualTimer;
 		if (usedTimer == null) return;
 		if (modifyTo == null) modifyTo = usedTimer.TimeLeft + playerTimer.PlyIncrement;
 		else if (modifyTo.Value <= 0) return;
+
+		if (modifyTo > playerTimer.LowTime) playerTimer.LowTimeReached = false;
 		usedTimer.Stop();
 		usedTimer.WaitTime = modifyTo.Value;
 		usedTimer.Start();
@@ -101,5 +107,14 @@ public partial class TimeControl : Node
 		string modifiedNumber = number.ToString();
 		if (modifiedNumber.Length == 1 && !keepAsIs) modifiedNumber = "0" + modifiedNumber;
 		return modifiedNumber;
+	}
+	public static void CheckIfOnLowTime()
+	{
+		PlayerTimer activeTimer = GetWantedTimer(Position.colorToMove);
+		if (!activeTimer.LowTimeReached && activeTimer.ActualTimer.TimeLeft <= activeTimer.LowTime)
+		{
+			activeTimer.LowTimeReached = true;
+			Audio.Play(Audio.Enum.LowTime);
+        }
 	}
 }

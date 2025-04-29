@@ -93,7 +93,12 @@ public partial class History
 	}
 	public static void KeyPressDetection()
 	{
-		bool replayDisabled = Promotion.MoveHistoryDisable || Animations.ActiveTweens.Count > 0 || cooldownOngoing || (Animations.ActiveCheckAnimation && Position.GameEndState != Position.EndState.Ongoing);
+		if (PauseMenu.IsPaused)
+		{
+			movesReplayedInThisSession = 0;
+            return;
+        }
+        bool replayDisabled = Promotion.MoveHistoryDisable || Animations.ActiveTweens.Count > 0 || cooldownOngoing || (Animations.ActiveCheckAnimation && Position.GameEndState != Position.EndState.Ongoing);
 		bool pressedZ = Input.IsKeyPressed(Key.Z), pressedY = Input.IsKeyPressed(Key.Y);
 		if (pressedZ && pressedY)
 		{
@@ -152,7 +157,7 @@ public partial class History
             TimeControl.ModifyTimeLeft(playerTimers.Key, playerTimers.Value);
         TimeControl.HandleTimerPauseProperty(LegalMoves.ReverseColorReturn(Position.colorToMove), true);
 	}
-	public enum TimerType { Replay, Cursor, FirstCursorMove, BoardFlip, ReplaySuccession }
+	public enum TimerType { Replay, Cursor, FirstCursorMove, BoardFlip, ReplaySuccession, GameEndScreen }
 	public static void TimerCountdown(float waitTime, TimerType timerType, bool replay = false, bool isUndo = false, Move replayedMove = null)
 	{
 		Timer cooldown = new() { WaitTime = waitTime, OneShot = true };
@@ -186,6 +191,9 @@ public partial class History
 					if (Position.GameEndState == Position.EndState.Ongoing) TimeControl.HandleTimerPauseProperty(Position.colorToMove);
                     Chessboard.FlipBoard(true);
                 }
+                break;
+			case TimerType.GameEndScreen:
+				if (!timerStart) PauseMenu.IsPaused = !PauseMenu.IsPaused;
                 break;
 		}
 	}

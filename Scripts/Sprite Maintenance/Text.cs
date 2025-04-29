@@ -1,4 +1,5 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 
 public partial class Text : Node
@@ -55,6 +56,8 @@ public partial class Text : Node
         Vector2 position = Chessboard.CalculateTilePosition(usedLocation.X, usedLocation.Y);
         labelInstance.Position = position - size;
     }
+
+	[Obsolete("This timer is used for debug purposes only, replace with a scalable version that contains GUI elements when needed")]
 	public static void ShowTimers()
 	{
 		int timersPrinted = 0;

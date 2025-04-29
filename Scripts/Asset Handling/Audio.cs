@@ -14,6 +14,7 @@ public partial class Audio : AudioStreamPlayer
 		GameStart,
 		GameEnd,
 		Illegal,
+		LowTime,
 		Move,
 		Promotion,
 		Stalemate

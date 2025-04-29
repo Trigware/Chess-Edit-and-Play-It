@@ -8,15 +8,14 @@ public partial class Cursor
 	public static List<Vector2I> LegalSelectedDirections = new();
 	public static bool cooldownOngoing = false, wasEnterPressed = false, enterPressedNow = false, CursorMovedInRow = false, FirstMovedTimerActive = false;
 	private const float cursorMoveCooldown = 0.115f, FirstMoveInRowCooldown = 0.06f;
-	private static bool CursorShown = false;
+	public static bool CursorShown = false;
 	public static Vector2I actualLocation, cursorDirectionField = new();
 	private static Vector2I? previousDirection = null, previousInputDirection = null;
 	private static Sprite2D cursor;
 	private static readonly List<(int eval, Vector2I dir)> directionPriority = new() { (4, new(0, -1)), (2, new(-1, 0)), (2, new(1, 0)), (1, new(0, 1)) };
 	public static void KeyPressDetection()
 	{
-		if (cooldownOngoing || Chessboard.waitingForBoardFlip || Position.GameEndState != Position.EndState.Ongoing) return;
-		if (CursorShown && Interaction.escapePressed && !Interaction.lastEscapeSelection) { ShowHideCursor(false); return; }
+		if (CancelMoveDetectionEarly()) return;
 		bool enterPressed = Input.IsKeyPressed(Key.Enter);
 		enterPressedNow = !wasEnterPressed && enterPressed && CursorShown;
 		wasEnterPressed = enterPressed;
@@ -27,6 +26,20 @@ public partial class Cursor
 		if (Input.IsKeyPressed(Key.Down)) { cursorDirectionField.Y = cursorDirectionField.Y == -1 ? 0 : 1; }
 		if (cursorDirectionField != Vector2I.Zero) CursorInput(cursorDirectionField); else { CursorMovedInRow = false; previousDirection = null; previousInputDirection = null; }
 	}
+	private static bool CancelMoveDetectionEarly()
+	{
+        bool gameOngoing = Position.GameEndState == Position.EndState.Ongoing,
+			 unseletedEscapePressed = Interaction.escapePressed && !Interaction.lastEscapeSelection && !Interaction.escapePressedOld,
+			 cursorMovementBlocked = cooldownOngoing || Chessboard.waitingForBoardFlip;
+		if (cursorMovementBlocked) return true;
+        if (unseletedEscapePressed)
+        {
+            if (gameOngoing) ShowHideCursor(false);
+            return true;
+        }
+        if (PauseMenu.IsPaused || !gameOngoing) return true;
+		return false;
+    }
 	public static void ShowHideCursor(bool show)
 	{
 		CursorShown = show;

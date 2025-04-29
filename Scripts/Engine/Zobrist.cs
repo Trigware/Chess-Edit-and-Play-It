@@ -66,7 +66,7 @@ public partial class Zobrist
 			positionRepeated = ++RepeatedPositions[hash];
 		else
 			RepeatedPositions.Add(hash, 1);
-		if (positionRepeated >= 3)
+		if (positionRepeated >= Chessboard.PositionRepetitionCount)
 			return true;
 		return false;
 	}

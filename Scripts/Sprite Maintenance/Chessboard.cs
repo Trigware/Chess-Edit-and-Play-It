@@ -13,7 +13,7 @@ public partial class Chessboard : Node
 	public static float actualTileSize = 45;
 	public static bool isFlipped = false, waitingForBoardFlip = false, ySizeBigger = false;
 	public static Vector2 leftUpCorner = default;
-	public const int PositionRepetitionCount = 3;
+	public const int PositionRepetitionCount = 3, NMoveRuleInPlies = 100;
 	private static PackedScene spriteRenderer;
 	public struct Element
 	{
@@ -30,11 +30,11 @@ public partial class Chessboard : Node
 			Layer = layer;
 		}
 	}
-	public enum Layer { Background, Tile, Helper, Piece, ColorIndicator, Promotion, Cursor, Timers }
+	public enum Layer { Background, Tile, Helper, Piece, ColorIndicator, Promotion, Cursor, Timers, PauseMain, PauseOutline }
 	public override void _Ready()
 	{
 		InitiateSceneFields();
-		Position.Load(Position.FEN.Default);
+		Position.Load(Position.FEN.QuadrupleCheckmate);
 		boardCenter = new(((float)tileCount.X - 1)/2, ((float)tileCount.Y - 1)/2);
 		Tags.GetRoyalsPerColor();
 	}
@@ -72,10 +72,12 @@ public partial class Chessboard : Node
 	}
 	private static void Create(Node parentNode)
 	{
-        TimeControl.SetupTimers();
-        gameviewSize = DisplayServer.WindowGetSize();
+		TimeControl.SetupTimers();
+		gameviewSize = DisplayServer.WindowGetSize();
 		isFlipped = Position.colorToMove == Position.oppositeStartColorToMove;
 		CreateGUIElement("tile", Layer.Background, parentNode);
+		CreateGUIElement("PauseMain", Layer.PauseMain, parentNode);
+		CreateGUIElement("PauseOutline", Layer.PauseOutline, parentNode);
 		for (int x = 0; x < tileCount.X; x++)
 		{
 			for (int y = 0; y < tileCount.Y; y++)
@@ -112,14 +114,18 @@ public partial class Chessboard : Node
 			GD.PrintErr($"The texture '{name}' cannot be loaded because it doesn't exist or it has a different name!");
 			return new();
 		}
+		float xAsFloat = x, yAsFloat = y;
+		if (layer == Layer.PauseMain || layer == Layer.PauseOutline)
+		{
+			Vector2 pauseMenuLocation = PauseMenu.GetPosition();
+			xAsFloat = pauseMenuLocation.X;
+			yAsFloat = pauseMenuLocation.Y;
+		}
 		Texture2D texture = update ? null : LoadGraphics.textureDict[name];
 		Node tileClone = update ? null : spriteRenderer.Instantiate();
 		Sprite2D spriteElement;
 		if (update)
-		{
-			if (layer == Layer.Cursor) spriteElement = tiles[new(default, Layer.Cursor)];
-			else spriteElement = isGUI ? guiElements[new(x, y, layer)] : tiles[new(x, y, layer)];
-		}
+			spriteElement = GetOldSprite(layer, isGUI, x, y);
 		else spriteElement = tileClone as Sprite2D;
 		bool tileAvailable = spriteElement != null || update && tiles.ContainsKey(new(x, y, layer));
 		if (!tileAvailable)
@@ -132,7 +138,7 @@ public partial class Chessboard : Node
 			spriteElement.Texture = texture;
 			spriteElement.Modulate = new(spriteElement.Modulate.R, spriteElement.Modulate.G, spriteElement.Modulate.B, transparency);
 		}
-		Vector2 position = CalculateTilePosition(x, y, layer);
+		Vector2 position = CalculateTilePosition(xAsFloat, yAsFloat, layer);
 		spriteElement.Scale = new Vector2(gridScale, gridScale);
 		spriteElement.ZIndex = (int)layer;
 		spriteElement.Position = layer == Layer.Background ? new(actualTileSize / 2, actualTileSize / 2) : position;
@@ -145,6 +151,14 @@ public partial class Chessboard : Node
 			parentNode.AddChild(spriteElement);
 		}
 		return spriteElement;
+	}
+	private static Sprite2D GetOldSprite(Layer layer, bool isGUI, int x, int y)
+	{
+		return layer switch
+		{
+			Layer.Cursor => tiles[new(default, Layer.Cursor)],
+			_ => isGUI ? guiElements[new(x, y, layer)] : tiles[new(x, y, layer)]
+		};
 	}
 	private static void LayerConditionals(Sprite2D spriteElement, Layer layer, bool update, Vector2 position, int x, int y)
 	{
@@ -160,13 +174,23 @@ public partial class Chessboard : Node
 			case Layer.Piece:
 				goto case Layer.Promotion;
 			case Layer.ColorIndicator:
-				spriteElement.Modulate = Colors.Dict[Position.colorToMove == 'w' ? Colors.Enum.WhiteColorToMove : Colors.Enum.BlackColorToMove];
+				spriteElement.Modulate = Colors.GetColorAsColorToMove();
 				spriteElement.Scale = new(tileCount.X * gridScale, gridScale);
 				spriteElement.RotationDegrees = ySizeBigger ? 90 : 0; break;
 			case Layer.Promotion:
 				spriteElement.Scale /= svgScale; break;
 			case Layer.Cursor:
 				spriteElement.TextureFilter = CanvasItem.TextureFilterEnum.Nearest; break;
+			case Layer.PauseMain:
+                Color spriteColor = layer == Layer.PauseMain ? Colors.Dict[Colors.Enum.PauseMain] : Colors.GetColorAsColorToMove();
+                spriteElement.Modulate = new(spriteColor.R, spriteColor.G, spriteColor.B, PauseMenu.IsPaused ? 1 : 0);
+                if (update) return;
+				spriteElement.Position = CalculateTilePosition(boardCenter.X, boardCenter.Y) + new Vector2(0, gameviewSize.Y/2);
+				if (layer == Layer.PauseMain) PauseMenu.Main = spriteElement;
+				else PauseMenu.Outline = spriteElement;
+				goto case Layer.Cursor;
+			case Layer.PauseOutline:
+				goto case Layer.PauseMain;
 		}
 	}
 	public static Sprite2D GetPiece(Vector2I location)
@@ -221,7 +245,7 @@ public partial class Chessboard : Node
 		isFlipped = Position.colorToMove == Position.oppositeStartColorToMove;
 		if (wasPreviouslyFlipped != isFlipped)
 		{
-            float timerDuration = Animations.animationSpeed * (LegalMoves.CheckResponseZones.Count >= 1 && History.RedoMoves.Count == 0 ? boardFlipCheckTimerMultiplier : boardFlipDefaultTimerMultiplier);
+			float timerDuration = Animations.animationSpeed * (LegalMoves.CheckResponseZones.Count >= 1 && History.RedoMoves.Count == 0 ? boardFlipCheckTimerMultiplier : boardFlipDefaultTimerMultiplier);
 			History.TimerCountdown(timerDuration, History.TimerType.BoardFlip);
 			char oppositeColor = LegalMoves.ReverseColorReturn(Position.colorToMove);
 			if (!replay) TimeControl.ModifyTimeLeft(oppositeColor);

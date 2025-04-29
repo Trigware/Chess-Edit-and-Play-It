@@ -72,7 +72,7 @@ public partial class LegalMoves
 		Position.InCheck = CheckResponseZones.Count >= 1;
 		if (legalMoves.Count == 0)
 			Position.GameEndState = Position.InCheck ? Position.EndState.Checkmate : Position.EndState.Stalemate;
-		if (Position.HalfmoveClock >= 100)
+		if (Position.HalfmoveClock >= Chessboard.NMoveRuleInPlies)
 			Position.GameEndState = Position.EndState.FiftyMoveRule;
 		if (Position.GameEndState == Position.EndState.Ongoing && InsufficientMaterial.Check())
 			Position.GameEndState = Position.EndState.InsufficientMaterial;
@@ -105,6 +105,8 @@ public partial class LegalMoves
 	{
         Interaction.PreviousMoveTiles(Colors.Enum.Default);
         Cursor.ShowHideCursor(false);
+        if (!Position.InCheck && Position.GameEndState != Position.EndState.Ongoing)
+            History.TimerCountdown(PauseMenu.pauseDuration, History.TimerType.GameEndScreen);
     }
     protected static List<Vector2I> GetOnlyTargets(List<(Vector2I start, Vector2I end)> moves)
 	{

@@ -17,7 +17,8 @@ public partial class Colors : Interaction
 		{ Enum.Checkmate, HSV(0, 80, 80) },
 		{ Enum.WhiteColorToMove, RGB(0xD9D9D9) },
 		{ Enum.BlackColorToMove, RGB(0x434343) },
-		{ Enum.Background, RGB(0x4D6D91) }
+		{ Enum.Background, RGB(0x4D6D91) },
+		{ Enum.PauseMain, RGB(0x616161) }
 	};
 	public enum Enum
 	{
@@ -34,7 +35,8 @@ public partial class Colors : Interaction
 		Checkmate,
 		WhiteColorToMove,
 		BlackColorToMove,
-		Background
+		Background,
+		PauseMain
 	}
 	private static Color RGB(int color, byte a = 0xFF)
 	{
@@ -149,4 +151,5 @@ public partial class Colors : Interaction
 		foreach (Vector2I checkedRoyal in LegalMoves.CheckedRoyals)
 			Set(color, checkedRoyal.X, checkedRoyal.Y);
 	}
+	public static Color GetColorAsColorToMove() => Dict[Position.colorToMove == 'w' ? Enum.WhiteColorToMove : Enum.BlackColorToMove];
 }

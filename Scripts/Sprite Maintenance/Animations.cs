@@ -11,7 +11,14 @@ public partial class Animations : Chessboard
 	public static Dictionary<Tween, (Sprite2D spr, bool deleteOnFinish, float? transparency)> ActiveTweens = new();
 	public static int firstCheckZone = 0;
 	public const float lowAnimationDurationBoundary = 0.3f;
-	public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale, float? endTransparency, bool deleteOnFinished, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = -1, int castlingAnimation = -1, bool promotionConfirmation = false, Tween.TransitionType transition = Godot.Tween.TransitionType.Sine, Tween.EaseType? easeType = Godot.Tween.EaseType.InOut, Layer layer = Layer.Piece)
+	public static void TweenPauseMenu(Sprite2D spr, Layer layer, bool pausing)
+	{
+		int yPauseMenuUnpause = isFlipped ? 0 : tileCount.Y;
+		Vector2 startPauseMenuPosition = PauseMenu.GetPosition();
+        spr.Position = CalculateTilePosition(startPauseMenuPosition.X, startPauseMenuPosition.Y);
+        Tween(spr, PauseMenu.pauseDuration, default, new(boardCenter.X, pausing ? boardCenter.Y : yPauseMenuUnpause), endTransparency: pausing ? 1 : 0, layer: layer);
+    }
+    public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale = null, float? endTransparency = null, bool deleteOnFinished = false, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = -1, int castlingAnimation = -1, bool promotionConfirmation = false, Tween.TransitionType transition = Godot.Tween.TransitionType.Sine, Tween.EaseType? easeType = Godot.Tween.EaseType.InOut, Layer layer = Layer.Piece)
 	{
 		Tween tween = spr.CreateTween();
 		ActiveTweens.Add(tween, (spr, deleteOnFinished, endTransparency));
@@ -19,7 +26,7 @@ public partial class Animations : Chessboard
 		{
 			Vector2 usedEndPos = (Vector2)endPosition;
 			TweenSetup(spr, tween, "position", CalculateTilePosition(usedEndPos.X, usedEndPos.Y), duration, transition, easeType);
-			if (layer != Layer.Cursor)
+			if (layer == Layer.Piece || layer == Layer.Promotion)
 			{
 				spr.ZIndex = (int)layer + 1;
 				TimeControl.HandleTimerPauseProperty(Position.colorToMove, true);
@@ -36,14 +43,14 @@ public partial class Animations : Chessboard
 			float usedEndTransparency = (float)endTransparency;
 			TweenSetup(spr, tween, "modulate:a", usedEndTransparency, duration, transition, easeType);
 		}
-		OnFinishedDelete(spr, startPosition, tween, endPosition, duration, deleteOnFinished, promotion, deleteFromPiecesDict, chainIterator, castlingAnimation, promotionConfirmation);
+		OnFinishedDelete(spr, startPosition, tween, endPosition, duration, deleteOnFinished, promotion, deleteFromPiecesDict, chainIterator, castlingAnimation, promotionConfirmation, layer);
 	}
 	private static void TweenSetup(Sprite2D spr, Tween tween, string type, Variant end, float duration, Tween.TransitionType transition, Tween.EaseType? easeType)
 	{
 		PropertyTweener property = tween.Parallel().TweenProperty(spr, type, end, duration).SetTrans(transition);
 		if (easeType != null) property.SetEase(easeType ?? default);
 	}
-	private static void OnFinishedDelete(Sprite2D spr, Vector2I startPosition, Tween tween, Vector2? endPosition, float duration, bool deleteOnFinished, bool promotion, bool deleteFromPiecesDict, int chainIterator, int castlingAnimation, bool promotionConfirmation)
+	private static void OnFinishedDelete(Sprite2D spr, Vector2I startPosition, Tween tween, Vector2? endPosition, float duration, bool deleteOnFinished, bool promotion, bool deleteFromPiecesDict, int chainIterator, int castlingAnimation, bool promotionConfirmation, Layer layer)
 	{
 		if (deleteOnFinished && deleteFromPiecesDict)
 			UpdatePosition.DeletePiece(startPosition, (Vector2I?)endPosition, false, false, '\0', spr);
@@ -51,7 +58,7 @@ public partial class Animations : Chessboard
 			promotionUnsafe = true;
 		if (duration == 0)
 		{
-			AnimationEnd(tween, deleteOnFinished, spr, endPosition);
+			AnimationEnd(tween, deleteOnFinished, spr, endPosition, layer);
 			Promotion.MoveHistoryDisable = false;
 			return;
 		}
@@ -73,7 +80,7 @@ public partial class Animations : Chessboard
 				Castling.endXpositions.RemoveAt(0);
 				Castling.elipsePathUp.RemoveAt(0);
 			}
-			AnimationEnd(tween, deleteOnFinished, spr, endPosition);
+			AnimationEnd(tween, deleteOnFinished, spr, endPosition, layer);
 			if (Promotion.promotionPending != null)
 				Promotion.Promote((Vector2I)Promotion.promotionPending);
 			if (promotionConfirmation)
@@ -81,12 +88,13 @@ public partial class Animations : Chessboard
 		};
 		timer.Start();
 	}
-	private static void AnimationEnd(Tween tween, bool deleteOnFinished, Sprite2D spr, Vector2? endPosition)
+	private static void AnimationEnd(Tween tween, bool deleteOnFinished, Sprite2D spr, Vector2? endPosition, Layer layer)
 	{
 		ActiveTweens.Remove(tween);
 		if (deleteOnFinished)
 			spr.QueueFree();
-		spr.ZIndex = (int)Layer.Piece;
+		if (layer == Layer.Piece || layer == Layer.Promotion)
+            spr.ZIndex = (int)Layer.Piece;
 		firstCheckZone = 0;
 		if (Position.GameEndState != Position.EndState.Ongoing && Position.GameEndState != Position.EndState.Checkmate) return;
 		if (ActiveTweens.Count == 0 && Promotion.PromotionOptionsPieces.Count == 0 && History.activeMoveSuccessionTimers == 0)

@@ -1,82 +1,10 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "H:\\Godot\\Chess Edit \u0026 Play It!\\",
+  "WorkspaceRootPath": "H:\\source\\Godot\\Chess Edit \u0026 Play It!\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|h:\\godot\\chess edit \u0026 play it!\\scripts\\play features\\history.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|solutionrelative:scripts\\play features\\history.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|h:\\godot\\chess edit \u0026 play it!\\scripts\\move generation\\updateposition.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|solutionrelative:scripts\\move generation\\updateposition.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|h:\\godot\\chess edit \u0026 play it!\\scripts\\play features\\timecontrol.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|solutionrelative:scripts\\play features\\timecontrol.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|h:\\godot\\chess edit \u0026 play it!\\scripts\\sprite maintenance\\chessboard.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|solutionrelative:scripts\\sprite maintenance\\chessboard.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|h:\\godot\\chess edit \u0026 play it!\\scripts\\sprite maintenance\\animations.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|solutionrelative:scripts\\sprite maintenance\\animations.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|h:\\godot\\chess edit \u0026 play it!\\scripts\\sprite maintenance\\text.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|solutionrelative:scripts\\sprite maintenance\\text.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|h:\\godot\\chess edit \u0026 play it!\\scripts\\asset handling\\loadgraphics.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|solutionrelative:scripts\\asset handling\\loadgraphics.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|h:\\godot\\chess edit \u0026 play it!\\scripts\\move generation\\piecemoves.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|solutionrelative:scripts\\move generation\\piecemoves.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|h:\\godot\\chess edit \u0026 play it!\\scripts\\move generation\\legalmoves.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|h:\\source\\godot\\chess edit \u0026 play it!\\scripts\\move generation\\legalmoves.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|solutionrelative:scripts\\move generation\\legalmoves.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|h:\\godot\\chess edit \u0026 play it!\\scripts\\sprite maintenance\\colors.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|solutionrelative:scripts\\sprite maintenance\\colors.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|h:\\godot\\chess edit \u0026 play it!\\scripts\\sprite maintenance\\interaction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|solutionrelative:scripts\\sprite maintenance\\interaction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|h:\\godot\\chess edit \u0026 play it!\\scripts\\play features\\cursor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|solutionrelative:scripts\\play features\\cursor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|h:\\godot\\chess edit \u0026 play it!\\scripts\\play features\\position.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|solutionrelative:scripts\\play features\\position.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|h:\\godot\\chess edit \u0026 play it!\\scripts\\move generation\\tags.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|solutionrelative:scripts\\move generation\\tags.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|h:\\godot\\chess edit \u0026 play it!\\scripts\\play features\\notation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|solutionrelative:scripts\\play features\\notation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|h:\\godot\\chess edit \u0026 play it!\\scripts\\move generation\\promotion.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|solutionrelative:scripts\\move generation\\promotion.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|h:\\godot\\chess edit \u0026 play it!\\scripts\\engine\\zobrist.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|solutionrelative:scripts\\engine\\zobrist.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|h:\\godot\\chess edit \u0026 play it!\\scripts\\asset handling\\audio.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|solutionrelative:scripts\\asset handling\\audio.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|h:\\godot\\chess edit \u0026 play it!\\scripts\\move generation\\castling.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1F748CBD-F751-42B1-9A66-5C451386DF57}|Chess EP Reimport.csproj|solutionrelative:scripts\\move generation\\castling.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -86,7 +14,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 14,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Bookmark",
@@ -98,237 +26,14 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "TimeControl.cs",
-              "DocumentMoniker": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Play Features\\TimeControl.cs",
-              "RelativeDocumentMoniker": "Scripts\\Play Features\\TimeControl.cs",
-              "ToolTip": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Play Features\\TimeControl.cs",
-              "RelativeToolTip": "Scripts\\Play Features\\TimeControl.cs",
-              "ViewState": "AgIAAEAAAAAAAAAAAAAYwCQAAAACAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-19T19:05:49.83Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 18,
-              "Title": "Castling.cs",
-              "DocumentMoniker": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Move Generation\\Castling.cs",
-              "RelativeDocumentMoniker": "Scripts\\Move Generation\\Castling.cs",
-              "ToolTip": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Move Generation\\Castling.cs",
-              "RelativeToolTip": "Scripts\\Move Generation\\Castling.cs",
-              "ViewState": "AgIAAAEAAAAAAAAAAAAQwFMAAAAGAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-09T05:33:14.573Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 11,
-              "Title": "Cursor.cs",
-              "DocumentMoniker": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Play Features\\Cursor.cs",
-              "RelativeDocumentMoniker": "Scripts\\Play Features\\Cursor.cs",
-              "ToolTip": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Play Features\\Cursor.cs",
-              "RelativeToolTip": "Scripts\\Play Features\\Cursor.cs",
-              "ViewState": "AgIAADsAAAAAAAAAAAAvwJMAAABhAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-05T19:11:19.566Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "Interaction.cs",
-              "DocumentMoniker": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Sprite Maintenance\\Interaction.cs",
-              "RelativeDocumentMoniker": "Scripts\\Sprite Maintenance\\Interaction.cs",
-              "ToolTip": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Sprite Maintenance\\Interaction.cs",
-              "RelativeToolTip": "Scripts\\Sprite Maintenance\\Interaction.cs",
-              "ViewState": "AgIAADIAAAAAAAAAAAAswFAAAAAUAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-06T06:41:37.085Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 13,
-              "Title": "Tags.cs",
-              "DocumentMoniker": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Move Generation\\Tags.cs",
-              "RelativeDocumentMoniker": "Scripts\\Move Generation\\Tags.cs",
-              "ToolTip": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Move Generation\\Tags.cs",
-              "RelativeToolTip": "Scripts\\Move Generation\\Tags.cs",
-              "ViewState": "AgIAAJcAAAAAAAAAAAAuwMMAAAA8AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-05T19:18:22.201Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "UpdatePosition.cs",
-              "DocumentMoniker": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Move Generation\\UpdatePosition.cs",
-              "RelativeDocumentMoniker": "Scripts\\Move Generation\\UpdatePosition.cs",
-              "ToolTip": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Move Generation\\UpdatePosition.cs",
-              "RelativeToolTip": "Scripts\\Move Generation\\UpdatePosition.cs",
-              "ViewState": "AgIAACIAAAAAAAAAAIA7wD8AAAAPAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-07T18:11:37.367Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "Colors.cs",
-              "DocumentMoniker": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Sprite Maintenance\\Colors.cs",
-              "RelativeDocumentMoniker": "Scripts\\Sprite Maintenance\\Colors.cs",
-              "ToolTip": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Sprite Maintenance\\Colors.cs",
-              "RelativeToolTip": "Scripts\\Sprite Maintenance\\Colors.cs",
-              "ViewState": "AgIAACoAAAAAAAAAAAAowEcAAAAHAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-07T17:58:40.125Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "LegalMoves.cs",
-              "DocumentMoniker": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Move Generation\\LegalMoves.cs",
-              "RelativeDocumentMoniker": "Scripts\\Move Generation\\LegalMoves.cs",
-              "ToolTip": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Move Generation\\LegalMoves.cs",
-              "RelativeToolTip": "Scripts\\Move Generation\\LegalMoves.cs",
-              "ViewState": "AgIAADoAAAAAAAAAAADwv2MAAAANAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-06T08:35:37.493Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "Animations.cs",
-              "DocumentMoniker": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Sprite Maintenance\\Animations.cs",
-              "RelativeDocumentMoniker": "Scripts\\Sprite Maintenance\\Animations.cs",
-              "ToolTip": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Sprite Maintenance\\Animations.cs",
-              "RelativeToolTip": "Scripts\\Sprite Maintenance\\Animations.cs",
-              "ViewState": "AgIAAD4AAAAAAAAAAAAWwFwAAAADAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-06T08:21:40.887Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 12,
-              "Title": "Position.cs",
-              "DocumentMoniker": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Play Features\\Position.cs",
-              "RelativeDocumentMoniker": "Scripts\\Play Features\\Position.cs",
-              "ToolTip": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Play Features\\Position.cs",
-              "RelativeToolTip": "Scripts\\Play Features\\Position.cs",
-              "ViewState": "AgIAAE0AAAAAAAAAAAAtwHAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-05T19:00:39.254Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "PieceMoves.cs",
-              "DocumentMoniker": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Move Generation\\PieceMoves.cs",
-              "RelativeDocumentMoniker": "Scripts\\Move Generation\\PieceMoves.cs",
-              "ToolTip": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Move Generation\\PieceMoves.cs",
-              "RelativeToolTip": "Scripts\\Move Generation\\PieceMoves.cs",
-              "ViewState": "AgIAAIwAAAAAAAAAAAAswL0AAAAPAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-11T04:45:18.763Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "Chessboard.cs",
-              "DocumentMoniker": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Sprite Maintenance\\Chessboard.cs",
-              "RelativeDocumentMoniker": "Scripts\\Sprite Maintenance\\Chessboard.cs",
-              "ToolTip": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Sprite Maintenance\\Chessboard.cs",
-              "RelativeToolTip": "Scripts\\Sprite Maintenance\\Chessboard.cs",
-              "ViewState": "AgIAAL8AAAAAAAAAAAAYwOAAAAARAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-05T19:00:33.236Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "History.cs",
-              "DocumentMoniker": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Play Features\\History.cs",
-              "RelativeDocumentMoniker": "Scripts\\Play Features\\History.cs",
-              "ToolTip": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Play Features\\History.cs",
-              "RelativeToolTip": "Scripts\\Play Features\\History.cs",
-              "ViewState": "AgIAAGkAAAAAAAAAAAAkwJgAAAA2AAAAAAAAAA==",
+              "Title": "LegalMoves.cs",
+              "DocumentMoniker": "H:\\source\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Move Generation\\LegalMoves.cs",
+              "RelativeDocumentMoniker": "Scripts\\Move Generation\\LegalMoves.cs",
+              "ToolTip": "H:\\source\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Move Generation\\LegalMoves.cs",
+              "RelativeToolTip": "Scripts\\Move Generation\\LegalMoves.cs",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-19T19:39:55.248Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "Text.cs",
-              "DocumentMoniker": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Sprite Maintenance\\Text.cs",
-              "RelativeDocumentMoniker": "Scripts\\Sprite Maintenance\\Text.cs",
-              "ToolTip": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Sprite Maintenance\\Text.cs",
-              "RelativeToolTip": "Scripts\\Sprite Maintenance\\Text.cs",
-              "ViewState": "AgIAADIAAAAAAAAAAAAiwDoAAAACAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-17T15:06:10.929Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "LoadGraphics.cs",
-              "DocumentMoniker": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Asset Handling\\LoadGraphics.cs",
-              "RelativeDocumentMoniker": "Scripts\\Asset Handling\\LoadGraphics.cs",
-              "ToolTip": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Asset Handling\\LoadGraphics.cs",
-              "RelativeToolTip": "Scripts\\Asset Handling\\LoadGraphics.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-17T13:42:06.93Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 17,
-              "Title": "Audio.cs",
-              "DocumentMoniker": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Asset Handling\\Audio.cs",
-              "RelativeDocumentMoniker": "Scripts\\Asset Handling\\Audio.cs",
-              "ToolTip": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Asset Handling\\Audio.cs",
-              "RelativeToolTip": "Scripts\\Asset Handling\\Audio.cs",
-              "ViewState": "AgIAAAUAAAAAAAAAAAAQwCIAAABBAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-09T19:56:06.317Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 14,
-              "Title": "Notation.cs",
-              "DocumentMoniker": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Play Features\\Notation.cs",
-              "RelativeDocumentMoniker": "Scripts\\Play Features\\Notation.cs",
-              "ToolTip": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Play Features\\Notation.cs",
-              "RelativeToolTip": "Scripts\\Play Features\\Notation.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAHAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-17T18:48:19.099Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 15,
-              "Title": "Promotion.cs",
-              "DocumentMoniker": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Move Generation\\Promotion.cs",
-              "RelativeDocumentMoniker": "Scripts\\Move Generation\\Promotion.cs",
-              "ToolTip": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Move Generation\\Promotion.cs",
-              "RelativeToolTip": "Scripts\\Move Generation\\Promotion.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB8AAAAQAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-10T05:17:38.504Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 16,
-              "Title": "Zobrist.cs",
-              "DocumentMoniker": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Engine\\Zobrist.cs",
-              "RelativeDocumentMoniker": "Scripts\\Engine\\Zobrist.cs",
-              "ToolTip": "H:\\Godot\\Chess Edit \u0026 Play It!\\Scripts\\Engine\\Zobrist.cs",
-              "RelativeToolTip": "Scripts\\Engine\\Zobrist.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAACgAAAAIAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-12T18:14:14.016Z"
+              "WhenOpened": "2025-04-27T19:55:13.278Z"
             }
           ]
         }

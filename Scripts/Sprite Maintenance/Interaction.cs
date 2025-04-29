@@ -6,21 +6,30 @@ public partial class Interaction : Chessboard
 {
 	public static Element? selectedTile = null;
 	public static List<Vector2I> LegalSelectedMoves = new();
-	public static bool escapePressed, lastEscapeSelection = false;
-	private bool interactionButtonPressed = false, leftMouseOld = false;
+	public static bool escapePressed, lastEscapeSelection = false, escapePressedOld = false;
+	private static bool interactionButtonPressed = false, leftMouseOld = false, pausedPressedOld = false;
 	public override void _Process(double delta)
 	{
 		History.KeyPressDetection();
-		bool leftActuallyPressed = Input.IsMouseButtonPressed(MouseButton.Left);
-		escapePressed = Input.IsKeyPressed(Key.Escape);
-		if (escapePressed) { if (selectedTile != null) lastEscapeSelection = true; } else lastEscapeSelection = false;
-		Cursor.KeyPressDetection();
-		bool leftMousePressStartNow = leftActuallyPressed && !leftMouseOld;
-		interactionButtonPressed = leftMousePressStartNow || Cursor.enterPressedNow;
-		if ((interactionButtonPressed || escapePressed) && Position.GameEndState == Position.EndState.Ongoing)
-			Select(leftMousePressStartNow);
-		leftMouseOld = leftActuallyPressed;
+		BoardInteractionInputs();
+		TimeControl.CheckIfOnLowTime();
 	}
+	private void BoardInteractionInputs()
+	{
+		bool leftActuallyPressed = Input.IsMouseButtonPressed(MouseButton.Left), pauseKeyPressedNow = Input.IsKeyPressed(Key.P);
+		if (pauseKeyPressedNow && !pausedPressedOld)
+			PauseMenu.IsPaused = !PauseMenu.IsPaused;
+        escapePressed = Input.IsKeyPressed(Key.Escape);
+        if (escapePressed) { if (selectedTile != null) lastEscapeSelection = true; } else lastEscapeSelection = false;
+        Cursor.KeyPressDetection();
+        bool leftMousePressStartNow = leftActuallyPressed && !leftMouseOld;
+        interactionButtonPressed = leftMousePressStartNow || Cursor.enterPressedNow;
+        if ((interactionButtonPressed || escapePressed) && Position.GameEndState == Position.EndState.Ongoing && !PauseMenu.IsPaused)
+            Select(leftMousePressStartNow);
+        leftMouseOld = leftActuallyPressed;
+		escapePressedOld = escapePressed;
+		pausedPressedOld = pauseKeyPressedNow;
+    }
 	private Vector2I GetPositionOnBoard()
 	{
 		Vector2 leftUpNotNull = leftUpCorner;
@@ -43,7 +52,6 @@ public partial class Interaction : Chessboard
 		}
 		if (Position.colorToMove == '\0')
 			return;
-		TimeControl.HandleTimerPauseProperty(Position.colorToMove);
 		Element mousePositionBoard = new(interactionPosition, Layer.Tile);
 		if (selectedTile != null && (Input.IsKeyPressed(Key.Escape) || (interactionButtonPressed && (selectedTile ?? default).Location == mousePositionBoard.Location)))
 		{
@@ -56,9 +64,13 @@ public partial class Interaction : Chessboard
 	}
 	private static void InteractWithPiece(Vector2I targetedLocation)
 	{
-		bool canSwitchSelectedTile = PieceMoves.GetPieceColor(targetedLocation) == Position.colorToMove;
-		if (canSwitchSelectedTile) Colors.SetTileColors(targetedLocation);
-		if (canSwitchSelectedTile || LegalSelectedMoves.Contains(targetedLocation)) Cursor.MoveCursor(targetedLocation, 0);
+        bool canSwitchSelectedTile = LegalMoves.GetPieceColor(targetedLocation) == Position.colorToMove;
+		if (canSwitchSelectedTile)
+		{
+			TimeControl.HandleTimerPauseProperty(Position.colorToMove);
+            Colors.SetTileColors(targetedLocation);
+        }
+        if (canSwitchSelectedTile || LegalSelectedMoves.Contains(targetedLocation)) Cursor.MoveCursor(targetedLocation, 0);
 		Vector2I selectedTileFlat = (selectedTile ?? default).Location;
 		if (LegalMoves.legalMoves.Contains((selectedTileFlat, targetedLocation)))
 			UpdatePosition.MovePiece(selectedTileFlat, targetedLocation);
