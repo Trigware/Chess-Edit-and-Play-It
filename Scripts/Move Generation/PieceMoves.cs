@@ -202,6 +202,7 @@ public partial class PieceMoves : LegalMoves
 		CheckResponseZones.Add(new() { start });
 		CheckResponseZones.Last().AddRange(GetOnlyTargets(rangeMoves));
 		int responseCount = CheckResponseZones.Last().Count();
+		CheckResponseRange.Add(start, responseCount);
 		if (responseCount > maxResponseRange)
 			maxResponseRange = responseCount;
 		if (!CheckedRoyals.Contains(end))

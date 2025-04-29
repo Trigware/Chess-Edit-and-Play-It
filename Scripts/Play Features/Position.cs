@@ -50,6 +50,7 @@ public partial class Position
 			FEN.KingVsQueenQueen => "4K3/1qq5/8/8/8/8/8/8 w - - 0 1",
 			FEN.CursorSnapTest => "8/5r/5n2/4b/4B/2N5/R/5Q w - - 0 1",
 			FEN.OnePlayerInsufficient => "8/4k3/8/8/8/8/3RKR2/8 w - - 0 1",
+			FEN.DoubleCheckmate => "4K3/8/4n3/3qrq2/8/8/8/8 b - - 0 1",
             _ => ""
         };
         Load(fenCall);
@@ -86,6 +87,7 @@ public partial class Position
 		KingVsQueenQueen,
 		CursorSnapTest,
 		OnePlayerInsufficient,
+		DoubleCheckmate,
         Empty
     }
     public enum EndState

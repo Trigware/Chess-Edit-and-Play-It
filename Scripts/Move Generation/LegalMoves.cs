@@ -11,6 +11,7 @@ public partial class LegalMoves
 	public static List<(Vector2I start, Vector2I end)> CastleeMoves = new();
 	public static List<Vector2I> OpponentMoves = new(), ProtectedPieces, CheckedRoyals = new(), RoyalAttackers, LegalMovesRanges;
 	public static List<List<Vector2I>> CheckResponseZones, PinnedPieceZones;
+	public static Dictionary<Vector2I, int> CheckResponseRange;
 	public static bool EnPassantBlocked, IsGettingLegalMovesOnLoad;
 	public static int maxResponseRange, CheckRoyalsCount;
 
@@ -28,7 +29,9 @@ public partial class LegalMoves
 		List<(Vector2I, Vector2I)> legalMovesLocal = new();
 		if (!opponent)
 		{
-			CheckResponseZones = new(); CheckedRoyals = new(); PinnedPieceZones = new(); ProtectedPieces = new(); RoyalAttackers = new(); EnPassantBlocked = false; maxResponseRange = 0; CheckRoyalsCount = 0; LegalMovesRanges = new();
+			CheckResponseZones = new(); CheckedRoyals = new(); CheckResponseRange = new();
+			PinnedPieceZones = new(); ProtectedPieces = new(); RoyalAttackers = new();
+			EnPassantBlocked = false; maxResponseRange = 0; CheckRoyalsCount = 0; LegalMovesRanges = new();
 		}
 		OpponentMoves = opponent ? GetOnlyTargets(legalMoves) : GetOpponentMoves();
 		if (!opponent)

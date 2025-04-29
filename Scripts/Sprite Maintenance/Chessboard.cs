@@ -34,7 +34,7 @@ public partial class Chessboard : Node
 	public override void _Ready()
 	{
 		InitiateSceneFields();
-		Position.Load(Position.FEN.QuadrupleCheckmate);
+		Position.Load(Position.FEN.DoubleCheckmate);
 		boardCenter = new(((float)tileCount.X - 1)/2, ((float)tileCount.Y - 1)/2);
 		Tags.GetRoyalsPerColor();
 	}

@@ -152,10 +152,7 @@ public partial class UpdatePosition
 		EditPiecePositions(castleePosition.start, castleePosition.end, GetPiece(castleePosition.start), false, false, false, false);
 		Audio.Play(Audio.Enum.Castle);
 	}
-	private static Sprite2D GetPiece(Vector2I location)
-	{
-		return Chessboard.tiles[new(location, Chessboard.Layer.Piece)];
-	}
+	private static Sprite2D GetPiece(Vector2I location) => Chessboard.tiles[new(location, Chessboard.Layer.Piece)];
 	public static void DiscoveredCheckAnimation(Vector2I? end, bool moveReplay, float durationMultiplier = 1)
 	{
 		Animations.firstCheckZone = 0;
@@ -164,7 +161,7 @@ public partial class UpdatePosition
 			Vector2I attackerPosition = LegalMoves.RoyalAttackers[i];
 			if (attackerPosition != end || Animations.animationSpeed == 0 || moveReplay)
 			{
-				Animations.CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i, durationMultiplier);
+				Animations.CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i, attackerPosition, false, durationMultiplier);
 				if (Animations.firstCheckZone == 0)
 					Animations.firstCheckZone = i;
 			}	

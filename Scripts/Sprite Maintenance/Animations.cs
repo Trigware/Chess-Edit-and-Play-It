@@ -15,10 +15,10 @@ public partial class Animations : Chessboard
 	{
 		int yPauseMenuUnpause = isFlipped ? 0 : tileCount.Y;
 		Vector2 startPauseMenuPosition = PauseMenu.GetPosition();
-        spr.Position = CalculateTilePosition(startPauseMenuPosition.X, startPauseMenuPosition.Y);
-        Tween(spr, PauseMenu.pauseDuration, default, new(boardCenter.X, pausing ? boardCenter.Y : yPauseMenuUnpause), endTransparency: pausing ? 1 : 0, layer: layer);
-    }
-    public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale = null, float? endTransparency = null, bool deleteOnFinished = false, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = -1, int castlingAnimation = -1, bool promotionConfirmation = false, Tween.TransitionType transition = Godot.Tween.TransitionType.Sine, Tween.EaseType? easeType = Godot.Tween.EaseType.InOut, Layer layer = Layer.Piece)
+		spr.Position = CalculateTilePosition(startPauseMenuPosition.X, startPauseMenuPosition.Y);
+		Tween(spr, PauseMenu.pauseDuration, default, new(boardCenter.X, pausing ? boardCenter.Y : yPauseMenuUnpause), endTransparency: pausing ? 1 : 0, layer: layer);
+	}
+	public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale = null, float? endTransparency = null, bool deleteOnFinished = false, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = -1, int castlingAnimation = -1, bool promotionConfirmation = false, Tween.TransitionType transition = Godot.Tween.TransitionType.Sine, Tween.EaseType? easeType = Godot.Tween.EaseType.InOut, Layer layer = Layer.Piece)
 	{
 		Tween tween = spr.CreateTween();
 		ActiveTweens.Add(tween, (spr, deleteOnFinished, endTransparency));
@@ -94,7 +94,7 @@ public partial class Animations : Chessboard
 		if (deleteOnFinished)
 			spr.QueueFree();
 		if (layer == Layer.Piece || layer == Layer.Promotion)
-            spr.ZIndex = (int)Layer.Piece;
+			spr.ZIndex = (int)Layer.Piece;
 		firstCheckZone = 0;
 		if (Position.GameEndState != Position.EndState.Ongoing && Position.GameEndState != Position.EndState.Checkmate) return;
 		if (ActiveTweens.Count == 0 && Promotion.PromotionOptionsPieces.Count == 0 && History.activeMoveSuccessionTimers == 0)
@@ -105,10 +105,10 @@ public partial class Animations : Chessboard
 		for (int i = 0; i < LegalMoves.RoyalAttackers.Count; i++)
 		{
 			if (LegalMoves.RoyalAttackers[i] == endNotNull)
-				CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i);
+				CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i, endNotNull, false);
 		}
 	}
-	public static void CheckAnimation(int i, Node main, int j, float durationMultiplier = 1)
+	public static void CheckAnimation(int i, Node main, int j, Vector2I attackerPosition, bool discoveredCheck, float durationMultiplier = 1)
 	{
 		bool isCheckmate = Position.GameEndState == Position.EndState.Checkmate && History.RedoMoves.Count == 0;
 		if (animationSpeed == 0)
@@ -127,6 +127,7 @@ public partial class Animations : Chessboard
 		else if (i == 1) return;
 		if (i == 1) ActiveCheckAnimation = true;
 
+		int checkmateAnimationRange = discoveredCheck ? LegalMoves.maxResponseRange : LegalMoves.CheckResponseRange[attackerPosition];
 		List<Color> previousColors = new();
 		if (j == firstCheckZone)
 			Colors.ChangeTileColorBack();
@@ -138,7 +139,7 @@ public partial class Animations : Chessboard
 			Colors.Set(Colors.Enum.Check, zone[i].X, zone[i].Y);
 		}
 
-		if (i >= LegalMoves.maxResponseRange)
+		if (i >= checkmateAnimationRange)
 		{
 			Audio.Play(isCheckmate ? Audio.Enum.Checkmate : Audio.Enum.Check);
 			if (isCheckmate)
@@ -146,11 +147,11 @@ public partial class Animations : Chessboard
 			ActiveCheckAnimation = false;
 			return;
 		}
-		Timer timer = new() { WaitTime = animationSpeed/LegalMoves.maxResponseRange*durationMultiplier, OneShot = true };
+		Timer timer = new() { WaitTime = animationSpeed/checkmateAnimationRange*durationMultiplier, OneShot = true };
 		main.AddChild(timer);
 		timer.Timeout += () =>
 		{
-			CheckAnimation(i+1, main, j, durationMultiplier);
+			CheckAnimation(i+1, main, j, attackerPosition, discoveredCheck, durationMultiplier);
 		};
 		timer.Start();
 	}
@@ -180,7 +181,7 @@ public partial class Animations : Chessboard
 	public static void ActiveAllCheckAnimationZones()
 	{
 		for (int i = 0; i < LegalMoves.CheckResponseZones.Count; i++)
-			CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i, 1);
+			CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i, LegalMoves.CheckResponseZones[i][0], true, 1);
 	}
 	public static void CheckAnimationCancelEarly(Vector2I flatMousePosition)
 	{
