@@ -42,12 +42,12 @@ public partial class LegalMoves
 			return new();
 		foreach (KeyValuePair<Vector2I, char> piece in Position.pieces)
 		{
-			if (GetPieceColor(piece.Value) != Position.colorToMove)
+			if (GetPieceColor(piece.Value) != Position.ColorToMove)
 				continue;
 			legalMovesLocal.AddRange(PieceMoves.GetMoves(piece, legalMovesLocal.Count, opponent));
 			int tagIndex = Tags.tagPositions.IndexOf(piece.Key);
 			if (tagIndex > -1 && Tags.activeTags[tagIndex].Contains(Tags.Tag.Castler))
-				legalMovesLocal.AddRange(Castling.IsLegal(piece.Key, Position.colorToMove, OpponentMoves, legalMovesLocal.Count));
+				legalMovesLocal.AddRange(Castling.IsLegal(piece.Key, Position.ColorToMove, OpponentMoves, legalMovesLocal.Count));
 		}
 		if (!opponent)
 		{
@@ -58,14 +58,14 @@ public partial class LegalMoves
 	}
 	private static List<Vector2I> GetOpponentMoves()
 	{
-		ReverseColor(Position.colorToMove);
+		ReverseColor(Position.ColorToMove);
 		List<Vector2I> opponentMoves = GetOnlyTargets(GetLegalMoves(true));
-		ReverseColor(Position.colorToMove);
+		ReverseColor(Position.ColorToMove);
 		return opponentMoves;
 	}
 	private static void PostMoveGeneration(bool undo)
-	{
-		if (Position.GameEndState != Position.EndState.Ongoing)
+    {
+        if (Position.GameEndState != Position.EndState.Ongoing)
 		{
 			if (Position.GameEndState == Position.EndState.Checkmate) return;
 			Audio.Play(Position.GameEndState == Position.EndState.Stalemate ? Audio.Enum.Stalemate : Audio.Enum.GameEnd);
@@ -89,27 +89,33 @@ public partial class LegalMoves
 		Animations.PreviousCheckTiles = new();
 		if (Position.InCheck)
 			Colors.ResetAllColors();
-		if (IsGettingLegalMovesOnLoad) Animations.ActiveAllCheckAnimationZones();
 
-		if (Position.GameEndState == Position.EndState.Stalemate)
+		if (IsGettingLegalMovesOnLoad) Animations.ActiveAllCheckAnimationZones();
+        if (Position.GameEndState == Position.EndState.Stalemate)
 			Audio.Play(Audio.Enum.Stalemate);
 
 		if (!isGameStateOngoing)
 		{
 			if (!Position.UniqueGameEndAudio.Contains(Position.GameEndState))
 				Audio.Play(Audio.Enum.GameEnd);
-			Position.WinningPlayer = Position.WinLossEndStates.Contains(Position.GameEndState) ? ReverseColorReturn(Position.colorToMove) : 'd';
+			Position.WinningPlayer = Position.WinLossEndStates.Contains(Position.GameEndState) ? ReverseColorReturn(Position.ColorToMove) : 'd';
 			Chessboard.waitingForBoardFlip = false;
-			EndGame();
+            if (IsGettingLegalMovesOnLoad)
+            {
+                Position.ColorToMove = Position.WinningPlayer;
+                Chessboard.Update();
+            }
+            EndGame();
 		}
-		IsGettingLegalMovesOnLoad = false;
+
+        IsGettingLegalMovesOnLoad = false;
 	}
 	public static void EndGame()
 	{
         Interaction.PreviousMoveTiles(Colors.Enum.Default);
         Cursor.ShowHideCursor(false);
-        if (!Position.InCheck && Position.GameEndState != Position.EndState.Ongoing)
-            History.TimerCountdown(PauseMenu.PauseScreenAfterGameEndDuration, History.TimerType.GameEndScreen);
+        if (Position.GameEndState != Position.EndState.Ongoing && !Position.InCheck) 
+			History.TimerCountdown(PauseMenu.PauseScreenAfterGameEndDuration, History.TimerType.GameEndScreen);
     }
     protected static List<Vector2I> GetOnlyTargets(List<(Vector2I start, Vector2I end)> moves)
 	{
@@ -131,7 +137,8 @@ public partial class LegalMoves
 		return (piece.ToString() == piece.ToString().ToUpper()) ? 'w' : 'b';
 	}
 	public static bool IsWithinGrid(Vector2I position) => position.X >= 0 && position.Y >= 0 && position.X < Chessboard.tileCount.X && position.Y < Chessboard.tileCount.Y;
-	public static void ReverseColor(char originalColor) => Position.colorToMove = ReverseColorReturn(originalColor);
+	public static void ReverseColor() => Position.ColorToMove = ReverseColorReturn(Position.ColorToMove);
+	public static void ReverseColor(char originalColor) => Position.ColorToMove = ReverseColorReturn(originalColor);
 	public static char ReverseColorReturn(char originalColor)
 	{
 		int currentColorIndex = Position.playerColors.IndexOf(originalColor);

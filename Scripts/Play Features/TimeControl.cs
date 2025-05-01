@@ -10,8 +10,8 @@ public partial class TimeControl : Node
 	{
 		PlayerTimerInfo = new()
 		{
-			{ 'w', new(600, 0) },
-			{ 'b', new(600, 0) }
+			{ 'w', new(5, 0) },
+			{ 'b', new(5, 0) }
 		};
 	}
 	public class PlayerTimer
@@ -29,7 +29,7 @@ public partial class TimeControl : Node
 			ActualTimer.Timeout += () =>
 			{
 				PlayerTimeout = true;
-				PlayerTimeout(LegalMoves.ReverseColorReturn(Position.colorToMove));
+				PlayerTimeout(LegalMoves.ReverseColorReturn(Position.ColorToMove));
 			};
 		}
 		public string GetTimeLeft()
@@ -44,7 +44,7 @@ public partial class TimeControl : Node
 	public static void HandleTimerPauseProperty(char color, bool pause = false)
 	{
 		PlayerTimer playerTimer = GetWantedTimer(color);
-        Timer usedTimer = playerTimer.ActualTimer;
+		Timer usedTimer = playerTimer.ActualTimer;
 		usedTimer.Paused = pause;
 		playerTimer.HasStarted = true;
 	}
@@ -70,13 +70,15 @@ public partial class TimeControl : Node
 		}
 		if (InsufficientMaterial.PlayerMaterialInsufficiency[otherPlayer])
 		{
-			Position.GameEndState = Position.EndState.InsufficientMaterialVsTimeout;
+			Position.GameEndState = Position.EndState.TimeoutVsInsufficientMaterial;
 			Position.WinningPlayer = 'd';
 		}
 		else
 		{
 			Position.GameEndState = Position.EndState.Timeout;
-			Position.WinningPlayer = LegalMoves.ReverseColorReturn(Position.colorToMove);
+			Position.WinningPlayer = LegalMoves.ReverseColorReturn(Position.ColorToMove);
+			Position.ColorToMove = Position.WinningPlayer;
+			Chessboard.Update();
 		}
 		Audio.Play(Audio.Enum.GameEnd);
 		if (Interaction.selectedTile != null)
@@ -110,11 +112,11 @@ public partial class TimeControl : Node
 	}
 	public static void CheckIfOnLowTime()
 	{
-		PlayerTimer activeTimer = GetWantedTimer(Position.colorToMove);
+		PlayerTimer activeTimer = GetWantedTimer(Position.ColorToMove);
 		if (!activeTimer.LowTimeReached && activeTimer.ActualTimer.TimeLeft <= activeTimer.LowTime)
 		{
 			activeTimer.LowTimeReached = true;
 			Audio.Play(Audio.Enum.LowTime);
-        }
+		}
 	}
 }

@@ -41,7 +41,7 @@ public partial class Zobrist
 			if (!LegalMoves.IsWithinGrid(piece.Key)) continue;
 			hash ^= Squares[piece.Key] ^ Pieces[pieceString.IndexOf(piece.Value)];
 		}
-		if (Position.colorToMove == 'b')
+		if (Position.ColorToMove == 'b')
 			hash ^= BlackToMove;
 		hash ^= LastCastlingRightHash;
 		hash ^= GetEnPassantHash();

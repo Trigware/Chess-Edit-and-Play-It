@@ -49,7 +49,7 @@ public partial class Castling : Node
 			Animations.Tween(spr, duration, startPosition, new(endXLocal, startPosition.Y), null, null, false);
 			return;
 		}
-		bool elipseUp = Position.colorToMove == (isRedo ? 'b' : 'w');
+		bool elipseUp = Position.ColorToMove == (isRedo ? 'b' : 'w');
         Animations.CancelCastlingEarly = false;
 		endXpositions.Add(endXLocal);
 		elipsePathUp.Add(elipseUp);
@@ -64,7 +64,7 @@ public partial class Castling : Node
 		bool shortCastle = endXLocal > startPosition.X;
 		for (int x = startPosition.X; shortCastle ? x <= endXLocal : x >= endXLocal; x += shortCastle ? 1 : -1)
 		{
-			Vector2I scannedLocation = new(x, startPosition.Y + (Position.colorToMove == (isRedo ? 'w' : 'b') ? 1 : -1));
+			Vector2I scannedLocation = new(x, startPosition.Y + (Position.ColorToMove == (isRedo ? 'w' : 'b') ? 1 : -1));
             if (Position.pieces.ContainsKey(scannedLocation))
 			{
 				elipsePath = false;

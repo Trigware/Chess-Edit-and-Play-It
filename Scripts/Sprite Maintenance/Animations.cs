@@ -14,7 +14,7 @@ public partial class Animations : Chessboard
 	public static void TweenPauseMenu(Sprite2D spr, Layer layer, bool pausing)
 	{
 		int yPauseMenuUnpause = isFlipped ? 0 : tileCount.Y;
-		Vector2 startPauseMenuPosition = PauseMenu.GetPosition();
+		Vector2 startPauseMenuPosition = PauseMenu.GetStandardPosition();
 		spr.Position = CalculateTilePosition(startPauseMenuPosition.X, startPauseMenuPosition.Y);
 		Tween(spr, PauseMenu.pauseDuration, default, new(boardCenter.X, pausing ? boardCenter.Y : yPauseMenuUnpause), endTransparency: pausing ? 1 : 0, layer: layer);
 	}
@@ -22,6 +22,11 @@ public partial class Animations : Chessboard
 	{
 		Tween tween = spr.CreateTween();
 		ActiveTweens.Add(tween, (spr, deleteOnFinished, endTransparency));
+		if (layer == Layer.PauseMain)
+		{
+			PauseMenu.ActiveTweens++;
+			PauseMenu.MenuMoving = true;
+		}
 		if (endPosition != null)
 		{
 			Vector2 usedEndPos = (Vector2)endPosition;
@@ -29,7 +34,7 @@ public partial class Animations : Chessboard
 			if (layer == Layer.Piece || layer == Layer.Promotion)
 			{
 				spr.ZIndex = (int)layer + 1;
-				TimeControl.HandleTimerPauseProperty(Position.colorToMove, true);
+				TimeControl.HandleTimerPauseProperty(Position.ColorToMove, true);
 			}
 		}
 		if (endScale != null)
@@ -95,7 +100,13 @@ public partial class Animations : Chessboard
 			spr.QueueFree();
 		if (layer == Layer.Piece || layer == Layer.Promotion)
 			spr.ZIndex = (int)Layer.Piece;
-		firstCheckZone = 0;
+		if (layer == Layer.PauseMain)
+		{
+            PauseMenu.ActiveTweens--;
+			if (PauseMenu.ActiveTweens == 0)
+				PauseMenu.MenuMoving = false;
+        }
+        firstCheckZone = 0;
 		if (Position.GameEndState != Position.EndState.Ongoing && Position.GameEndState != Position.EndState.Checkmate) return;
 		if (ActiveTweens.Count == 0 && Promotion.PromotionOptionsPieces.Count == 0 && History.activeMoveSuccessionTimers == 0)
 			FlipBoard();
@@ -141,10 +152,12 @@ public partial class Animations : Chessboard
 
 		if (i >= checkmateAnimationRange)
 		{
-            History.TimerCountdown(PauseMenu.PauseScreenAfterGameEndDuration, History.TimerType.GameEndScreen);
             Audio.Play(isCheckmate ? Audio.Enum.Checkmate : Audio.Enum.Check);
 			if (isCheckmate)
-				CheckmateColors();
+			{
+                CheckmateColors();
+                History.TimerCountdown(PauseMenu.PauseScreenAfterGameEndDuration, History.TimerType.GameEndScreen);
+            }
             ActiveCheckAnimation = false;
 			return;
 		}

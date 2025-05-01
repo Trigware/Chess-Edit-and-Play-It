@@ -6,7 +6,8 @@ using System.Linq;
 public partial class Position
 {
 	public static Dictionary<Vector2I, char> pieces = new();
-	public static char colorToMove, WinningPlayer = '\0', oppositeStartColorToMove = playerColors.Last();
+	public static char ColorToMove;
+	public static char WinningPlayer = '\0', oppositeStartColorToMove = playerColors.Last();
 	public static (Vector2I target, Vector2I delete)? EnPassantInfo = null;
 	public static (Vector2I start, Vector2I end)? LastMoveInfo = null;
 	public static bool startPositionLoaded = false;
@@ -99,7 +100,7 @@ public partial class Position
         ThreefoldRepetition,
         FiftyMoveRule,
         Timeout,
-        InsufficientMaterialVsTimeout,
+        TimeoutVsInsufficientMaterial,
         Resignation,
         DrawAgreement
     }
@@ -109,7 +110,7 @@ public partial class Position
 	{
 		if (startPositionLoaded)
 			return;
-		colorToMove = 'w';
+		ColorToMove = 'w';
         Zobrist.GenerateKeys();
         LegalMoves.IsGettingLegalMovesOnLoad = true;
 		Animations.firstCheckZone = 0;
@@ -152,7 +153,7 @@ public partial class Position
 	{
         if (fenSplit.Length == 1)
             return true;
-        colorToMove = fenSplit[1] switch
+        ColorToMove = fenSplit[1] switch
         {
             "b" => 'b',
             _ => 'w'

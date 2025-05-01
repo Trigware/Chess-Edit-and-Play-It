@@ -15,7 +15,7 @@ public partial class UpdatePosition
 		char capturedPiece = Position.pieces.TryGetValue(end, out char val) ? val : '\0', pieceMoved = Position.pieces[start];
 		Tags.lastDeletedTags = new();
 		Chessboard.waitingForBoardFlip = true;
-		Cursor.Location[Position.colorToMove] = end;
+		Cursor.Location[Position.ColorToMove] = end;
 		HandleEnPassantAndClocks(enPassant, leapMoveIndex, start, end, pieceMoved);
 		MovePiecesInternally(enPassant, castlingIndex, promotionIndex, start, end);
 		UpdateForUserFeatures(start, end, promotionIndex != -1, capturedPiece, pieceMoved, castlingIndex);
@@ -43,7 +43,7 @@ public partial class UpdatePosition
 		if (leapMoveIndex > -1) Position.EnPassantInfo = LegalMoves.PawnLeapMovesInfo[leapMoveIndex]; else Position.EnPassantInfo = null;
 
 		if (Chessboard.tiles.ContainsKey(new(end, Chessboard.Layer.Piece)) || pieceMoved.ToString().ToLower() == "p" || enPassant) Position.HalfmoveClock = 0; else Position.HalfmoveClock++;
-		if (Position.colorToMove == Position.oppositeStartColorToMove) Position.FullmoveNumber++;
+		if (Position.ColorToMove == Position.oppositeStartColorToMove) Position.FullmoveNumber++;
 	}
 	private static void MovePiecesInternally(bool enPassant, int castlingIndex, int promotionIndex, Vector2I start, Vector2I end)
 	{
@@ -71,7 +71,7 @@ public partial class UpdatePosition
 	{
 		if (promotionIndex == -1)
 		{
-			LegalMoves.ReverseColor(Position.colorToMove);
+			LegalMoves.ReverseColor(Position.ColorToMove);
 			LegalMoves.GetLegalMoves();
 		}
 		else
@@ -79,8 +79,8 @@ public partial class UpdatePosition
 			LegalMoves.legalMoves = new();
 			if (Promotion.CanBePromotedTo.Length > 1)
 			{
-				Promotion.AvailablePromotions(end, Position.colorToMove);
-				Position.colorToMove = '\0';
+				Promotion.AvailablePromotions(end, Position.ColorToMove);
+				Position.ColorToMove = '\0';
 			}
 			else
 				Promotion.AutomaticPromotion(end, Promotion.CanBePromotedTo[0]);
@@ -137,7 +137,7 @@ public partial class UpdatePosition
 			Castling.TweenCastle(handledSprite, Animations.animationSpeed * durationMultiplier, start, end.X, isRedo);
 		else
 		{
-			Vector2I animationEnd = promotionReplay ? new(start.X, end.Y + (Position.colorToMove != 'w' ? 3 : -3)) : end;
+			Vector2I animationEnd = promotionReplay ? new(start.X, end.Y + (Position.ColorToMove != 'w' ? 3 : -3)) : end;
 			Animations.Tween(handledSprite, Animations.animationSpeed * durationMultiplier, start, isRedo && promotionReplay ? end : animationEnd, null, promotion || promotionReplay ? 0 : null, promotion || promotionReplay, promotion, !(isRedo && promotionReplay));
 		}
 	}

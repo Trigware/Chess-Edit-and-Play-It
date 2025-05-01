@@ -37,7 +37,7 @@ public partial class PieceMoves : LegalMoves
 			char targetColor = GetPieceColor(addedFlatPosition);
 			if (RoyalDangerRestriction(opponent, isMovedPieceRoyal, addedFlatPosition, piece.Key))
 			{
-				if (targetColor == Position.colorToMove)
+				if (targetColor == Position.ColorToMove)
 					break;
 				else
 					continue;
@@ -85,7 +85,7 @@ public partial class PieceMoves : LegalMoves
 	}
 	private static bool ReachedSameColor(char targetColor, bool opponent, Vector2I addedFlatPosition, bool pinnedPieceMoveAnalyse, Vector2I dir, int range)
 	{
-		if (targetColor != Position.colorToMove) return false;
+		if (targetColor != Position.ColorToMove) return false;
 		if (opponent)
 			ProtectedPieces.Add(addedFlatPosition);
 		if (opponent && Position.EnPassantInfo != null && addedFlatPosition == (Position.EnPassantInfo ?? default).delete && CanMeetRoyal(addedFlatPosition, dir, range))
@@ -113,7 +113,7 @@ public partial class PieceMoves : LegalMoves
 	{
 		foreach (KeyValuePair<Vector2I, char> endRoyal in Position.RoyalPiecesColor)
 		{
-			if (endRoyal.Value == Position.colorToMove)
+			if (endRoyal.Value == Position.ColorToMove)
 				continue;
 			Vector2I deltaVector = endRoyal.Key - startPosition;
 			if (deltaVector.X * direction.Y != deltaVector.Y * direction.X)
@@ -157,7 +157,7 @@ public partial class PieceMoves : LegalMoves
 		if (enPassant)
 		{
 			(Vector2I target, Vector2I delete) enPassantNotNull = Position.EnPassantInfo ?? default;
-			enPassant = addedFlatPosition == enPassantNotNull.target && GetPieceColor(enPassantNotNull.delete) != Position.colorToMove && !EnPassantBlocked;
+			enPassant = addedFlatPosition == enPassantNotNull.target && GetPieceColor(enPassantNotNull.delete) != Position.ColorToMove && !EnPassantBlocked;
 		}
 		bool targetCapture = Position.pieces.TryGetValue(addedFlatPosition, out _) || enPassant || opponent;
 		if (dirIter == 0 && targetCapture)
@@ -180,7 +180,7 @@ public partial class PieceMoves : LegalMoves
 	}
 	public static bool IsRoyal(Vector2I location)
 	{
-		if (!(Position.pieces.TryGetValue(location, out char piece) && piece != Position.colorToMove))
+		if (!(Position.pieces.TryGetValue(location, out char piece) && piece != Position.ColorToMove))
 			return false;
 		int tagIndex = Tags.tagPositions.IndexOf(location);
 		return tagIndex > -1 ? Tags.activeTags[tagIndex].Contains(Tags.Tag.Royal) : false;

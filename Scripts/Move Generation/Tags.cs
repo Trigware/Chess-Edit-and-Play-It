@@ -124,7 +124,7 @@ public partial class Tags
 			History.initialCursorLocation.TryAdd(color, randomChosenPiece);
 			Cursor.Location.TryAdd(color, randomChosenPiece);
 		}
-		History.LatestReverseCursorLocation = History.initialCursorLocation[LegalMoves.ReverseColorReturn(Position.colorToMove)];
+		History.LatestReverseCursorLocation = History.initialCursorLocation[LegalMoves.ReverseColorReturn(Position.ColorToMove)];
 	}
 	public static void GetCastlingRightsHash()
 	{

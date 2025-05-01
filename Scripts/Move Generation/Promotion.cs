@@ -56,10 +56,10 @@ public partial class Promotion
 	}
 	public static void AutomaticPromotion(Vector2I location, char piecePromotedTo)
 	{
-		char chosenPiece = Position.colorToMove == 'w' ? piecePromotedTo : Convert.ToChar(piecePromotedTo.ToString().ToLower());
+		char chosenPiece = Position.ColorToMove == 'w' ? piecePromotedTo : Convert.ToChar(piecePromotedTo.ToString().ToLower());
 		Position.pieces[location] = chosenPiece;
 		OptionChosen(chosenPiece, location, location, 1, Chessboard.Layer.Piece);
-        LegalMoves.ReverseColor(Position.colorToMove);
+        LegalMoves.ReverseColor(Position.ColorToMove);
         LegalMoves.GetLegalMoves();
     }
 	public static void OptionChosen(char chosenPiece, Vector2I promotionLocation, Vector2I animationStartPosition, float endTransparency, Chessboard.Layer tileLayer, float durationMultiplier = 2)

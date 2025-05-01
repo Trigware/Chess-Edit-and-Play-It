@@ -35,7 +35,10 @@ public partial class LoadGraphics : Node
 		foreach (string texture in otherTextures)
 		{
 			string spriteName = texture.Substring(0, texture.IndexOf('.'));
-			textureDict.Add(spriteName, LoadTexture(texture));
+			Texture2D loadedTexture = LoadTexture(texture);
+			if (texture == "PauseMain.png")
+				PauseMenu.MenuTextureSize = loadedTexture.GetSize();
+            textureDict.Add(spriteName, loadedTexture);
 		}
 		Text.notoSans = GD.Load<FontFile>("res://Fonts/NotoSans.ttf");
     }

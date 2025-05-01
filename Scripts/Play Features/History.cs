@@ -149,13 +149,13 @@ public partial class History
 		UpdatePosition.DiscoveredCheckAnimation(null, true, MoveReplayAnimationSpeedMultiplier);
 		TimerCountdown(Animations.animationSpeed * MoveReplayAnimationSpeedMultiplier * 2, TimerType.ReplaySuccession, true, isUndo, replayedMove);
 		Vector2I cursorLocationMove = isUndo ? replayedMove.Start : LatestReverseCursorLocation;
-		Cursor.Location[Position.colorToMove] = cursorLocationMove;
+		Cursor.Location[Position.ColorToMove] = cursorLocationMove;
 		Cursor.MoveCursor(cursorLocationMove, 0);
 
 		Dictionary<char, double> PlayerTimersTimeLeft = isUndo ? replayedMove.TimeLeftStart : replayedMove.TimeLeftEnd;
 		foreach (KeyValuePair<char, double> playerTimers in PlayerTimersTimeLeft)
             TimeControl.ModifyTimeLeft(playerTimers.Key, playerTimers.Value);
-        TimeControl.HandleTimerPauseProperty(LegalMoves.ReverseColorReturn(Position.colorToMove), true);
+        TimeControl.HandleTimerPauseProperty(LegalMoves.ReverseColorReturn(Position.ColorToMove), true);
 	}
 	public enum TimerType { Replay, Cursor, FirstCursorMove, BoardFlip, ReplaySuccession, GameEndScreen }
 	public static void TimerCountdown(float waitTime, TimerType timerType, bool replay = false, bool isUndo = false, Move replayedMove = null)
@@ -181,14 +181,14 @@ public partial class History
 				if (!timerStart)
 				{
 					Chessboard.Update();
-					Cursor.MoveCursor(Cursor.Location[Position.colorToMove], 0);
-                    TimeControl.HandleTimerPauseProperty(Position.colorToMove);
+					Cursor.MoveCursor(Cursor.Location[Position.ColorToMove], 0);
+                    TimeControl.HandleTimerPauseProperty(Position.ColorToMove);
                 } break;
 			case TimerType.ReplaySuccession: 
 				activeMoveSuccessionTimers += timerStart ? 1 : -1;
 				if (activeMoveSuccessionTimers == 0)
 				{
-					if (Position.GameEndState == Position.EndState.Ongoing) TimeControl.HandleTimerPauseProperty(Position.colorToMove);
+					if (Position.GameEndState == Position.EndState.Ongoing) TimeControl.HandleTimerPauseProperty(Position.ColorToMove);
                     Chessboard.FlipBoard(true);
                 }
                 break;
@@ -212,7 +212,7 @@ public partial class History
 		}
 		if (!isUndo)
 		{
-			if (Position.LastMoveInfo == null) LatestReverseCursorLocation = initialCursorLocation[LegalMoves.ReverseColorReturn(Position.colorToMove)];
+			if (Position.LastMoveInfo == null) LatestReverseCursorLocation = initialCursorLocation[LegalMoves.ReverseColorReturn(Position.ColorToMove)];
 			else LatestReverseCursorLocation = (Position.LastMoveInfo ?? default).start;
 		}
 		(Vector2I start, Vector2I end) LastMoveInfo = UndoMoves.Peek().GetTuple();
@@ -226,7 +226,7 @@ public partial class History
 		bool promotion = replayedMove.PiecePromotedFrom != '\0', enPassant = replayedMove.EnPassantCapture != '\0', capture = replayedMove.CapturedPiece != '\0', castling = replayedMove.CastleeInfo != null;
 		Audio.playedCheck = false;
 		Audio.silenceAudio = promotion || enPassant || castling;
-		LegalMoves.ReverseColor(Position.colorToMove);
+		LegalMoves.ReverseColor(Position.ColorToMove);
 		ReplayRegularMove(replayedMove, capture, promotion, castling, isUndo);
 		if (promotion) ReplayPromotion(replayedMove, isUndo);
 		if (enPassant) ReplayEnPassant(replayedMove, isUndo);
@@ -241,12 +241,12 @@ public partial class History
 		if (capture && isUndo)
 			Animations.Tween(UpdatePosition.AddPiece(replayedMove.End, replayedMove.CapturedPiece, 0, 1), Animations.animationSpeed * MoveReplayAnimationSpeedMultiplier, replayedMove.End, null, 1, null, false);
 		Position.HalfmoveClock = replayedMove.HalfmoveClock;
-		if (Position.colorToMove != Position.oppositeStartColorToMove)
+		if (Position.ColorToMove != Position.oppositeStartColorToMove)
 			Position.FullmoveNumber--;
 	}
 	private static void ReplayPromotion(Move replayedMove, bool isUndo)
 	{
-		Vector2I promotionAnimationStart = new(replayedMove.Start.X, replayedMove.End.Y + (Position.colorToMove == 'w' ? 2 : -2));
+		Vector2I promotionAnimationStart = new(replayedMove.Start.X, replayedMove.End.Y + (Position.ColorToMove == 'w' ? 2 : -2));
 		Promotion.OptionChosen(isUndo ? replayedMove.PiecePromotedFrom : replayedMove.PiecePromotedTo, replayedMove.Start, promotionAnimationStart, 1, Chessboard.Layer.Piece, MoveReplayAnimationSpeedMultiplier);
 		ReplayMoveAudio(Audio.Enum.Promotion);
 	}
