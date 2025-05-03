@@ -16,7 +16,7 @@ public partial class Animations : Chessboard
 		int yPauseMenuUnpause = isFlipped ? 0 : tileCount.Y;
 		Vector2 startPauseMenuPosition = PauseMenu.GetStandardPosition();
 		spr.Position = CalculateTilePosition(startPauseMenuPosition.X, startPauseMenuPosition.Y);
-		Tween(spr, PauseMenu.pauseDuration, default, new(boardCenter.X, pausing ? boardCenter.Y : yPauseMenuUnpause), endTransparency: pausing ? 1 : 0, layer: layer);
+		Tween(spr, PauseMenu.PauseMenuMoveDuration, default, new(boardCenter.X, pausing ? boardCenter.Y : yPauseMenuUnpause), endTransparency: pausing ? PauseMenu.PauseMenuMaxVisibilityTransparency : 0, layer: layer);
 	}
 	public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale = null, float? endTransparency = null, bool deleteOnFinished = false, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = -1, int castlingAnimation = -1, bool promotionConfirmation = false, Tween.TransitionType transition = Godot.Tween.TransitionType.Sine, Tween.EaseType? easeType = Godot.Tween.EaseType.InOut, Layer layer = Layer.Piece)
 	{

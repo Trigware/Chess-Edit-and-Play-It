@@ -1,7 +1,7 @@
 {
 	"Pause Menu": {
 		"Title Text": {
-			"Paused": "Game Paused!",
+			"Paused": "Paused",
 			"d": "Game Drawn!",
 			"w": "White Won!",
 			"b": "Black Won!"
@@ -16,6 +16,11 @@
 			"NMoveRule": "The {moveRuleCount}-Move Rule",
 			"TimeoutVsInsufficientMaterial": "Timeout, but the opponent can't checkmate!",
 			"DrawAgreement": "Draw by Agreement"
+		},
+		"Interaction Text": {
+			"Settings": "Settings",
+			"PlayAgain": "Play Again",
+			"Quit": "Quit"
 		}
 	},
 	"Players": {

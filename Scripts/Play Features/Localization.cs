@@ -5,7 +5,7 @@ using System.Text.Json;
 
 public partial class Localization : Node
 {
-	public static Language chosenLanguage = Language.English;
+	public static Language chosenLanguage = Language.Czech;
 	private static Dictionary<Language, Dictionary<string, string>> AllLanguageTexts = new();
 	private readonly static Language BaseLanguageFile = Language.English;
 	public enum Language
@@ -18,7 +18,8 @@ public partial class Localization : Node
 		PauseTitle,
 		PauseDescription,
 		GamePaused,
-		Players
+		Players,
+		PauseInteraction
 	}
 	public override void _Ready()
 	{
@@ -58,11 +59,11 @@ public partial class Localization : Node
 				break;
 			case JsonValueKind.String:
 				if (AllLanguageTexts.ContainsKey(BaseLanguageFile) && !AllLanguageTexts[BaseLanguageFile].ContainsKey(currentPath))
-					GD.PushError($"{lang} language file contains '{currentPath}' which doesn't exist in the {BaseLanguageFile} language file!");
+					GD.PrintErr($"{lang} language file contains '{currentPath}' which doesn't exist in the {BaseLanguageFile} language file!");
 				pureJsonData.Add(currentPath, element.GetString());
 				break;
 			default:
-				GD.PushError($"The only JsonElement kinds currently supported are strings and objects.\nPlease modify '{currentPath}' in the {lang} language file!");
+				GD.PrintErr($"The only JsonElement kinds currently supported are strings and objects.\nPlease modify '{currentPath}' in the {lang} language file!");
 				break;
 		}
 	}
@@ -74,7 +75,7 @@ public partial class Localization : Node
 			{
 				if (lang == BaseLanguageFile) continue;
 				if (!AllLanguageTexts[lang].ContainsKey(propertyName))
-					GD.PushError($"{BaseLanguageFile} language file contains '{propertyName}' which doesn't exist in the {lang} language file!");
+					GD.PrintErr($"{BaseLanguageFile} language file contains '{propertyName}' which doesn't exist in the {lang} language file!");
 			}
 		}
 	}
@@ -91,7 +92,7 @@ public partial class Localization : Node
 		Dictionary<string, string> languageFileText = AllLanguageTexts[chosenLanguage];
 		if (!languageFileText.ContainsKey(textPath))
 		{
-			GD.PushError($"Attempting to load non-existent text at '{textPath}' from the {chosenLanguage} language file!");
+			GD.PrintErr($"Attempting to load non-existent text at '{textPath}' from the {chosenLanguage} language file!");
 			return '{' + textPath + '}' + $", {chosenLanguage}";
 		}
 		return ReplaceNamesForValues(textVariables, languageFileText[textPath], textPath);
@@ -145,6 +146,7 @@ public partial class Localization : Node
 			Path.PauseDescription => "Pause Menu.Description Text",
 			Path.GamePaused => "Pause Menu.Title Text.Paused",
 			Path.Players => "Players",
+			Path.PauseInteraction => "Pause Menu.Interaction Text",
 			_ => throw new Exception($"Please update the {textPathAsEnum} enum, text path missing!")
 		};
 	}

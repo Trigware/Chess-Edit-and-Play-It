@@ -4,8 +4,7 @@ using System.Collections.Generic;
 public partial class PauseMenu
 {
 	public static Sprite2D Main, Outline;
-	public static Label TitleLabel = null, DescriptionLabel = null;
-	public const float pauseDuration = 0.5f, PauseScreenAfterGameEndDuration = 0.3f, PauseMenuTextboxSize = 0.9f;
+	public const float PauseMenuMoveDuration = 0.5f, PauseScreenAfterGameEndDuration = 0.3f, PauseMenuTextboxSize = 0.9f, PauseMenuMaxVisibilityTransparency = 0.85f;
 	private static bool isPausedValue = false;
 	public static bool GameEndedInThisSession = false, WaitingForPauseAfterGameEnd = false, MenuMoving = false;
 	public static string TitleText = "", DescriptionText = "";

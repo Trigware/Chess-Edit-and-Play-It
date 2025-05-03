@@ -5,26 +5,40 @@ using System.Collections.Generic;
 public partial class Text : Node
 {
 	public static PackedScene simpleLabel;
-	public static List<Label> activeLabels = new();
+	public static List<Label> PauseMenuLabels = new(), TileRecognitionLabels = new();
 	public static FontFile notoSans;
-	private const float tileHelperOffset = 0.35f, intendedScale = 1.62f, PauseDescriptionYOffset = 0.2f;
-	private const int TileRecognitionHelperSize = 32, PauseTitleSize = 96, PauseDescriptionSize = 48;
+	private const float tileHelperOffset = 0.35f, intendedScale = 1.62f, PauseDescriptionYOffset = 0.2f, PauseInteractionYOffset = 1.05f, PauseInteractionXOffset = 0.5f;
+	private const int TileRecognitionHelperSize = 32, PauseTitleSize = 96, PauseDescriptionSize = 48, PauseInteractionTextSize = 54;
 	private static Dictionary<char, Label> timerLabels = new();
 
-	public static void DeleteRecognitionLabels()
+	private enum PauseLabel
 	{
-		foreach (Label label in activeLabels)
-			label.QueueFree();
-		activeLabels.Clear();
+		Title,
+		Description,
+		PlayAgain,
+		Settings,
+		Quit
 	}
-	public static void RefreshPauseText()
+	public static void DeleteAllLabelsInList(List<Label> labelList)
 	{
-		if (PauseMenu.TitleLabel != null)
-			PauseMenu.TitleLabel.QueueFree();
-		if (PauseMenu.DescriptionLabel != null)
-			PauseMenu.DescriptionLabel.QueueFree();
-		PauseMenu.TitleLabel = PrintPauseMenuElement(PauseMenu.TitleText, PauseTitleSize, 0);
-		PauseMenu.DescriptionLabel = PrintPauseMenuElement(PauseMenu.DescriptionText, PauseDescriptionSize, PauseDescriptionYOffset);
+		foreach (Label label in labelList)
+			label?.QueueFree();
+		labelList.Clear();
+	}
+	public static void RefreshPauseText(bool calledFromDraw = false)
+	{
+		GD.Print(PauseMenuLabels.Count);
+		DeleteAllLabelsInList(PauseMenuLabels);
+		foreach (PauseLabel pauseLabelEnum in Enum.GetValues(typeof(PauseLabel)))
+		{
+			float interactionLabelsXOffset = (pauseLabelEnum - PauseLabel.Settings) * PauseInteractionXOffset;
+			PauseMenuLabels.Add(pauseLabelEnum switch
+			{
+				PauseLabel.Title => PrintPauseMenuElement(PauseMenu.TitleText, PauseTitleSize),
+				PauseLabel.Description => PrintPauseMenuElement(PauseMenu.DescriptionText, PauseDescriptionSize, PauseDescriptionYOffset),
+				_ => PrintPauseMenuElement(Localization.GetText(Localization.Path.PauseInteraction, pauseLabelEnum.ToString()), PauseInteractionTextSize, PauseInteractionYOffset, interactionLabelsXOffset)
+			});
+		}
 	}
 	public static void TileRecognitionHelper(Vector2I location, bool rankIdentifier = true)
 	{
@@ -34,16 +48,18 @@ public partial class Text : Node
 
 		bool adjustedIsRank = Chessboard.isFlipped ? !rankIdentifier : rankIdentifier;
 		char recognitionChar = adjustedIsRank ? Notation.rankNumbers[location.Y] : Notation.fileLetters[location.X];
-		activeLabels.Add(Print(recognitionChar.ToString(), location, Colors.GetColorFromEnum(Colors.Enum.Default, location.X + 1, location.Y), TileRecognitionHelperSize, rankIdentifier ? -1 : 1));
+		TileRecognitionLabels.Add(Print(recognitionChar.ToString(), location, Colors.GetColorFromEnum(Colors.Enum.Default, location.X + 1, location.Y), TileRecognitionHelperSize, rankIdentifier ? -1 : 1));
 
 		if (location == helperIntersectionTile && rankIdentifier) TileRecognitionHelper(location, false);
 	}
 	public static Label Print(string text, Vector2 location, Color textColor, int textSize, int? isRank = null, Chessboard.Layer layer = Chessboard.Layer.Helper, bool isPauseText = false, Vector2 pauseOffset = default)
 	{
+		if (text == "")
+			return null;
 		Node labelNode = simpleLabel.Instantiate();
 		if (!(labelNode is Label)) return null;
 		Label labelInstance = (Label)labelNode;
-		float textRescale = Chessboard.gridScale / intendedScale / 2;
+		float textRescale = GetTextRescale();
 
 		labelInstance.Text = text;
 		labelInstance.ZIndex = (int)layer;
@@ -62,17 +78,17 @@ public partial class Text : Node
 	}
 	private static Vector2 RepositionPauseText(Vector2 location, Vector2 textSize, float rescale, Label labelInstance, Vector2 pauseOffset)
 	{
-        Vector2 rescalingToFit = PauseMenu.Main.Scale * PauseMenu.MenuTextureSize * PauseMenu.PauseMenuTextboxSize / (labelInstance.Size * rescale);
-        float actualTextRescale = Math.Min(rescalingToFit.X, rescalingToFit.Y);
+		Vector2 rescalingToFit = PauseMenu.Main.Scale * PauseMenu.MenuTextureSize * PauseMenu.PauseMenuTextboxSize / (labelInstance.Size * rescale);
+		float actualTextRescale = Math.Min(rescalingToFit.X, rescalingToFit.Y);
 		if (actualTextRescale < 1)
 		{
 			labelInstance.Scale *= actualTextRescale;
-            textSize *= actualTextRescale;
-        }
-        Vector2 textPosition = location - textSize;
-		float distanceToMenuTop = PauseMenu.MenuTextureSize.Y * rescale;
+			textSize *= actualTextRescale;
+		}
+		Vector2 textPosition = location - textSize;
+		Vector2 distanceToMenuTopLeft = PauseMenu.MenuTextureSize * rescale;
 		pauseOffset *= -2;
-		return new(textPosition.X, textPosition.Y - distanceToMenuTop * (1 + pauseOffset.Y));
+		return new(textPosition.X - distanceToMenuTopLeft.X * pauseOffset.X, textPosition.Y - distanceToMenuTopLeft.Y * (1 + pauseOffset.Y));
 	}
 	private static void GetPositionOfTileRecognitionHelper(int? isRank, Vector2 location, Vector2 size, Label labelInstance)
 	{
@@ -80,11 +96,12 @@ public partial class Text : Node
 		Vector2 position = Chessboard.CalculateTilePosition(usedLocation.X, usedLocation.Y);
 		labelInstance.Position = position - size;
 	}
-	private static Label PrintPauseMenuElement(string printedText, int textSize, float yOffset)
+	private static Label PrintPauseMenuElement(string printedText, int textSize, float yOffset = 0, float xOffset = 0)
 	{
 		Color pauseColor = new(Colors.Dict[Colors.Enum.PauseText], PauseMenu.Main.Modulate.A);
-		return Print(printedText, PauseMenu.Main.Position, pauseColor, textSize, layer: Chessboard.Layer.PauseText, isPauseText: true, pauseOffset: new(0, yOffset));
+		return Print(printedText, PauseMenu.Main.Position, pauseColor, textSize, layer: Chessboard.Layer.PauseText, isPauseText: true, pauseOffset: new(xOffset, yOffset));
 	}
+	private static float GetTextRescale() => Chessboard.gridScale / intendedScale / 2;
 
 	[Obsolete("This timer is used for debug purposes only, replace with a scalable version that contains GUI elements when needed")]
 	public static void ShowTimers()

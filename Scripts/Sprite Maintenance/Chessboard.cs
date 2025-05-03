@@ -70,7 +70,7 @@ public partial class Chessboard : Node
 			Create(LoadGraphics.I);
 		else
 			Update();
-		Text.RefreshPauseText();
+		Text.RefreshPauseText(true);
 	}
 	private static void Create(Node parentNode)
 	{
@@ -185,7 +185,7 @@ public partial class Chessboard : Node
 				spriteElement.TextureFilter = CanvasItem.TextureFilterEnum.Nearest; break;
 			case Layer.PauseMain:
 				Color spriteColor = layer == Layer.PauseMain ? Colors.Dict[Colors.Enum.PauseMain] : Colors.GetColorAsColorToMove();
-				spriteElement.Modulate = new(spriteColor.R, spriteColor.G, spriteColor.B, PauseMenu.IsPaused ? 1 : 0);
+				spriteElement.Modulate = new(spriteColor.R, spriteColor.G, spriteColor.B, PauseMenu.IsPaused ? PauseMenu.PauseMenuMaxVisibilityTransparency : 0);
 				if (update) return;
 				spriteElement.Position = CalculateTilePosition(boardCenter.X, boardCenter.Y) + new Vector2(0, gameviewSize.Y/2);
 				if (layer == Layer.PauseMain) PauseMenu.Main = spriteElement;
@@ -215,7 +215,7 @@ public partial class Chessboard : Node
 	}
 	public static void Update()
 	{
-		if (Text.activeLabels.Count > 0) Text.DeleteRecognitionLabels();
+		if (Text.TileRecognitionLabels.Count > 0) Text.DeleteAllLabelsInList(Text.TileRecognitionLabels);
 		foreach (KeyValuePair<Element, Sprite2D> keyValue in tiles)
 		{
 			Layer layer = keyValue.Key.Layer;
