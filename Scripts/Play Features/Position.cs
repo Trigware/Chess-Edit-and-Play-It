@@ -95,13 +95,13 @@ public partial class Position
     {
         Ongoing,
         Checkmate,
+		Timeout,
+        Resignation,
         Stalemate,
         InsufficientMaterial,
-        ThreefoldRepetition,
-        FiftyMoveRule,
-        Timeout,
+        RepeatedPosition,
+        NMoveRule,
         TimeoutVsInsufficientMaterial,
-        Resignation,
         DrawAgreement
     }
 	public static readonly EndState[] WinLossEndStates = new EndState[] { EndState.Checkmate, EndState.Timeout, EndState.Resignation };

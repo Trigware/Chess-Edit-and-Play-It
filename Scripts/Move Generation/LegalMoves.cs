@@ -76,13 +76,13 @@ public partial class LegalMoves
 		if (legalMoves.Count == 0)
 			Position.GameEndState = Position.InCheck ? Position.EndState.Checkmate : Position.EndState.Stalemate;
 		if (Position.HalfmoveClock >= Chessboard.NMoveRuleInPlies)
-			Position.GameEndState = Position.EndState.FiftyMoveRule;
+			Position.GameEndState = Position.EndState.NMoveRule;
 		if (Position.GameEndState == Position.EndState.Ongoing && InsufficientMaterial.Check())
 			Position.GameEndState = Position.EndState.InsufficientMaterial;
 		if (IsGettingLegalMovesOnLoad)
 			Tags.GetCastlingRightsHash();
 		if (Zobrist.TriggersRepetitionRule(Zobrist.Hash(undo), undo))
-			Position.GameEndState = Position.EndState.ThreefoldRepetition;
+			Position.GameEndState = Position.EndState.RepeatedPosition;
 
 		bool isGameStateOngoing = Position.GameEndState == Position.EndState.Ongoing;
 		Animations.CancelCheckEarly = false;
@@ -107,7 +107,6 @@ public partial class LegalMoves
             }
             EndGame();
 		}
-
         IsGettingLegalMovesOnLoad = false;
 	}
 	public static void EndGame()

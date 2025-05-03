@@ -5,7 +5,7 @@ public partial class PauseMenu
 {
 	public static Sprite2D Main, Outline;
 	public static Label TitleLabel = null, DescriptionLabel = null;
-	public const float pauseDuration = 0.5f, PauseScreenAfterGameEndDuration = 0.3f;
+	public const float pauseDuration = 0.5f, PauseScreenAfterGameEndDuration = 0.3f, PauseMenuTextboxSize = 0.9f;
 	private static bool isPausedValue = false;
 	public static bool GameEndedInThisSession = false, WaitingForPauseAfterGameEnd = false, MenuMoving = false;
 	public static string TitleText = "", DescriptionText = "";
@@ -35,28 +35,17 @@ public partial class PauseMenu
 	{
 		if (Position.GameEndState == Position.EndState.Ongoing)
 		{
-			TitleText = "Game Paused";
+			TitleText = Localization.GetText(Localization.Path.GamePaused);
 			DescriptionText = "";
 			return;
 		}
-		TitleText = Position.WinningPlayer switch
+		TitleText = Localization.GetText(Localization.Path.PauseTitle, Position.WinningPlayer.ToString());
+		Localization.TextVariables textVariables = Position.GameEndState switch
 		{
-			'd' => "Game Drawn",
-			'w' => "White Won",
-			_ => "Black Won"
-		} + "!";
-		DescriptionText = "Due to " + Position.GameEndState switch
-		{
-			Position.EndState.Checkmate => "checkmate",
-			Position.EndState.Timeout => "timeout",
-			Position.EndState.Resignation => "resignation", // unused, add later
-
-			Position.EndState.Stalemate => "stalemate",
-			Position.EndState.ThreefoldRepetition => "repeated position",
-			Position.EndState.FiftyMoveRule => $"the {Chessboard.NMoveRuleInPlies/2}-move rule",
-			Position.EndState.InsufficientMaterial => "insufficient material",
-			Position.EndState.TimeoutVsInsufficientMaterial => "timeout vs insufficient material",
-			Position.EndState.DrawAgreement => "an agreement" // unused, add later
-		} + "!";
+			Position.EndState.Resignation => new(Localization.GetText(Localization.Path.Players, LegalMoves.ReverseColorReturn(Position.WinningPlayer).ToString())),
+			Position.EndState.NMoveRule => new(Chessboard.NMoveRuleInPlies/2),
+			_ => new()
+		};
+		DescriptionText = Localization.GetText(textVariables, Localization.Path.PauseDescription, Position.GameEndState.ToString());
 	}
 }

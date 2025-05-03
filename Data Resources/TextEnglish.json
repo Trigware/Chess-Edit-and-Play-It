@@ -1,0 +1,25 @@
+{
+	"Pause Menu": {
+		"Title Text": {
+			"Paused": "Game Paused!",
+			"d": "Game Drawn!",
+			"w": "White Won!",
+			"b": "Black Won!"
+		},
+		"Description Text": {
+			"Checkmate": "By Checkmate",
+			"Timeout": "Timeout",
+			"Resignation": "{resignedPlayer} Resigned",
+			"Stalemate": "By Stalemate",
+			"InsufficientMaterial": "By Insufficient Material",
+			"RepeatedPosition": "By Repeated Position",
+			"NMoveRule": "The {moveRuleCount}-Move Rule",
+			"TimeoutVsInsufficientMaterial": "Timeout, but the opponent can't checkmate!",
+			"DrawAgreement": "Draw by Agreement"
+		}
+	},
+	"Players": {
+		"b": "Black",
+		"w": "White"
+	}
+}

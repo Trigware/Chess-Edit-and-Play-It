@@ -62,7 +62,14 @@ public partial class Text : Node
 	}
 	private static Vector2 RepositionPauseText(Vector2 location, Vector2 textSize, float rescale, Label labelInstance, Vector2 pauseOffset)
 	{
-		Vector2 textPosition = location - textSize;
+        Vector2 rescalingToFit = PauseMenu.Main.Scale * PauseMenu.MenuTextureSize * PauseMenu.PauseMenuTextboxSize / (labelInstance.Size * rescale);
+        float actualTextRescale = Math.Min(rescalingToFit.X, rescalingToFit.Y);
+		if (actualTextRescale < 1)
+		{
+			labelInstance.Scale *= actualTextRescale;
+            textSize *= actualTextRescale;
+        }
+        Vector2 textPosition = location - textSize;
 		float distanceToMenuTop = PauseMenu.MenuTextureSize.Y * rescale;
 		pauseOffset *= -2;
 		return new(textPosition.X, textPosition.Y - distanceToMenuTop * (1 + pauseOffset.Y));

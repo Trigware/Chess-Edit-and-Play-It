@@ -1,0 +1,25 @@
+{
+	"Pause Menu": {
+		"Title Text": {
+			"Paused": "Hra pozastavena!",
+			"d": "Remíza!",
+			"w": "Vyhrál bílý!",
+			"b": "Vyhrál černý!"
+		},
+		"Description Text": {
+			"Checkmate": "Kvůli šachmatu!",
+			"Timeout": "Čas vypršel!",
+			"Resignation": "{resignedPlayer} se vzdal!",
+			"Stalemate": "Kvůli patu!",
+			"InsufficientMaterial": "Kvůli nedostatečnému materiálu!",
+			"RepeatedPosition": "Pozice se opakovala!",
+			"NMoveRule": "Kvůli pravidlu {moveRuleCount} tahů!",
+			"TimeoutVsInsufficientMaterial": "Čas vypršel, ale soupeř nemůže dát mat!",
+			"DrawAgreement": "Hráči se dohodli na remíze!"
+		}
+	},
+	"Players": {
+		"b": "Černý",
+		"w": "Bílý"
+	}
+}

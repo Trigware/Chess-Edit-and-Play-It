@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://b1a51vags0u1x"]
+[gd_scene load_steps=6 format=3 uid="uid://b1a51vags0u1x"]
 
 [ext_resource type="Script" path="res://Scripts/Asset Handling/LoadGraphics.cs" id="1_coymj"]
 [ext_resource type="Script" path="res://Scripts/Sprite Maintenance/Chessboard.cs" id="2_ogc18"]
+[ext_resource type="Script" path="res://Scripts/Play Features/Localization.cs" id="5_ova1p"]
 [ext_resource type="Script" path="res://Scripts/Sprite Maintenance/Interaction.cs" id="8_pbtar"]
 [ext_resource type="Script" path="res://Scripts/Asset Handling/Audio.cs" id="14_qbwyj"]
 
@@ -13,6 +14,9 @@ script = ExtResource("2_ogc18")
 
 [node name="Interaction" type="Node" parent="."]
 script = ExtResource("8_pbtar")
+
+[node name="Language Handlerer" type="Node" parent="."]
+script = ExtResource("5_ova1p")
 
 [node name="Audio Player" type="AudioStreamPlayer" parent="."]
 script = ExtResource("14_qbwyj")

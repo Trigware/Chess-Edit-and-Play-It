@@ -16,7 +16,7 @@ public partial class LoadGraphics : Node
 		Texture2D texture = GD.Load<Texture2D>(fileLocation);
 		if (texture == null)
 		{
-			GD.PrintErr($"A file at location '{fileLocation}' that could be an 'Texture2D' asset was not found!");
+			GD.PushError($"A file at location '{fileLocation}' that could be an 'Texture2D' asset was not found!");
 			return null;
 		}
 		return texture;

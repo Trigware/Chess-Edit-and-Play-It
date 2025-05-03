@@ -10,7 +10,7 @@ public partial class LoadAudio
 		AudioStream audio = GD.Load<AudioStream>(fileLocation);
 		if (audio == null)
 		{
-			GD.PrintErr($"A file at location '{fileLocation}' that could be an 'AudioStream' asset was not found!");
+			GD.PushError($"A file at location '{fileLocation}' that could be an 'AudioStream' asset was not found!");
 			return null;
 		}
 		return audio;
