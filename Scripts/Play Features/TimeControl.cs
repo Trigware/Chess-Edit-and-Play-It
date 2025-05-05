@@ -10,8 +10,8 @@ public partial class TimeControl : Node
 	{
 		PlayerTimerInfo = new()
 		{
-			{ 'w', new(5, 0) },
-			{ 'b', new(5, 0) }
+			{ 'w', new(600, 0) },
+			{ 'b', new(600, 0) }
 		};
 	}
 	public class PlayerTimer
@@ -112,6 +112,7 @@ public partial class TimeControl : Node
 	}
 	public static void CheckIfOnLowTime()
 	{
+		if (Position.ColorToMove == '\0') return;
 		PlayerTimer activeTimer = GetWantedTimer(Position.ColorToMove);
 		if (!activeTimer.LowTimeReached && activeTimer.ActualTimer.TimeLeft <= activeTimer.LowTime)
 		{

@@ -5,7 +5,7 @@ using System.Text.Json;
 
 public partial class Localization : Node
 {
-	public static Language chosenLanguage = Language.Czech;
+	public static Language chosenLanguage = Language.English;
 	private static Dictionary<Language, Dictionary<string, string>> AllLanguageTexts = new();
 	private readonly static Language BaseLanguageFile = Language.English;
 	public enum Language

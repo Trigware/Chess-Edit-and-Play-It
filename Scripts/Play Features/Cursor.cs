@@ -28,18 +28,18 @@ public partial class Cursor
 	}
 	private static bool CancelMoveDetectionEarly()
 	{
-        bool gameOngoing = Position.GameEndState == Position.EndState.Ongoing,
+		bool gameOngoing = Position.GameEndState == Position.EndState.Ongoing,
 			 unseletedEscapePressed = Interaction.escapePressed && !Interaction.lastEscapeSelection && !Interaction.escapePressedOld,
 			 cursorMovementBlocked = cooldownOngoing || Chessboard.waitingForBoardFlip;
 		if (cursorMovementBlocked) return true;
-        if (unseletedEscapePressed)
-        {
-            if (gameOngoing) ShowHideCursor(false);
-            return true;
-        }
-        if (PauseMenu.IsPaused || !gameOngoing) return true;
+		if (unseletedEscapePressed)
+		{
+			if (gameOngoing) ShowHideCursor(false);
+			return true;
+		}
+		if (PauseMenu.IsPaused || !gameOngoing) return true;
 		return false;
-    }
+	}
 	public static void ShowHideCursor(bool show)
 	{
 		CursorShown = show;
@@ -62,7 +62,7 @@ public partial class Cursor
 	{
 		X = false; Y = false;
 		bool promotionOptions = Promotion.PromotionOptionsPositions.Count > 0 && !Promotion.PromotionOptionsPositions.Contains(location);
-        if (Interaction.selectedTile != null) return false;
+		if (Interaction.selectedTile != null) return false;
 		if (location.X < 0 || location.X >= Chessboard.tileCount.X || promotionOptions) X = true;
 		if (location.Y < 0 || location.Y >= Chessboard.tileCount.Y || promotionOptions) Y = true;
 		return X && Y;
@@ -85,18 +85,18 @@ public partial class Cursor
 		{
 			if (LegalSelectedDirections.Contains(previousDirection ?? default)) return previousDirection ?? default;
 			return Vector2I.Zero;
-        }
+		}
 		if (LegalSelectedDirections.Count == 1)
 		{
 			Interaction.Deselect((Interaction.selectedTile ?? default).Location);
 			Interaction.PreviousMoveTiles(Colors.Enum.PreviousMove);
-            return direction;
-        }
-        List<Vector2I> availableMovesInDirection = new();
+			return direction;
+		}
+		List<Vector2I> availableMovesInDirection = new();
 		foreach (Vector2I selectedDirection in LegalSelectedDirections)
 		{
 			bool sameXDir = IsSameSign(direction.X, selectedDirection.X) || direction.X == 0, sameYDir = IsSameSign(direction.Y, selectedDirection.Y) || direction.Y == 0;
-            if (sameXDir && sameYDir) availableMovesInDirection.Add(selectedDirection);
+			if (sameXDir && sameYDir) availableMovesInDirection.Add(selectedDirection);
 		}
 		if (availableMovesInDirection.Count == 0) return Vector2I.Zero;
 		availableMovesInDirection = CalculateClosestMove(availableMovesInDirection, direction);

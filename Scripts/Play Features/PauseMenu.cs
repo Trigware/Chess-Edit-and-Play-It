@@ -4,7 +4,8 @@ using System.Collections.Generic;
 public partial class PauseMenu
 {
 	public static Sprite2D Main, Outline;
-	public const float PauseMenuMoveDuration = 0.5f, PauseScreenAfterGameEndDuration = 0.3f, PauseMenuTextboxSize = 0.9f, PauseMenuMaxVisibilityTransparency = 0.85f;
+	public const float PauseMenuMoveDuration = 0.5f, PauseScreenAfterGameEndDuration = 0.3f, MaxTextSizeBoundary = 0.9f, PauseMenuMaxVisibilityTransparency = 0.85f;
+	public static Dictionary<Text.PauseLabel, Rect2> InteractionHitboxes = new();
 	private static bool isPausedValue = false;
 	public static bool GameEndedInThisSession = false, WaitingForPauseAfterGameEnd = false, MenuMoving = false;
 	public static string TitleText = "", DescriptionText = "";
@@ -15,7 +16,7 @@ public partial class PauseMenu
 		get => isPausedValue;
 		set
 		{
-			if (WaitingForPauseAfterGameEnd) return;
+			if (WaitingForPauseAfterGameEnd || Position.ColorToMove == '\0') return;
 			UpdatePauseMenuText();
 			Animations.TweenPauseMenu(Main, Chessboard.Layer.PauseMain, value);
 			Animations.TweenPauseMenu(Outline, Chessboard.Layer.PauseOutline, value);
@@ -25,7 +26,7 @@ public partial class PauseMenu
 			isPausedValue = value;
 		}
 	}
-	public static Vector2 GetStandardPosition()
+	public static Vector2 GetStandardPosition(Chessboard.Layer layer)
 	{
 		int yPauseHidePosition = Chessboard.isFlipped ? 0 : Chessboard.tileCount.Y;
 		return IsPaused ? Chessboard.boardCenter : new(Chessboard.boardCenter.X, yPauseHidePosition);
@@ -47,4 +48,18 @@ public partial class PauseMenu
 		};
 		DescriptionText = Localization.GetText(textVariables, Localization.Path.PauseDescription, Position.GameEndState.ToString());
 	}
+	public static void InteractWithTextElement(Text.PauseLabel pauseInteraction)
+	{
+		switch (pauseInteraction)
+		{
+			case Text.PauseLabel.NewGame: TriggerNewGame(); break;
+		}
+	}
+	private static void TriggerNewGame()
+	{
+        IsPaused = false;
+		if (Interaction.selectedTile != null)
+			Interaction.Deselect(Interaction.selectedTile.Value.Location);
+		History.Undo(true);
+    }
 }

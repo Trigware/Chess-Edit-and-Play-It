@@ -34,7 +34,7 @@ public partial class Chessboard : Node
 	public override void _Ready()
 	{
 		InitiateSceneFields();
-		Position.Load(Position.FEN.OnePlayerInsufficient);
+		Position.Load(Position.FEN.PromotionTest);
 		boardCenter = new(((float)tileCount.X - 1)/2, ((float)tileCount.Y - 1)/2);
 		Tags.GetRoyalsPerColor();
 	}
@@ -42,12 +42,12 @@ public partial class Chessboard : Node
 	{
 		gameviewSize = DisplayServer.WindowGetSize();
 		if (gameviewSize != oldviewSize)
-        {
-            Draw();
+		{
+			Draw();
 			Animations.CancelEarly();
 		}
-        oldviewSize = gameviewSize;
-        TimeControl.CheckIfOnLowTime();
+		oldviewSize = gameviewSize;
+		TimeControl.CheckIfOnLowTime();
 		Text.ShowTimers();
 	}
 	private static void InitiateSceneFields()
@@ -57,7 +57,7 @@ public partial class Chessboard : Node
 	}
 	public static void Draw()
 	{
-        waitingForBoardFlip = false;
+		waitingForBoardFlip = false;
 		Vector2 gridSize = (Vector2)tileCount * tileSize;
 		bool valueSmallX = false;
 		ySizeBigger = gameviewSize.Y > gameviewSize.X;
@@ -74,8 +74,8 @@ public partial class Chessboard : Node
 	}
 	private static void Create(Node parentNode)
 	{
-        TimeControl.SetupTimers();
-        gameviewSize = DisplayServer.WindowGetSize();
+		TimeControl.SetupTimers();
+		gameviewSize = DisplayServer.WindowGetSize();
 		isFlipped = Position.ColorToMove == Position.oppositeStartColorToMove;
 		CreateGUIElement("tile", Layer.Background, parentNode);
 		CreateGUIElement("PauseMain", Layer.PauseMain, parentNode);
@@ -98,9 +98,9 @@ public partial class Chessboard : Node
 			if (colorIndicator == tileCount.Y)
 				break;
 		}
-        Cursor.SetCursor();
+		Cursor.SetCursor();
 		LegalMoves.GetLegalMoves();
-        TimeControl.TimeLeftAtLastPlyStart = TimeControl.GetPlayerTimersTimeLeft();
+		TimeControl.TimeLeftAtLastPlyStart = TimeControl.GetPlayerTimersTimeLeft();
 	}
 	private static void DrawTilesElement(int x, int y, Layer layer, Node parentNode, float transparency = 1)
 	{
@@ -119,7 +119,7 @@ public partial class Chessboard : Node
 		float xAsFloat = x, yAsFloat = y;
 		if (layer == Layer.PauseMain || layer == Layer.PauseOutline)
 		{
-			Vector2 pauseMenuLocation = PauseMenu.GetStandardPosition();
+			Vector2 pauseMenuLocation = PauseMenu.GetStandardPosition(layer);
 			xAsFloat = pauseMenuLocation.X;
 			yAsFloat = pauseMenuLocation.Y;
 		}
@@ -187,18 +187,22 @@ public partial class Chessboard : Node
 				Color spriteColor = layer == Layer.PauseMain ? Colors.Dict[Colors.Enum.PauseMain] : Colors.GetColorAsColorToMove();
 				spriteElement.Modulate = new(spriteColor.R, spriteColor.G, spriteColor.B, PauseMenu.IsPaused ? PauseMenu.PauseMenuMaxVisibilityTransparency : 0);
 				if (update) return;
-				spriteElement.Position = CalculateTilePosition(boardCenter.X, boardCenter.Y) + new Vector2(0, gameviewSize.Y/2);
-				if (layer == Layer.PauseMain) PauseMenu.Main = spriteElement;
-				else PauseMenu.Outline = spriteElement;
+				SetPauseMenuElement(spriteElement, layer);
 				goto case Layer.Cursor;
 			case Layer.PauseOutline:
 				goto case Layer.PauseMain;
 		}
 	}
-	public static Sprite2D GetPiece(Vector2I location)
+	private static void SetPauseMenuElement(Sprite2D spriteElement, Layer layer)
 	{
-		return tiles[new(location, Layer.Piece)];
+		spriteElement.Position = CalculateTilePosition(boardCenter.X, boardCenter.Y) + new Vector2(0, gameviewSize.Y / 2);
+		switch (layer)
+		{
+			case Layer.PauseMain: PauseMenu.Main = spriteElement; break;
+			case Layer.PauseOutline: PauseMenu.Outline = spriteElement; break;
+		}
 	}
+	public static Sprite2D GetPiece(Vector2I location) => tiles[new(location, Layer.Piece)];
 	public static Vector2 CalculateTilePosition(float x, float y, Layer layer = Layer.Tile)
 	{
 		if (layer == Layer.ColorIndicator)

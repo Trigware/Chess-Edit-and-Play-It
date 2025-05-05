@@ -18,9 +18,10 @@
 			"DrawAgreement": "Draw by Agreement"
 		},
 		"Interaction Text": {
-			"Settings": "Settings",
+			"NewGame": "New Game",
 			"PlayAgain": "Play Again",
-			"Quit": "Quit"
+			"Settings": "Settings",
+			"Quit": "Quit Game"
 		}
 	},
 	"Players": {

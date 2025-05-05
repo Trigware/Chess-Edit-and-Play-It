@@ -76,15 +76,15 @@ public partial class History
 		RedoMoves = new();
 		UndoMoves.Push(latestMove);
 	}
-	private static void Undo()
+	public static void Undo(bool resetGame = false)
 	{
-		if (Chessboard.waitingForBoardFlip) return;
+		if (Chessboard.waitingForBoardFlip || UndoMoves.Count == 0) return;
 		lastReplay = ReplayType.Undo;
 		UpdateTileColorsAndUndoTimer();
 		Move undoneMove = UndoMoves.Pop();
         MoveReplay(undoneMove, true);
 	}
-	private static void Redo()
+	public static void Redo()
 	{
 		lastReplay = ReplayType.Redo;
 		UpdateTileColorsAndUndoTimer();

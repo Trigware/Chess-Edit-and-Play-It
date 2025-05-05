@@ -7,23 +7,26 @@ public partial class Interaction : Chessboard
 	public static Element? selectedTile = null;
 	public static List<Vector2I> LegalSelectedMoves = new();
 	public static bool escapePressed, lastEscapeSelection = false, escapePressedOld = false;
-	private static bool interactionButtonPressed = false, leftMouseOld = false, pausedPressedOld = false;
+    private static Vector2 MousePosition;
+    private static bool interactionButtonPressed = false, leftMouseOld = false, pausedPressedOld = false, leftMousePressStartNow = false;
 	public override void _Process(double delta)
-	{
-		History.KeyPressDetection();
+    {
+        MousePosition = GetViewport().GetMousePosition();
+        History.KeyPressDetection();
 		BoardInteractionInputs();
 	}
 	private void BoardInteractionInputs()
 	{
 		if (PauseMenu.MenuMoving)
 			Text.RefreshPauseText();
+		InteractWithPauseMenuText();
 		bool leftActuallyPressed = Input.IsMouseButtonPressed(MouseButton.Left), pauseKeyPressedNow = Input.IsKeyPressed(Key.P);
 		if (pauseKeyPressedNow && !pausedPressedOld)
 			PauseMenu.IsPaused = !PauseMenu.IsPaused;
 		escapePressed = Input.IsKeyPressed(Key.Escape);
 		if (escapePressed) { if (selectedTile != null) lastEscapeSelection = true; } else lastEscapeSelection = false;
 		Cursor.KeyPressDetection();
-		bool leftMousePressStartNow = leftActuallyPressed && !leftMouseOld;
+		leftMousePressStartNow = leftActuallyPressed && !leftMouseOld;
 		interactionButtonPressed = leftMousePressStartNow || Cursor.enterPressedNow;
 		if ((interactionButtonPressed || escapePressed) && Position.GameEndState == Position.EndState.Ongoing && !PauseMenu.IsPaused)
 			Select(leftMousePressStartNow);
@@ -33,14 +36,25 @@ public partial class Interaction : Chessboard
 	}
 	private Vector2I GetPositionOnBoard()
 	{
-		Vector2 leftUpNotNull = leftUpCorner;
-		Vector2 mousePosition = GetViewport().GetMousePosition();
-		Vector2 tileSelectionPosition = ((mousePosition - leftUpNotNull) / actualTileSize).Floor();
+        Vector2 leftUpNotNull = leftUpCorner;
+		Vector2 tileSelectionPosition = ((MousePosition - leftUpNotNull) / actualTileSize).Floor();
 		if (isFlipped)
 			tileSelectionPosition *= -1;
 		return (Vector2I)tileSelectionPosition;
 	}
-	private void Select(bool leftMousePressStartNow)
+	private void InteractWithPauseMenuText()
+	{
+		if ((!PauseMenu.IsPaused && !PauseMenu.MenuMoving) || !leftMousePressStartNow) return;
+		foreach (KeyValuePair<Text.PauseLabel, Rect2> pauseInteractionHitbox in PauseMenu.InteractionHitboxes)
+		{
+			if (pauseInteractionHitbox.Value.HasPoint(MousePosition))
+			{
+				PauseMenu.InteractWithTextElement(pauseInteractionHitbox.Key);
+				break;
+			}
+		}
+    }
+    private void Select(bool leftMousePressStartNow)
 	{
 		if (waitingForBoardFlip) return;
 		Vector2I interactionPosition = leftMousePressStartNow ? GetPositionOnBoard() : Cursor.actualLocation;

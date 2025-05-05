@@ -18,8 +18,9 @@
 			"DrawAgreement": "Hráči se dohodli na remíze!"
 		},
 		"Interaction Text": {
-			"Settings": "Nastavení",
+			"NewGame": "Nová hra",
 			"PlayAgain": "Hraj znovu",
+			"Settings": "Nastavení",
 			"Quit": "Opusť hru"
 		}
 	},

@@ -14,7 +14,7 @@ public partial class Animations : Chessboard
 	public static void TweenPauseMenu(Sprite2D spr, Layer layer, bool pausing)
 	{
 		int yPauseMenuUnpause = isFlipped ? 0 : tileCount.Y;
-		Vector2 startPauseMenuPosition = PauseMenu.GetStandardPosition();
+		Vector2 startPauseMenuPosition = PauseMenu.GetStandardPosition(layer);
 		spr.Position = CalculateTilePosition(startPauseMenuPosition.X, startPauseMenuPosition.Y);
 		Tween(spr, PauseMenu.PauseMenuMoveDuration, default, new(boardCenter.X, pausing ? boardCenter.Y : yPauseMenuUnpause), endTransparency: pausing ? PauseMenu.PauseMenuMaxVisibilityTransparency : 0, layer: layer);
 	}
@@ -102,11 +102,11 @@ public partial class Animations : Chessboard
 			spr.ZIndex = (int)Layer.Piece;
 		if (layer == Layer.PauseMain)
 		{
-            PauseMenu.ActiveTweens--;
+			PauseMenu.ActiveTweens--;
 			if (PauseMenu.ActiveTweens == 0)
 				PauseMenu.MenuMoving = false;
-        }
-        firstCheckZone = 0;
+		}
+		firstCheckZone = 0;
 		if (Position.GameEndState != Position.EndState.Ongoing && Position.GameEndState != Position.EndState.Checkmate) return;
 		if (ActiveTweens.Count == 0 && Promotion.PromotionOptionsPieces.Count == 0 && History.activeMoveSuccessionTimers == 0)
 			FlipBoard();
@@ -152,13 +152,13 @@ public partial class Animations : Chessboard
 
 		if (i >= checkmateAnimationRange)
 		{
-            Audio.Play(isCheckmate ? Audio.Enum.Checkmate : Audio.Enum.Check);
+			Audio.Play(isCheckmate ? Audio.Enum.Checkmate : Audio.Enum.Check);
 			if (isCheckmate)
 			{
-                CheckmateColors();
-                History.TimerCountdown(PauseMenu.PauseScreenAfterGameEndDuration, History.TimerType.GameEndScreen);
-            }
-            ActiveCheckAnimation = false;
+				CheckmateColors();
+				History.TimerCountdown(PauseMenu.PauseScreenAfterGameEndDuration, History.TimerType.GameEndScreen);
+			}
+			ActiveCheckAnimation = false;
 			return;
 		}
 		Timer timer = new() { WaitTime = animationSpeed/checkmateAnimationRange*durationMultiplier, OneShot = true };

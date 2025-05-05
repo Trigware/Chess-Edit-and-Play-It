@@ -36,7 +36,7 @@ public partial class LoadGraphics : Node
 		{
 			string spriteName = texture.Substring(0, texture.IndexOf('.'));
 			Texture2D loadedTexture = LoadTexture(texture);
-			if (texture == "PauseMain.png")
+			if (spriteName == "PauseMain")
 				PauseMenu.MenuTextureSize = loadedTexture.GetSize();
             textureDict.Add(spriteName, loadedTexture);
 		}
