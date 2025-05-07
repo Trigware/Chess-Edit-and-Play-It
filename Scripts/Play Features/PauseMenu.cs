@@ -7,16 +7,16 @@ public partial class PauseMenu
 	public const float PauseMenuMoveDuration = 0.5f, PauseScreenAfterGameEndDuration = 0.3f, MaxTextSizeBoundary = 0.9f, PauseMenuMaxVisibilityTransparency = 0.85f;
 	public static Dictionary<Text.PauseLabel, Rect2> InteractionHitboxes = new();
 	private static bool isPausedValue = false;
-	public static bool GameEndedInThisSession = false, WaitingForPauseAfterGameEnd = false, MenuMoving = false;
+	public static bool GameEndedInThisSession = false, WaitingForPauseAfterGameEnd = false, MenuMoving = false, UndoingMovesForNewGame = false;
 	public static string TitleText = "", DescriptionText = "";
 	public static Vector2 MenuTextureSize;
-	public static int ActiveTweens = 0;
+	public static int ActiveTweensCount = 0, UndoMovesCountForResettingGame = 0;
 	public static bool IsPaused
 	{
 		get => isPausedValue;
 		set
 		{
-			if (WaitingForPauseAfterGameEnd || Position.ColorToMove == '\0') return;
+			if (WaitingForPauseAfterGameEnd || Position.ColorToMove == '\0' || UndoingMovesForNewGame) return;
 			UpdatePauseMenuText();
 			Animations.TweenPauseMenu(Main, Chessboard.Layer.PauseMain, value);
 			Animations.TweenPauseMenu(Outline, Chessboard.Layer.PauseOutline, value);
@@ -60,6 +60,26 @@ public partial class PauseMenu
         IsPaused = false;
 		if (Interaction.selectedTile != null)
 			Interaction.Deselect(Interaction.selectedTile.Value.Location);
-		History.Undo(true);
+		UndoingMovesForNewGame = History.UndoMoves.Count > 0;
+		UndoMovesCountForResettingGame = History.UndoMoves.Count;
+        Position.GameEndState = Position.EndState.Ongoing;
+		if (UndoingMovesForNewGame)
+		{
+            History.Undo();
+			Cursor.ShowHideCursor(false);
+        }
+        else
+			Audio.Play(Audio.Enum.GameStart);
+    }
+	public static void UndoMoveForNewGame()
+	{
+		if (History.UndoMoves.Count > 0)
+        {
+            History.Undo();
+            return;
+		}
+        UndoingMovesForNewGame = false;
+        History.RedoMoves = new();
+        Audio.Play(Audio.Enum.GameStart);
     }
 }

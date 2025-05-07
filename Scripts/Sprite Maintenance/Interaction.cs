@@ -56,7 +56,7 @@ public partial class Interaction : Chessboard
     }
     private void Select(bool leftMousePressStartNow)
 	{
-		if (waitingForBoardFlip) return;
+		if (waitingForBoardFlip || PauseMenu.UndoingMovesForNewGame || History.cooldownOngoing) return;
 		Vector2I interactionPosition = leftMousePressStartNow ? GetPositionOnBoard() : Cursor.actualLocation;
 		if (interactionButtonPressed && Promotion.PromotionOptionsPositions.Contains(interactionPosition))
 		{
@@ -82,7 +82,7 @@ public partial class Interaction : Chessboard
 		bool canSwitchSelectedTile = LegalMoves.GetPieceColor(targetedLocation) == Position.ColorToMove;
 		if (canSwitchSelectedTile)
 		{
-			TimeControl.HandleTimerPauseProperty(Position.ColorToMove);
+            TimeControl.HandleTimerPauseProperty(Position.ColorToMove);
 			Colors.SetTileColors(targetedLocation);
 		}
 		if (canSwitchSelectedTile || LegalSelectedMoves.Contains(targetedLocation)) Cursor.MoveCursor(targetedLocation, 0);

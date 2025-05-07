@@ -34,7 +34,7 @@ public partial class Chessboard : Node
 	public override void _Ready()
 	{
 		InitiateSceneFields();
-		Position.Load(Position.FEN.PromotionTest);
+		Position.Load(Position.FEN.Default);
 		boardCenter = new(((float)tileCount.X - 1)/2, ((float)tileCount.Y - 1)/2);
 		Tags.GetRoyalsPerColor();
 	}
@@ -246,7 +246,7 @@ public partial class Chessboard : Node
 	}
 	public static void FlipBoard(bool replay = false)
 	{
-		if (Position.GameEndState != Position.EndState.Ongoing) return;
+		if (Position.GameEndState != Position.EndState.Ongoing || (PauseMenu.UndoingMovesForNewGame && History.UndoMoves.Count > 0)) return;
 		bool wasPreviouslyFlipped = isFlipped;
 		isFlipped = Position.ColorToMove == Position.oppositeStartColorToMove;
 		if (wasPreviouslyFlipped != isFlipped)

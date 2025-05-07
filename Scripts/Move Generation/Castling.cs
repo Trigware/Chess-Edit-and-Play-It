@@ -46,7 +46,7 @@ public partial class Castling : Node
 	{
 		if (duration < Animations.lowAnimationDurationBoundary || !CanDoElipseAnimation(startPosition, endXLocal, duration, isRedo))
 		{
-			Animations.Tween(spr, duration, startPosition, new(endXLocal, startPosition.Y), null, null, false);
+			Animations.Tween(spr, duration, startPosition, new(endXLocal, startPosition.Y), null, null, false, castlerAnimation: true);
 			return;
 		}
 		bool elipseUp = Position.ColorToMove == (isRedo ? 'b' : 'w');
@@ -54,7 +54,7 @@ public partial class Castling : Node
 		endXpositions.Add(endXLocal);
 		elipsePathUp.Add(elipseUp);
 		elipseQuality = Convert.ToInt32(elipseQualityConst * Animations.animationSpeed);
-		Animations.Tween(spr, duration / elipseQuality, startPosition, CalculatePointOnElipse(1, startPosition, endXLocal, elipseUp), null, null, false, false, true, 1, endXpositions.Count-1);
+		Animations.Tween(spr, duration / elipseQuality, startPosition, CalculatePointOnElipse(1, startPosition, endXLocal, elipseUp), null, null, false, false, true, 1, endXpositions.Count-1, castlerAnimation: true);
 	}
 	private static bool CanDoElipseAnimation(Vector2I startPosition, int endXLocal, float duration, bool isRedo)
 	{

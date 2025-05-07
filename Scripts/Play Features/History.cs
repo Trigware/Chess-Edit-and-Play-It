@@ -8,7 +8,8 @@ public partial class History
 	public static Dictionary<char, Vector2I> initialCursorLocation = new();
 	public static bool cooldownOngoing = false;
 	private static float MoveReplayAnimationSpeedMultiplier = 0.75f;
-	public static int movesReplayedInThisSession = 0, activeMoveSuccessionTimers = 0;
+	public static int MovesReplayedInThisSession = 0, activeMoveSuccessionTimers = 0;
+	private const float MinimalReplaySpeed = 0.3f, MaximalReplaySpeed = 1, AnimationSpeedMultiplierForNewGame = 2.5f;
 	private static ReplayType lastReplay = ReplayType.None;
 	public class Move
 	{
@@ -76,9 +77,9 @@ public partial class History
 		RedoMoves = new();
 		UndoMoves.Push(latestMove);
 	}
-	public static void Undo(bool resetGame = false)
+	public static void Undo()
 	{
-		if (Chessboard.waitingForBoardFlip || UndoMoves.Count == 0) return;
+		if (Chessboard.waitingForBoardFlip) return;
 		lastReplay = ReplayType.Undo;
 		UpdateTileColorsAndUndoTimer();
 		Move undoneMove = UndoMoves.Pop();
@@ -93,46 +94,56 @@ public partial class History
 	}
 	public static void KeyPressDetection()
 	{
-		if (PauseMenu.IsPaused || PauseMenu.WaitingForPauseAfterGameEnd)
+		if (PauseMenu.IsPaused || PauseMenu.WaitingForPauseAfterGameEnd || PauseMenu.UndoingMovesForNewGame)
 		{
-			movesReplayedInThisSession = 0;
+			MovesReplayedInThisSession = 0;
             return;
         }
         bool replayDisabled = Promotion.MoveHistoryDisable || Animations.ActiveTweens.Count > 0 || cooldownOngoing || (Animations.ActiveCheckAnimation && Position.GameEndState != Position.EndState.Ongoing);
 		bool pressedZ = Input.IsKeyPressed(Key.Z), pressedY = Input.IsKeyPressed(Key.Y);
 		if (pressedZ && pressedY)
 		{
-			movesReplayedInThisSession = 0;
+			MovesReplayedInThisSession = 0;
 			return;
 		}
 		if (Chessboard.waitingForBoardFlip) return;
 		if (pressedZ && !replayDisabled)
 		{
-			if (UndoMoves.Count == 0 || lastReplay == ReplayType.Redo) movesReplayedInThisSession = 0;
+			if (UndoMoves.Count == 0 || lastReplay == ReplayType.Redo) MovesReplayedInThisSession = 0;
 			if (UndoMoves.Count > 0) { Undo(); return; }
 		}
 		if (pressedY && !replayDisabled)
 		{
-			if (RedoMoves.Count == 0 || lastReplay == ReplayType.Undo) movesReplayedInThisSession = 0;
+			if (RedoMoves.Count == 0 || lastReplay == ReplayType.Undo) MovesReplayedInThisSession = 0;
 			if (RedoMoves.Count > 0) { Redo(); return; }
 		}
 		if (!pressedZ && !pressedY)
 		{
 			lastReplay = ReplayType.None;
-			movesReplayedInThisSession = 0;
+			MovesReplayedInThisSession = 0;
 		}
 	}
 	private static void UpdateTileColorsAndUndoTimer()
 	{
 		Animations.CheckAnimationsStarted = new();
 		Colors.ChangeTileColorBack();
-		MoveReplayAnimationSpeedMultiplier = Mathf.Lerp(1, 0.3f, Mathf.Min(10, movesReplayedInThisSession) / 10f);
+		MoveReplayAnimationSpeedMultiplier = GetReplayAnimationSpeed();
 		Colors.ColorCheckedRoyalTiles(Colors.Enum.Default);
 		LegalMoves.CheckedRoyals = new();
-		movesReplayedInThisSession++;
+		MovesReplayedInThisSession++;
 		TimerCountdown(Mathf.Max(Animations.lowAnimationDurationBoundary, Animations.animationSpeed) * MoveReplayAnimationSpeedMultiplier, TimerType.Replay);
 	}
-	private static void MoveReplay(Move replayedMove, bool isUndo)
+	public static float GetReplayAnimationSpeed()
+	{
+		int movesReplayedInRow = MovesReplayedInThisSession;
+		if (PauseMenu.UndoingMovesForNewGame)
+			movesReplayedInRow = 0;
+		float animationSpeed = Mathf.Lerp(MaximalReplaySpeed, MinimalReplaySpeed, Mathf.Min(10, movesReplayedInRow) / 10f);
+		if (PauseMenu.UndoingMovesForNewGame)
+			animationSpeed /= PauseMenu.UndoMovesCountForResettingGame / AnimationSpeedMultiplierForNewGame;
+        return animationSpeed;
+    }
+    private static void MoveReplay(Move replayedMove, bool isUndo)
 	{
 		Stack<Move> movePushedTo = isUndo ? RedoMoves : UndoMoves;
 		Animations.CheckAnimationCancelEarly(replayedMove.End);
@@ -182,7 +193,7 @@ public partial class History
 				{
 					Chessboard.Update();
 					Cursor.MoveCursor(Cursor.Location[Position.ColorToMove], 0);
-                    TimeControl.HandleTimerPauseProperty(Position.ColorToMove);
+					TimeControl.HandleTimerPauseProperty(Position.ColorToMove);
                 } break;
 			case TimerType.ReplaySuccession: 
 				activeMoveSuccessionTimers += timerStart ? 1 : -1;
