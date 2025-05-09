@@ -113,9 +113,9 @@ public partial class Animations : Chessboard
 		if (endPosition == null)
 			return;
 		Vector2I endNotNull = (Vector2I)endPosition;
-        if (PauseMenu.UndoingMovesForNewGame && layer == Layer.Piece && !castlerAnimation)
-            PauseMenu.UndoMoveForNewGame();
-        for (int i = 0; i < LegalMoves.RoyalAttackers.Count; i++)
+		if (PauseMenu.UndoingMovesForNewGame && layer == Layer.Piece && !castlerAnimation)
+			PauseMenu.UndoMoveForNewGame();
+		for (int i = 0; i < LegalMoves.RoyalAttackers.Count; i++)
 		{
 			if (LegalMoves.RoyalAttackers[i] == endNotNull)
 				CheckAnimation(1, ((SceneTree)Engine.GetMainLoop()).CurrentScene, i, endNotNull, false);

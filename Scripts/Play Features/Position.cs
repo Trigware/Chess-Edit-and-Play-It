@@ -7,7 +7,7 @@ public partial class Position
 {
 	public static Dictionary<Vector2I, char> pieces = new();
 	public static char ColorToMove;
-	public static char WinningPlayer = '\0', oppositeStartColorToMove = playerColors.Last();
+	public static char WinningPlayer = '\0', oppositeStartColorToMove = playerColors.Last(), StartColorToMove;
 	public static (Vector2I target, Vector2I delete)? EnPassantInfo = null;
 	public static (Vector2I start, Vector2I end)? LastMoveInfo = null;
 	public static bool startPositionLoaded = false;

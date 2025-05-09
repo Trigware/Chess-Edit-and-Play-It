@@ -10,8 +10,8 @@ public partial class TimeControl : Node
 	{
 		PlayerTimerInfo = new()
 		{
-			{ 'w', new(600, 0) },
-			{ 'b', new(600, 0) }
+			{ 'w', new(5, 0) },
+			{ 'b', new(5, 0) }
 		};
 	}
 	public class PlayerTimer
@@ -61,6 +61,14 @@ public partial class TimeControl : Node
 		usedTimer.WaitTime = modifyTo.Value;
 		usedTimer.Start();
 	}
+	public static void RestartTimer(char color)
+	{
+        PlayerTimer playerTimer = GetWantedTimer(color);
+        playerTimer.PlayerTimeout = false;
+		PauseMenu.GameEndedInThisSession = false;
+        ModifyTimeLeft(color, playerTimer.InitialTime);
+		Chessboard.UpdateAllGUI(true);
+    }
 	private static void PlayerTimeout(char otherPlayer)
 	{
 		if (History.UndoMoves.Count > 0)

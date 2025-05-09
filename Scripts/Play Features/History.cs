@@ -207,7 +207,7 @@ public partial class History
 				PauseMenu.WaitingForPauseAfterGameEnd = timerStart;
 				if (!timerStart && !PauseMenu.GameEndedInThisSession)
                 {
-                    PauseMenu.IsPaused = !PauseMenu.IsPaused;
+                    PauseMenu.IsPaused = true;
                     PauseMenu.GameEndedInThisSession = true;
                 }
                 break;

@@ -36,6 +36,7 @@ public partial class Chessboard : Node
 		InitiateSceneFields();
 		Position.Load(Position.FEN.Default);
 		boardCenter = new(((float)tileCount.X - 1)/2, ((float)tileCount.Y - 1)/2);
+		Position.StartColorToMove = Position.ColorToMove;
 		Tags.GetRoyalsPerColor();
 	}
 	public override void _Process(double delta)
@@ -235,9 +236,16 @@ public partial class Chessboard : Node
 			if (layer == Layer.Tile)
 				Text.TileRecognitionHelper(keyValue.Key.Location);
 		}
-		foreach (Element guiElement in guiElements.Keys)
-			UpdateGUIElement(guiElement.Layer, guiElement.Location);
+		UpdateAllGUI();
 	}
+	public static void UpdateAllGUI(bool onlyColorIndicators = false)
+	{
+        foreach (Element guiElement in guiElements.Keys)
+		{
+			if (onlyColorIndicators && guiElement.Layer != Layer.ColorIndicator) continue;
+            UpdateGUIElement(guiElement.Layer, guiElement.Location);
+        }
+    }
 	public static void Delete()
 	{
 		foreach (Sprite2D sprite in tiles.Values)

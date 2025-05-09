@@ -24,7 +24,7 @@ public partial class LegalMoves
 		{ 'Q', ( new Vector2I[] {new(-1, 0), new(1, 0), new(0, -1), new(0, 1), new(-1, -1), new(1, -1), new(-1, 1), new(1, 1)}, int.MaxValue ) },
 		{ 'K', ( new Vector2I[] {new(-1, 0), new(1, 0), new(0, -1), new(0, 1), new(-1, -1), new(1, -1), new(-1, 1), new(1, 1)}, 1 ) }
 	};
-	public static List<(Vector2I, Vector2I)> GetLegalMoves(bool opponent = false, bool undo = false)
+	public static List<(Vector2I, Vector2I)> GetLegalMoves(bool opponent = false, bool undo = false, bool gameReset = false)
 	{
 		List<(Vector2I, Vector2I)> legalMovesLocal = new();
 		if (!opponent)
@@ -52,7 +52,7 @@ public partial class LegalMoves
 		if (!opponent)
 		{
 			legalMoves = legalMovesLocal;
-			PostMoveGeneration(undo);
+			if (!gameReset) PostMoveGeneration(undo);
 		}
 		return legalMovesLocal;
 	}

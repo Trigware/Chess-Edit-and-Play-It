@@ -67,9 +67,11 @@ public partial class PauseMenu
 		{
             History.Undo();
 			Cursor.ShowHideCursor(false);
+			return;
         }
-        else
-			Audio.Play(Audio.Enum.GameStart);
+		Audio.Play(Audio.Enum.GameStart);
+        Position.ColorToMove = Position.StartColorToMove;
+        TimeControl.RestartTimer(Position.ColorToMove);
     }
 	public static void UndoMoveForNewGame()
 	{
@@ -81,5 +83,13 @@ public partial class PauseMenu
         UndoingMovesForNewGame = false;
         History.RedoMoves = new();
         Audio.Play(Audio.Enum.GameStart);
+		foreach (char playerColor in Position.playerColors)
+			TimeControl.RestartTimer(playerColor);
+		Zobrist.RepeatedPositions = new();
+        if (Position.ColorToMove != Position.StartColorToMove)
+		{
+            Position.ColorToMove = Position.StartColorToMove;
+            LegalMoves.GetLegalMoves(gameReset: true);
+        }
     }
 }
