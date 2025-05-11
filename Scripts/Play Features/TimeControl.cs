@@ -10,8 +10,8 @@ public partial class TimeControl : Node
 	{
 		PlayerTimerInfo = new()
 		{
-			{ 'w', new(5, 0) },
-			{ 'b', new(5, 0) }
+			{ 'w', new(1, 0) },
+			{ 'b', new(1, 0) }
 		};
 	}
 	public class PlayerTimer
@@ -52,7 +52,7 @@ public partial class TimeControl : Node
 	{
 		PlayerTimer playerTimer = GetWantedTimer(color);
 		Timer usedTimer = playerTimer.ActualTimer;
-		if (usedTimer == null) return;
+        if (usedTimer == null) return;
 		if (modifyTo == null) modifyTo = usedTimer.TimeLeft + playerTimer.PlyIncrement;
 		else if (modifyTo.Value <= 0) return;
 

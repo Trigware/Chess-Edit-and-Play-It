@@ -1,5 +1,6 @@
 using Godot;
 using System.Collections.Generic;
+using System.IO;
 
 public partial class LoadGraphics : Node
 {
@@ -23,8 +24,8 @@ public partial class LoadGraphics : Node
 	}
 	private static void LoadAllTextures()
 	{
-		string[] pieceTextures = new string[] { "wP", "wN", "wB", "wR", "wQ", "wK", "bP", "bN", "bB", "bR", "bQ", "bK" },
-				 otherTextures = new string[] { "cursor.png", "tile.png", "PauseMain.png", "PauseOutline.png" };
+		string[] pieceTextures = new string[] { "wP", "wN", "wB", "wR", "wQ", "wK", "bP", "bN", "bB", "bR", "bQ", "bK" };
+		List<string> otherTextures = GetNonPieceTexturesInDirectory();
 		foreach (string texture in pieceTextures)
 		{
 			string spriteName = texture;
@@ -42,4 +43,20 @@ public partial class LoadGraphics : Node
 		}
 		Text.notoSans = GD.Load<FontFile>("res://Fonts/NotoSans.ttf");
     }
+	private static List<string> GetNonPieceTexturesInDirectory()
+	{
+		List<string> fileList = new();
+		DirAccess directory = DirAccess.Open("res://Graphics");
+		directory.ListDirBegin();
+		while (true)
+		{
+			string fileName = directory.GetNext();
+			if (fileName == "") break;
+			if (fileName.Length == 6 || fileName.EndsWith(".import")) continue; // piece files
+			fileList.Add(fileName);
+		}
+		directory.ListDirEnd();
+		directory.Dispose();
+		return fileList;
+	}
 }

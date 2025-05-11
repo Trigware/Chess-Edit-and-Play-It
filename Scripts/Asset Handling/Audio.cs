@@ -46,10 +46,7 @@ public partial class Audio : AudioStreamPlayer
         if (name == Enum.Check || name == Enum.Checkmate) playedCheck = true;
         PlaySettings(name, 0.1f);
 	}
-	public static void PlayShiftless(Enum name)
-	{
-		Play(name);
-	}
+	public static void PlayShiftless(Enum name) => Play(name);
 	private static float GetRandom(float lower, float upper)
 	{
 		return lower + (upper - lower) * GD.Randf();

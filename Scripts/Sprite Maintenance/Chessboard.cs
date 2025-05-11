@@ -30,7 +30,7 @@ public partial class Chessboard : Node
 			Layer = layer;
 		}
 	}
-	public enum Layer { Background, Tile, Helper, Piece, ColorIndicator, Promotion, Cursor, Timers, PauseMain, PauseOutline, PauseText }
+	public enum Layer { Background, Tile, Helper, Piece, ColorIndicator, Promotion, Cursor, Timers, PauseMain, PauseOutline, PauseClose, PauseText }
 	public override void _Ready()
 	{
 		InitiateSceneFields();
@@ -71,7 +71,7 @@ public partial class Chessboard : Node
 			Create(LoadGraphics.I);
 		else
 			Update();
-		Text.RefreshPauseText(true);
+		Text.RefreshPauseText();
 	}
 	private static void Create(Node parentNode)
 	{
@@ -81,6 +81,7 @@ public partial class Chessboard : Node
 		CreateGUIElement("tile", Layer.Background, parentNode);
 		CreateGUIElement("PauseMain", Layer.PauseMain, parentNode);
 		CreateGUIElement("PauseOutline", Layer.PauseOutline, parentNode);
+		CreateGUIElement("Close", Layer.PauseClose, parentNode);
 		for (int x = 0; x < tileCount.X; x++)
 		{
 			for (int y = 0; y < tileCount.Y; y++)
@@ -118,7 +119,7 @@ public partial class Chessboard : Node
 			return new();
 		}
 		float xAsFloat = x, yAsFloat = y;
-		if (layer == Layer.PauseMain || layer == Layer.PauseOutline)
+		if (layer == Layer.PauseMain || layer == Layer.PauseOutline || layer == Layer.PauseClose)
 		{
 			Vector2 pauseMenuLocation = PauseMenu.GetStandardPosition(layer);
 			xAsFloat = pauseMenuLocation.X;
@@ -131,7 +132,7 @@ public partial class Chessboard : Node
 			spriteElement = GetOldSprite(layer, isGUI, x, y);
 		else spriteElement = tileClone as Sprite2D;
 		bool tileAvailable = spriteElement != null || update && tiles.ContainsKey(new(x, y, layer));
-		if (!tileAvailable)
+        if (!tileAvailable)
 		{
 			GD.PrintErr("Tile scene 'Tile.tscn' doesn't have a Sprite2D node for it's root.");
 			return new();
@@ -143,7 +144,7 @@ public partial class Chessboard : Node
 		}
 		Vector2 position = CalculateTilePosition(xAsFloat, yAsFloat, layer);
 		spriteElement.Scale = new Vector2(gridScale, gridScale);
-		spriteElement.ZIndex = (int)layer;
+        spriteElement.ZIndex = (int)layer;
 		spriteElement.Position = layer == Layer.Background ? new(actualTileSize / 2, actualTileSize / 2) : position;
 		LayerConditionals(spriteElement, layer, update, position, x, y);
 		if (!update)
@@ -168,42 +169,45 @@ public partial class Chessboard : Node
 		switch (layer)
 		{
 			case Layer.Background:
-				spriteElement.Scale = new(gridScale * (gameviewSize.X / actualTileSize) * 2, gridScale * (gameviewSize.Y / actualTileSize) * 2);
+				spriteElement.Scale = new Vector2(gameviewSize.X, gameviewSize.Y) * gridScale / actualTileSize * 3;
 				spriteElement.Modulate = Colors.Dict[Colors.Enum.Background];
 				break;
 			case Layer.Tile:
 				if (x == 0 && y == 0) leftUpCorner = position - new Vector2(actualTileSize / 2, actualTileSize / 2);
 				if (!update) Colors.Set(spriteElement, Colors.Enum.Default, x, y); break;
-			case Layer.Piece:
-				goto case Layer.Promotion;
-			case Layer.ColorIndicator:
+			case Layer.Piece or Layer.Promotion:
+                spriteElement.Scale /= svgScale; break;
+            case Layer.ColorIndicator:
 				spriteElement.Modulate = Colors.GetColorAsColorToMove();
 				spriteElement.Scale = new(tileCount.X * gridScale, gridScale);
 				spriteElement.RotationDegrees = ySizeBigger ? 90 : 0; break;
-			case Layer.Promotion:
-				spriteElement.Scale /= svgScale; break;
 			case Layer.Cursor:
 				spriteElement.TextureFilter = CanvasItem.TextureFilterEnum.Nearest; break;
-			case Layer.PauseMain:
-				Color spriteColor = layer == Layer.PauseMain ? Colors.Dict[Colors.Enum.PauseMain] : Colors.GetColorAsColorToMove();
-				spriteElement.Modulate = new(spriteColor.R, spriteColor.G, spriteColor.B, PauseMenu.IsPaused ? PauseMenu.PauseMenuMaxVisibilityTransparency : 0);
+			case Layer.PauseMain or Layer.PauseOutline or Layer.PauseClose:
+				if (layer == Layer.PauseClose) spriteElement.Scale *= PauseMenu.CloseButtonScaleMutliplier;
 				if (update) return;
 				SetPauseMenuElement(spriteElement, layer);
 				goto case Layer.Cursor;
-			case Layer.PauseOutline:
-				goto case Layer.PauseMain;
 		}
 	}
 	private static void SetPauseMenuElement(Sprite2D spriteElement, Layer layer)
 	{
-		spriteElement.Position = CalculateTilePosition(boardCenter.X, boardCenter.Y) + new Vector2(0, gameviewSize.Y / 2);
+		Color spriteColor = new(0xFFFFFF00);
+        spriteElement.Position = CalculateTilePosition(boardCenter.X, boardCenter.Y) + new Vector2(0, gameviewSize.Y / 2);
 		switch (layer)
 		{
-			case Layer.PauseMain: PauseMenu.Main = spriteElement; break;
-			case Layer.PauseOutline: PauseMenu.Outline = spriteElement; break;
+			case Layer.PauseMain:
+				PauseMenu.Main = spriteElement;
+				spriteColor = Colors.Dict[Colors.Enum.PauseMain]; break;
+			case Layer.PauseOutline:
+				PauseMenu.Outline = spriteElement;
+				spriteColor = Colors.GetColorAsColorToMove(); break;
+			case Layer.PauseClose:
+                PauseMenu.CloseButton = spriteElement; break;
 		}
-	}
-	public static Sprite2D GetPiece(Vector2I location) => tiles[new(location, Layer.Piece)];
+        spriteElement.Modulate = new(spriteColor.R, spriteColor.G, spriteColor.B, PauseMenu.IsPaused ? PauseMenu.PauseMenuMaxVisibilityTransparency : 0);
+    }
+    public static Sprite2D GetPiece(Vector2I location) => tiles[new(location, Layer.Piece)];
 	public static Vector2 CalculateTilePosition(float x, float y, Layer layer = Layer.Tile)
 	{
 		if (layer == Layer.ColorIndicator)

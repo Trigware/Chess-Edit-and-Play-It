@@ -14,9 +14,9 @@ public partial class Animations : Chessboard
 	public static void TweenPauseMenu(Sprite2D spr, Layer layer, bool pausing)
 	{
 		int yPauseMenuUnpause = isFlipped ? 0 : tileCount.Y;
-		Vector2 startPauseMenuPosition = PauseMenu.GetStandardPosition(layer);
+		Vector2 startPauseMenuPosition = PauseMenu.GetStandardPosition(layer), endPauseMenuPosition = new Vector2(boardCenter.X, pausing ? boardCenter.Y : yPauseMenuUnpause) + PauseMenu.GetPositionalOffsetForCloseButton(layer);
 		spr.Position = CalculateTilePosition(startPauseMenuPosition.X, startPauseMenuPosition.Y);
-		Tween(spr, PauseMenu.PauseMenuMoveDuration, default, new(boardCenter.X, pausing ? boardCenter.Y : yPauseMenuUnpause), endTransparency: pausing ? PauseMenu.PauseMenuMaxVisibilityTransparency : 0, layer: layer);
+		Tween(spr, PauseMenu.PauseMenuMoveDuration, default, endPauseMenuPosition, endTransparency: pausing ? PauseMenu.PauseMenuMaxVisibilityTransparency : 0, layer: layer);
 	}
 	public static void Tween(Sprite2D spr, float duration, Vector2I startPosition, Vector2? endPosition, float? endScale = null, float? endTransparency = null, bool deleteOnFinished = false, bool promotion = false, bool deleteFromPiecesDict = true, int chainIterator = -1, int castlingAnimation = -1, bool promotionConfirmation = false, Tween.TransitionType transition = Godot.Tween.TransitionType.Sine, Tween.EaseType? easeType = Godot.Tween.EaseType.InOut, Layer layer = Layer.Piece, bool castlerAnimation = false)
 	{
@@ -104,8 +104,8 @@ public partial class Animations : Chessboard
 		{
 			PauseMenu.ActiveTweensCount--;
 			if (PauseMenu.ActiveTweensCount == 0)
-				PauseMenu.MenuMoving = false;
-		}
+                PauseMenu.MenuMoving = false;
+        }
 		firstCheckZone = 0;
 		if (Position.GameEndState != Position.EndState.Ongoing && Position.GameEndState != Position.EndState.Checkmate) return;
 		if (ActiveTweens.Count == 0 && Promotion.PromotionOptionsPieces.Count == 0 && History.activeMoveSuccessionTimers == 0)

@@ -19,7 +19,8 @@ public partial class Colors : Interaction
 		{ Enum.BlackColorToMove, RGB(0x434343) },
 		{ Enum.Background, RGB(0x4D6D91) },
 		{ Enum.PauseMain, RGB(0x616161) },
-		{ Enum.PauseText, RGB(0xD9D9D9) }
+		{ Enum.PauseText, RGB(0xD9D9D9) },
+		{ Enum.InteractionUnavailable, RGB(0x999999) }
 	};
 	public enum Enum
 	{
@@ -38,7 +39,8 @@ public partial class Colors : Interaction
 		BlackColorToMove,
 		Background,
 		PauseMain,
-		PauseText
+		PauseText,
+		InteractionUnavailable
 	}
 	private static Color RGB(int color, byte a = 0xFF)
 	{
@@ -99,8 +101,8 @@ public partial class Colors : Interaction
 	{
 		Cursor.LegalSelectedDirections = new();
 		LegalSelectedMoves = new();
-        Animations.CheckAnimationCancelEarly(flatMousePosition);
-        Sprite2D currentSprite = tiles[new(flatMousePosition, Layer.Tile)];
+		Animations.CheckAnimationCancelEarly(flatMousePosition);
+		Sprite2D currentSprite = tiles[new(flatMousePosition, Layer.Tile)];
 		if (selectedTile != null)
 			Deselect((selectedTile ?? default).Location);
 		PreviousMoveTiles(Enum.PreviousMove);
@@ -154,4 +156,9 @@ public partial class Colors : Interaction
 			Set(color, checkedRoyal.X, checkedRoyal.Y);
 	}
 	public static Color GetColorAsColorToMove() => Dict[Position.ColorToMove == 'w' ? Enum.WhiteColorToMove : Enum.BlackColorToMove];
+	public static Color GetPauseInteractionColor(Text.PauseLabel pauseLabel)
+	{
+		if (Text.UnavailableInteractions.Contains(pauseLabel)) return new(Dict[Enum.InteractionUnavailable], PauseMenu.Main.Modulate.A);
+        return new(Dict[Enum.PauseText], PauseMenu.Main.Modulate.A);
+    }
 }

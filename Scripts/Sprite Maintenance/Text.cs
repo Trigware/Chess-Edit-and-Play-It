@@ -5,7 +5,8 @@ using System.Collections.Generic;
 public partial class Text : Node
 {
 	public static PackedScene simpleLabel;
-	public static List<Label> PauseMenuLabels = new(), TileRecognitionLabels = new();
+	public static List<Label> TileRecognitionLabels = new();
+	public static Dictionary<PauseLabel, Label> PauseMenuLabels = new();
 	public static FontFile notoSans;
 	private const float tileHelperOffset = 0.35f, intendedScale = 1.62f, PauseDescriptionYOffset = 0.2f, PauseInteractionYOffset = 1.05f, PauseInteractionXOffset = 0.5f, InteractionHitboxYOffset = 0.015f, HeightPauseMenuPortion = 0.068f;
 	private const int TileRecognitionHelperSize = 32, PauseTitleSize = 96, PauseDescriptionSize = 48, PauseInteractionTextSize = 54;
@@ -20,28 +21,30 @@ public partial class Text : Node
 		Settings,
 		Quit
 	}
+	public readonly static List<PauseLabel> UnavailableInteractions = new() { PauseLabel.Settings, PauseLabel.Quit };
 	public static void DeleteAllLabelsInList(List<Label> labelList)
 	{
 		foreach (Label label in labelList)
 			label?.QueueFree();
 		labelList.Clear();
 	}
-	public static void RefreshPauseText(bool calledFromDraw = false)
+	public static void RefreshPauseText()
 	{
-		DeleteAllLabelsInList(PauseMenuLabels);
+		foreach (Label label in PauseMenuLabels.Values)
+			label?.QueueFree();
 		foreach (PauseLabel pauseLabelEnum in Enum.GetValues(typeof(PauseLabel)))
 		{
 			if (pauseLabelEnum == PauseLabel.Unknown) continue;
 			float interactionLabelsXOffset = (pauseLabelEnum - PauseLabel.Settings) * PauseInteractionXOffset;
 			string textPathFinalizer = pauseLabelEnum.ToString();
-			if (pauseLabelEnum == PauseLabel.NewGame && Position.GameEndState != Position.EndState.Ongoing) textPathFinalizer = "PlayAgain";
+			if (pauseLabelEnum == PauseLabel.NewGame && PauseMenu.EndStateOnAnimationStart != Position.EndState.Ongoing) textPathFinalizer = "PlayAgain";
 
-            PauseMenuLabels.Add(pauseLabelEnum switch
+			PauseMenuLabels[pauseLabelEnum] = pauseLabelEnum switch
 			{
 				PauseLabel.Title => PrintPauseMenuElement(PauseMenu.TitleText, PauseTitleSize),
 				PauseLabel.Description => PrintPauseMenuElement(PauseMenu.DescriptionText, PauseDescriptionSize, PauseDescriptionYOffset),
 				_ => PrintPauseMenuElement(Localization.GetText(Localization.Path.PauseInteraction, textPathFinalizer), PauseInteractionTextSize, PauseInteractionYOffset, interactionLabelsXOffset, 1/3f, pauseLabelEnum)
-			});
+			};
 		}
 	}
 	public static void TileRecognitionHelper(Vector2I location, bool rankIdentifier = true)
@@ -83,7 +86,7 @@ public partial class Text : Node
 	private static Vector2 RepositionPauseText(Vector2 location, Vector2 textSize, float rescale, Label labelInstance, Vector2 pauseOffset, float menuPortion, PauseLabel pauseLabel)
 	{
 		Vector2 pauseMenuSize = PauseMenu.Main.Scale * PauseMenu.MenuTextureSize * PauseMenu.MaxTextSizeBoundary, labelSize = labelInstance.Size * rescale;
-        Vector2 rescalingToFit = pauseMenuSize * menuPortion / labelSize;
+		Vector2 rescalingToFit = pauseMenuSize * menuPortion / labelSize;
 		float actualTextRescale = Math.Min(rescalingToFit.X, rescalingToFit.Y);
 		if (actualTextRescale < 1)
 		{
@@ -92,18 +95,18 @@ public partial class Text : Node
 		}
 		Vector2 textPosition = location - textSize;
 		Vector2 distanceToMenuTopLeft = PauseMenu.MenuTextureSize * rescale;
-        pauseOffset *= -2;
-        Vector2 offsetedPosition = new(textPosition.X - distanceToMenuTopLeft.X * pauseOffset.X, textPosition.Y - distanceToMenuTopLeft.Y * (1 + pauseOffset.Y));
+		pauseOffset *= -2;
+		Vector2 offsetedPosition = new(textPosition.X - distanceToMenuTopLeft.X * pauseOffset.X, textPosition.Y - distanceToMenuTopLeft.Y * (1 + pauseOffset.Y));
 		if (pauseLabel != PauseLabel.Unknown)
 			AddHitbox(pauseLabel, location, pauseMenuSize, menuPortion, offsetedPosition.X, textSize.X * 2);
-        return offsetedPosition;
+		return offsetedPosition;
 	}
 	private static void AddHitbox(PauseLabel pauseLabel, Vector2 location, Vector2 pauseMenuSize, float menuPortion, float leftHitboxPoint, float hitboxWidth)
 	{
 		float topHitboxPoint = (location + pauseMenuSize * (menuPortion + InteractionHitboxYOffset)).Y, hitboxHeight = pauseMenuSize.Y * HeightPauseMenuPortion;
-        PauseMenu.InteractionHitboxes[pauseLabel] = new(leftHitboxPoint, topHitboxPoint, hitboxWidth, hitboxHeight);
-    }
-    private static void GetPositionOfTileRecognitionHelper(int? isRank, Vector2 location, Vector2 size, Label labelInstance)
+		PauseMenu.InteractionHitboxes[pauseLabel] = new(leftHitboxPoint, topHitboxPoint, hitboxWidth, hitboxHeight);
+	}
+	private static void GetPositionOfTileRecognitionHelper(int? isRank, Vector2 location, Vector2 size, Label labelInstance)
 	{
 		Vector2 usedLocation = new(location.X + (tileHelperOffset + 0.05f) * isRank.Value, location.Y + tileHelperOffset * isRank.Value);
 		Vector2 position = Chessboard.CalculateTilePosition(usedLocation.X, usedLocation.Y);
@@ -111,7 +114,7 @@ public partial class Text : Node
 	}
 	private static Label PrintPauseMenuElement(string printedText, int textSize, float yOffset = 0, float xOffset = 0, float menuPortion = 1, PauseLabel pauseLabel = PauseLabel.Unknown)
 	{
-		Color pauseColor = new(Colors.Dict[Colors.Enum.PauseText], PauseMenu.Main.Modulate.A);
+		Color pauseColor = Colors.GetPauseInteractionColor(pauseLabel);
 		return Print(printedText, PauseMenu.Main.Position, pauseColor, textSize, layer: Chessboard.Layer.PauseText, isPauseText: true, pauseOffset: new(xOffset, yOffset), menuPortion: menuPortion, pauseLabel: pauseLabel);
 	}
 	private static float GetTextRescale() => Chessboard.gridScale / intendedScale / 2;
